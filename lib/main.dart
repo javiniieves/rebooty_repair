@@ -1,10 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:rebooty_repair/screens/Principal.dart';
 import 'package:rebooty_repair/screens/anyadir/anyadir_alquiler.dart';
 import 'package:rebooty_repair/screens/anyadir/anyadir_clientes.dart';
 import 'package:rebooty_repair/screens/anyadir/anyadir_vehiculos.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
+  if (Platform.isWindows || Platform.isLinux) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   runApp(AppAlquilerCoches());
 }
 
@@ -18,9 +25,9 @@ class AppAlquilerCoches extends StatelessWidget {
       home: Principal(),
 
       routes: {
-        "añadir_cliente" : (context) => PantallaAnyadirClientes(),
-        "añadir_vehiculo" : (context) => PantallaAnyadirVehiculos(),
-        "añadir_alquiler" : (context) => PantallaAnyadirAlquiler(),
+        "añadir_cliente": (context) => PantallaAnyadirClientes(),
+        "añadir_vehiculo": (context) => PantallaAnyadirVehiculos(),
+        "añadir_alquiler": (context) => PantallaAnyadirAlquiler(),
       },
     );
   }
