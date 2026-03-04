@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:rebooty_repair/screens/Principal.dart';
+import 'dart:io';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
+  if (Platform.isWindows || Platform.isLinux) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   runApp(AppAlquilerCoches());
 }
 

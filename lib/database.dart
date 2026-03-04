@@ -7,6 +7,8 @@ class DatabaseHelper {
 
     final path = join(ruta, "alquileres.db");
 
+    print("Ruta base de datos: $path");
+
     return openDatabase(path, version: 1, onCreate: (db, version) async {
 
       // tabla vehículos
