@@ -24,7 +24,7 @@ class _PantallaAnyadirState extends State<PantallaAnyadir> {
           padding: EdgeInsets.all(20.0),
           child: SizedBox(
             width: double.infinity,
-            child: SingleChildScrollView( // Añadido por si la pantalla es pequeña
+            child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
