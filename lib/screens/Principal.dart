@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:rebooty_repair/screens/Cliente.dart';
-import 'package:rebooty_repair/screens/Vehiculos.dart';
+import 'package:rebooty_repair/screens/anyadir/anyadir_clientes.dart';
+import 'package:rebooty_repair/screens/anyadir/anyadir_vehiculos.dart';
+import 'package:rebooty_repair/screens/anyadir/pantalla_anyadir.dart';
+import 'package:rebooty_repair/screens/buscar/pantalla_buscar.dart';
 
 class Principal extends StatefulWidget {
   const Principal({super.key});
@@ -10,7 +12,7 @@ class Principal extends StatefulWidget {
 }
 
 class _PrincipalState extends State<Principal> {
-  List<Widget> listaPantallas = [PantallaClientes(), PantallaVehiculos()];
+  List<Widget> listaPantallas = [PantallaAnyadir(), Pantallabuscar()];
   int indicePantallaActual = 0;
 
   @override
@@ -20,8 +22,9 @@ class _PrincipalState extends State<Principal> {
 
       bottomNavigationBar: NavigationBar(
         destinations: [
-          NavigationDestination(icon: Icon(Icons.man), label: "Clientes"),
-          NavigationDestination(icon: Icon(Icons.car_rental_sharp), label: "Vehiculos"),
+          NavigationDestination(icon: Icon(Icons.add), label: "Añadir"),
+
+          NavigationDestination(icon: Icon(Icons.search), label: "Buscar"),
         ],
 
         selectedIndex: indicePantallaActual,
