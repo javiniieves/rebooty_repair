@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:rebooty_repair/screens/anyadir/anyadir_clientes.dart';
-import 'package:rebooty_repair/screens/anyadir/anyadir_vehiculos.dart';
 import 'package:rebooty_repair/screens/anyadir/pantalla_anyadir.dart';
 import 'package:rebooty_repair/screens/buscar/pantalla_buscar.dart';
 
