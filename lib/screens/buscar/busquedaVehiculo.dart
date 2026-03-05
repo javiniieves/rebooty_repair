@@ -106,7 +106,7 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                       return ListTile(
                         leading: const Icon(Icons.directions_car_filled),
                         title: Text(vehiculo['marca'] ?? 'Sin marca'),
-                        subtitle: Text(vehiculo['modelo'] ?? 'Sin modelo'),
+                        subtitle: Text(vehiculo['estado'] ?? 'Sin estado'),
                       );
                     },
                   );
