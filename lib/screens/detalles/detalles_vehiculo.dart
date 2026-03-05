@@ -117,11 +117,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                           onTap: () {
                             showDialog(
                               context: context,
-                              builder: (context) => _ventanaCambio(
-                                vehiculo!["id"],
-                                "marca",
-                                _marcaController,
-                              ),
+                              builder: (context) => _ventanaCambio(vehiculo!["id"], "marca", _marcaController),
                             );
                           },
                           child: _infoRow(
@@ -138,11 +134,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                           onTap: () {
                             showDialog(
                               context: context,
-                              builder: (context) => _ventanaCambio(
-                                vehiculo!["id"],
-                                "modelo",
-                                _modeloController,
-                              ),
+                              builder: (context) => _ventanaCambio(vehiculo!["id"], "modelo", _modeloController),
                             );
                           },
                           child: _infoRow(
@@ -257,8 +249,10 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                 );
 
                 controllerCampoACambiar.clear();
-                Navigator.pop(context);
+
                 cargarDatosVehiculo(idVehiculo);
+
+                Navigator.pop(context);
               },
               child: const Text("GUARDAR CAMBIOS"),
             ),
