@@ -109,6 +109,9 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                         leading: const Icon(Icons.directions_car_filled),
                         title: Text(alquiler['matricula'] ?? 'Sin coche'),
                         subtitle: Text(alquiler['estado'] ?? 'Sin estado'),
+                        onTap: (){
+                          Navigator.pushNamed(context, "routeName");
+                        },
                       );
                     },
                   );
