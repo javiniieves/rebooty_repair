@@ -28,4 +28,19 @@ class DatabaseHelper {
       await db.execute("CREATE TABLE fotos (id INTEGER PRIMARY KEY, id_alquiler INTEGER, ruta TEXT)");
     });
   }
+
+  static Future<List<Map<String, dynamic>>> obtenerClientesPorId(int idCliente) async {
+    final db = await proyectodb();
+    return await db.query("clientes", where: "id = ?", whereArgs: [idCliente]);
+  }
+
+  static Future<List<Map<String, Object?>>> obtenerVehiculoPorId(int idVehiculo) async {
+    final db = await proyectodb();
+    return await db.query("vehiculos", where: "id = ?", whereArgs: [idVehiculo]);
+  }
+
+  static Future<List<Map<String, dynamic>>> obtenerVehiculosDisponibles() async {
+    final baseDatos = await proyectodb();
+    return await baseDatos.query("vehiculos", where: "estado = ?", whereArgs: ["Disponible"]);
+  }
 }
