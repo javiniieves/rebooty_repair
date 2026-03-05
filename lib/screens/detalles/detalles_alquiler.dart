@@ -8,14 +8,29 @@ class DetallesAlquilerScreen extends StatefulWidget {
 }
 
 class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
+  late TextEditingController fechaIniControler;
+  late TextEditingController fechaLimitControler;
+  late TextEditingController fechaDevControler;
+  late TextEditingController estadoControler;
+
   @override
-  Widget build(BuildContext context) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
     final alquiler =
     ModalRoute
         .of(context)
         ?.settings
         .arguments as Map<String, dynamic>;
 
+    fechaIniControler = TextEditingController(text: alquiler['fecha_inicio']);
+    fechaLimitControler = TextEditingController(text: alquiler['fecha_fin']);
+    fechaDevControler = TextEditingController(text: alquiler['fecha_devolucion'] ?? 'no devuelto');
+    estadoControler = TextEditingController(text: alquiler['estado']);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -52,13 +67,13 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                         horizontal: 20, vertical: 25),
                     child: Column(
                       children: [
-                        _infoRow(Icons.date_range, "Fecha de inicio", alquiler['fecha_inicio']),
+                        _infoRow(Icons.date_range, "Fecha de inicio", fechaIniControler),
                         const Divider(),
-                        _infoRow(Icons.date_range_outlined, "Fecha limite", alquiler['fecha_fin']),
+                        _infoRow(Icons.date_range_outlined, "Fecha limite", fechaLimitControler),
                         const Divider(),
-                        _infoRow(Icons.calendar_today, "Fecha de devolucion", alquiler['fecha_devolucion'] ?? 'no devuelto'),
+                        _infoRow(Icons.calendar_today, "Fecha de devolucion", fechaDevControler),
                         const Divider(),
-                        _infoRow(Icons.directions_car, "Estado de la devolucion", alquiler['estado']),
+                        _infoRow(Icons.directions_car, "Estado de la devolucion", estadoControler),
                       ],
                     ),
                   ),
@@ -73,18 +88,58 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     );
   }
 
-  Widget _infoRow(IconData icon, String titulo, String valor) {
+  Widget _infoRow(IconData icon, String titulo, TextEditingController controller) {
     return Row(
       children: [
         Icon(icon, color: Colors.deepPurple),
         const SizedBox(width: 15),
         Expanded(
           child: Text(
-            "$titulo: $valor",
+            "$titulo: ${controller.text}",
             style: const TextStyle(fontSize: 17),
           ),
         ),
+        IconButton(
+          icon: const Icon(Icons.edit, color: Colors.deepPurple),
+          onPressed: () {
+            _editarCampo(titulo, controller);
+          },
+        )
       ],
+    );
+  }
+
+  void _editarCampo(String titulo, TextEditingController controller) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Editar $titulo"),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: titulo,
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Guardar"),
+              onPressed: () {
+                setState(() {});
+                //_guardarEnBaseDeDatos();
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              child: const Text("Cancelar"),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            )
+          ],
+        );
+      },
     );
   }
 }
