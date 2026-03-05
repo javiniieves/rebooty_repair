@@ -107,8 +107,10 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                         leading: const Icon(Icons.directions_car_filled),
                         title: Text(vehiculo['marca'] ?? 'Sin marca'),
                         subtitle: Text(vehiculo['estado'] ?? 'Sin estado'),
+
                         onTap: (){
                           Navigator.pushNamed(context, "routeName");
+
                         },
                       );
                     },

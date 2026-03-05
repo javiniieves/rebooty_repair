@@ -8,6 +8,8 @@ import 'package:rebooty_repair/screens/anyadir/anyadir_vehiculos.dart';
 import 'package:rebooty_repair/screens/buscar/busquedaAlquiler.dart';
 import 'package:rebooty_repair/screens/buscar/busquedaCliente.dart';
 import 'package:rebooty_repair/screens/buscar/busquedaVehiculo.dart';
+import 'package:rebooty_repair/screens/detalles/detalles_alquiler.dart';
+import 'package:rebooty_repair/screens/detalles/detalles_vehiculo.dart';
 
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -37,6 +39,10 @@ class AppAlquilerCoches extends StatelessWidget {
         "buscar_cliente" : (context) => PantallaBusquedaCliente(),
         "buscar_vehiculo" : (context) => PantallaBusquedaVehiculo(),
         "buscar_alquiler" : (context) => PantallaBusquedaAlquiler(),
+
+        "detalles_cliente" : (context) => DetallesClienteScreen(),
+        "detalles_vehiculo" : (context) => DetallesVehiculoScreen(),
+        "detalles_alquiler" : (context) => DetallesAlquilerScreen(),
       },
     );
   }
