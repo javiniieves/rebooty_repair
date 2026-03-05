@@ -15,24 +15,22 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
 
   Map<String, dynamic>? vehiculo;
 
-  // metodo encargado de rellenar la variable vehiculo con
-  // los datos del coche con el id recibido por parametro
-  Future<void> cargarDatosVehiculo(int idVehiculo) async {
-    final vehiculosConIdRecibido = await DatabaseHelper.obtenerVehiculoPorId(
-      idVehiculo,
-    );
-
-    setState(() {
-      vehiculo = vehiculosConIdRecibido.first;
-    });
-  }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     int idVehiculo = ModalRoute.of(context)?.settings.arguments as int;
 
     cargarDatosVehiculo(idVehiculo);
+  }
+
+  // metodo encargado de rellenar la variable vehiculo con
+  // los datos del coche con el id recibido por parametro
+  Future<void> cargarDatosVehiculo(int idVehiculo) async {
+    final vehiculosConIdRecibido = await DatabaseHelper.obtenerVehiculoPorId(idVehiculo);
+
+    setState(() {
+      vehiculo = vehiculosConIdRecibido.first;
+    });
   }
 
   @override
@@ -77,7 +75,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
 
               const SizedBox(height: 15),
 
-              // matrícula
+              // informacion coche
               Text(
                 "${vehiculo!['marca']} ${vehiculo!['modelo']}",
                 textAlign: TextAlign.center,
@@ -106,18 +104,10 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                           onTap: () {
                             showDialog(
                               context: context,
-                              builder: (context) => _ventanaCambio(
-                                vehiculo!["id"],
-                                "matricula",
-                                _matriculaController,
-                              ),
+                              builder: (context) => _ventanaCambio(vehiculo!["id"], "matricula", _matriculaController),
                             );
                           },
-                          child: _infoRow(
-                            Icons.badge,
-                            "Matrícula",
-                            vehiculo!['matricula'],
-                          ),
+                          child: _infoRow(Icons.badge, "Matrícula", vehiculo!['matricula']),
                         ),
 
                         const Divider(height: 30),
@@ -278,11 +268,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     );
   }
 
-  Widget _ventanaCambioEstado(
-    int idVehiculo,
-    String campoACambiar,
-    String estadoActual,
-  ) {
+
+  Widget _ventanaCambioEstado(int idVehiculo, String campoACambiar, String estadoActual) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: Text("Actualizar $campoACambiar"),
@@ -311,18 +298,15 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                 value: estadoActual,
                 child: Text(estadoActual),
               );
-            }).toList(),
-            // convertimos a lista porque items nos pide la lista con los valores del DropdownButtonFormField
+            }).toList(), // convertimos a lista porque items nos pide la lista con los valores del DropdownButtonFormField
 
             // al pulsar en uno de los desplegables del menú, actualizamos la variable con
             // el estado actual del coche para que sea ahora el valor del desplegable pulsado
             onChanged: (nuevoEstado) async {
               final baseDatos = await DatabaseHelper.proyectodb();
 
-              //  actualizar esto
               await baseDatos.update(
                 "vehiculos", {"estado": nuevoEstado},
-                // El campo en la tabla se llama "estado"
                 where: "id = ?",
                 whereArgs: [idVehiculo],
               );

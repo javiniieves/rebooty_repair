@@ -91,10 +91,11 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                   // Filtrado por DNI según lo escrito en el TextField
                   final filtro = _matriculaController.text.toLowerCase();
                   final vehiculosFiltrados = snapshot.data!.where((vehiculo) {
-                    final dni = vehiculo['matricula']?.toString().toLowerCase() ?? '';
-                    return dni.startsWith(filtro);
+                    final matricula = vehiculo['matricula']?.toString().toLowerCase() ?? '';
+                    return matricula.startsWith(filtro);
                   }).toList();
 
+                  // listamos los coches que empiezan con lo escrito
                   return ListView.separated(
                     separatorBuilder: (context, index) => Divider(),
                     itemCount: vehiculosFiltrados.length,
@@ -102,7 +103,7 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                       final vehiculo = vehiculosFiltrados[index];
                       return ListTile(
                         leading: const Icon(Icons.directions_car_filled),
-                        title: Text(vehiculo['marca'] ?? 'Sin marca'),
+                        title: Text(vehiculo['matricula'] ?? 'Sin matricula'),
                         subtitle: Text(vehiculo['estado'] ?? 'Sin estado'),
 
                         onTap: (){
