@@ -6,8 +6,7 @@ class PantallaBusquedaVehiculo extends StatefulWidget {
   const PantallaBusquedaVehiculo({super.key});
 
   @override
-  State<PantallaBusquedaVehiculo> createState() =>
-      _PantallaBusquedaVehiculoState();
+  State<PantallaBusquedaVehiculo> createState() => _PantallaBusquedaVehiculoState();
 }
 
 class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
@@ -16,9 +15,7 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
   Future<List<Map<String, dynamic>>> cargarVehiculos() async {
     final baseDatos = await DatabaseHelper.proyectodb();
 
-    final List<Map<String, dynamic>> vehiculos = await baseDatos.query(
-      "vehiculos",
-    );
+    final List<Map<String, dynamic>> vehiculos = await baseDatos.query("vehiculos");
     return vehiculos;
   }
 
@@ -109,8 +106,7 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                         subtitle: Text(vehiculo['estado'] ?? 'Sin estado'),
 
                         onTap: (){
-                          Navigator.pushNamed(context, "routeName");
-
+                          Navigator.pushNamed(context, "detalles_vehiculo", arguments: vehiculo["id"]);
                         },
                       );
                     },

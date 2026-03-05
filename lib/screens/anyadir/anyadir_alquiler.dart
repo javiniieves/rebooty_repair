@@ -30,9 +30,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   Future<void> cargarIdsClientes() async {
     final baseDatos = await DatabaseHelper.proyectodb();
 
-    final List<Map<String, dynamic>> clientes = await baseDatos.query(
-      "clientes",
-    );
+    final List<Map<String, dynamic>> clientes = await baseDatos.query("clientes");
 
     // convertimos cada cliente a un String con su dni
     // una vez todos convertidos, actualizamos la lista con los id de los clientes
@@ -44,21 +42,13 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   }
 
   Future<void> cargarIdsVehiculos() async {
-    final baseDatos = await DatabaseHelper.proyectodb();
-
     // vehículos disponibles
-    final List<Map<String, dynamic>> vehiculos = await baseDatos.query(
-      "vehiculos",
-      where: "estado = ?",
-      whereArgs: ["Disponible"],
-    );
+    final List<Map<String, dynamic>> vehiculos = await DatabaseHelper.obtenerVehiculosDisponibles();
 
     // convertimos cada cliente a un String con su dni
     // una vez todos convertidos, actualizamos la lista con los id de los clientes
     setState(() {
-      listaIdsVehiculos = vehiculos
-          .map((vehiculoActual) => vehiculoActual["id"].toString())
-          .toList();
+      listaIdsVehiculos = vehiculos.map((vehiculoActual) => vehiculoActual["id"].toString()).toList();
     });
   }
 
@@ -199,9 +189,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 // el desplegable tiene 3 estado a elegir
                 // cada uno de esos estados lo mapeamos para crearlo como DropdownMenuItem
                 // su valor y es el mismo que su texto (ej: "Pendiente", "Terminado"...)
-                items: ["Pendiente", "En proceso", "Terminado"].map((
-                    estadoActual,
-                    ) {
+                items: ["Pendiente", "En proceso", "Terminado"].map((estadoActual) {
                   return DropdownMenuItem(
                     value: estadoActual,
                     child: Text(estadoActual),
