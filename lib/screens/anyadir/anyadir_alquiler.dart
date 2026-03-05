@@ -237,6 +237,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         "precio": _precioController.text,
                         "fecha_inicio": _fechaInicioController.text,
                         "fecha_fin": _fechaFinController.text,
+                        "estado": estadoActual
                       });
                       _precioController.clear();
 
