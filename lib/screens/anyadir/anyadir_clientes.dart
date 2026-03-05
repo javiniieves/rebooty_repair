@@ -16,6 +16,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
   late TextEditingController _nombreController;
   late TextEditingController _dniController;
   late TextEditingController _telefonoController;
+  late TextEditingController _direccionController;
 
   // estado por defecto al añadir un coche
   String estadoActual = "Disponible";
@@ -26,6 +27,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
     _nombreController = TextEditingController();
     _dniController = TextEditingController();
     _telefonoController = TextEditingController();
+    _direccionController = TextEditingController();
 
     _formKey = GlobalKey<FormState>();
   }
@@ -88,7 +90,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                 // introducir teléfono
                 TextField(
                   controller: _telefonoController,
-                  keyboardType: TextInputType.phone, // Abre el teclado numérico en móviles
+                  keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     labelText: "Teléfono",
                     prefixIcon: const Icon(Icons.phone),
@@ -96,7 +98,19 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                   ),
                 ),
 
-                const SizedBox(height: 100), // Reducido para que no quede tan lejos en pantallas pequeñas
+                const SizedBox(height: 30),
+
+                // introducir direccion
+                TextField(
+                  controller: _direccionController,
+                  decoration: InputDecoration(
+                    labelText: "Dirección",
+                    prefixIcon: const Icon(Icons.home),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+
+                const SizedBox(height: 100),
 
                 // TODO: validaciones campos
                 // botón de añadir cliente
@@ -113,11 +127,14 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                         "nombre": _nombreController.text,
                         "dni": _dniController.text,
                         "telefono": _telefonoController.text,
+                        "direccion": _direccionController.text
                       });
 
                       _nombreController.clear();
                       _dniController.clear();
                       _telefonoController.clear();
+                      _direccionController.clear();
+                      _direccionController.clear();
 
                       // Aviso de éxito
                       ScaffoldMessenger.of(context).showSnackBar(

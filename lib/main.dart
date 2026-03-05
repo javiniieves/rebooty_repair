@@ -9,6 +9,7 @@ import 'package:rebooty_repair/screens/buscar/busquedaAlquiler.dart';
 import 'package:rebooty_repair/screens/buscar/busquedaCliente.dart';
 import 'package:rebooty_repair/screens/buscar/busquedaVehiculo.dart';
 import 'package:rebooty_repair/screens/detalles/detalles_alquiler.dart';
+import 'package:rebooty_repair/screens/detalles/detalles_cliente.dart';
 import 'package:rebooty_repair/screens/detalles/detalles_vehiculo.dart';
 
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
