@@ -5,6 +5,10 @@ import 'package:rebooty_repair/screens/anyadir/anyadir_clientes.dart';
 import 'package:rebooty_repair/screens/anyadir/anyadir_vehiculos.dart';
 import 'package:rebooty_repair/screens/buscar/busquedaCliente.dart';
 import 'package:rebooty_repair/screens/buscar/busquedaVehiculo.dart';
+
+
+import 'package:rebooty_repair/screens/buscar/busquedaCliente.dart';
+import 'package:rebooty_repair/screens/buscar/busquedaVehiculo.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
