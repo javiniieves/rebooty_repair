@@ -25,7 +25,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   final _fechaInicioController = TextEditingController();
   final _fechaFinController = TextEditingController();
 
-  bool esInicio = true;
+  String estadoActual = "Pendiente";
 
   Future<void> cargarIdsClientes() async {
     final baseDatos = await DatabaseHelper.proyectodb();
@@ -53,30 +53,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
       whereArgs: ["Disponible"],
     );
 
-    Future<void> seleccionarFecha() async {
-      final DateTime? fechaElegida = await showDatePicker(
-        context: context,
-        firstDate: DateTime(2026),
-        lastDate: DateTime(2027),
-      );
-
-      if (fechaElegida != null) {
-        setState(() {
-          // Guardamos la fecha y la formateamos para el texto (Año-Mes-Día)
-          String fechaFormateada =
-              "${fechaElegida.year}-${fechaElegida.month}-${fechaElegida.day}";
-
-          if (esInicio) {
-            fechaInicio = fechaElegida;
-            _fechaInicioController.text = fechaFormateada;
-          } else {
-            fechaFin = fechaElegida;
-            _fechaFinController.text = fechaFormateada;
-          }
-        });
-      }
-    }
-
     // convertimos cada cliente a un String con su dni
     // una vez todos convertidos, actualizamos la lista con los id de los clientes
     setState(() {
@@ -90,38 +66,37 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   void initState() {
     super.initState();
     cargarIdsClientes();
-    cargarIdsClientes();
+    cargarIdsVehiculos();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Añade un nuevo alquiler"),
+        title: const Text("Añade un nuevo alquiler"),
         centerTitle: true,
         leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.chevron_left_outlined),
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.chevron_left_outlined),
         ),
       ),
-
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(30.0),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // menú con los ids de los cliente disponibles
               DropdownButtonFormField(
                 value: _idClienteSeleccionado,
-                decoration: InputDecoration(labelText: "Id del cliente"),
+                decoration: InputDecoration(
+                  labelText: "Id del cliente",
+                  prefixIcon: const Icon(Icons.person_search),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
                 items: listaIdsClientes.map((idActual) {
-                  return DropdownMenuItem(
-                    value: idActual,
-                    child: Text(idActual),
-                  );
+                  return DropdownMenuItem(value: idActual, child: Text(idActual));
                 }).toList(),
                 onChanged: (nuevoId) {
                   setState(() {
@@ -130,17 +105,18 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 },
               ),
 
-              SizedBox(height: 50),
+              const SizedBox(height: 25),
 
               // menú con los ids de los vehiculos disponibles
               DropdownButtonFormField(
                 value: idVehiculoSeleccionado,
-                decoration: InputDecoration(labelText: "Id del vehículo"),
+                decoration: InputDecoration(
+                  labelText: "Id del vehículo",
+                  prefixIcon: const Icon(Icons.car_rental),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
                 items: listaIdsVehiculos.map((idActual) {
-                  return DropdownMenuItem(
-                    value: idActual,
-                    child: Text(idActual),
-                  );
+                  return DropdownMenuItem(value: idActual, child: Text(idActual));
                 }).toList(),
                 onChanged: (nuevoId) {
                   setState(() {
@@ -149,21 +125,47 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 },
               ),
 
-              SizedBox(height: 60),
+              const SizedBox(height: 25),
+
+              // elegir fecha inicio
+              TextFormField(
+                controller: _fechaInicioController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: "Fecha inicio",
+                  prefixIcon: const Icon(Icons.calendar_today),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onTap: () => seleccionarFecha(true),
+              ),
+
+              const SizedBox(height: 25),
+
+              // elegir fecha fin
+              TextFormField(
+                controller: _fechaFinController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: "Fecha fin",
+                  prefixIcon: const Icon(Icons.event_available),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onTap: () => seleccionarFecha(false),
+              ),
+
+              const SizedBox(height: 25),
 
               // introducir precio
               TextFormField(
                 controller: _precioController,
+                keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: "Precio",
                   prefixIcon: const Icon(Icons.price_check_rounded),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-
                 validator: (value) {
-                  // Comprobamos si está vacío
+                  // Comprobamos si el precio está vacío
                   if (value == null || value.isEmpty) {
                     return "Por favor, introduce un precio";
                   }
@@ -180,6 +182,43 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   return null;
                 },
               ),
+
+              const SizedBox(height: 40),
+
+              // elegir estado del alquiler
+              DropdownButtonFormField(
+                // el valor será la variable que indica el estado actual del coche
+                value: estadoActual,
+
+                decoration: InputDecoration(
+                  labelText: "Estado",
+                  prefixIcon: const Icon(Icons.info_outline),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+
+                // el desplegable tiene 3 estado a elegir
+                // cada uno de esos estados lo mapeamos para crearlo como DropdownMenuItem
+                // su valor y es el mismo que su texto (ej: "Pendiente", "Terminado"...)
+                items: ["Pendiente", "En proceso", "Terminado"].map((
+                    estadoActual,
+                    ) {
+                  return DropdownMenuItem(
+                    value: estadoActual,
+                    child: Text(estadoActual),
+                  );
+                }).toList(),
+                // convertimos a lista porque items nos pide la lista con los valores del DropdownButtonFormField
+
+                // al pulsar en uno de los desplegables del menú, actualizamos la variable con
+                // el estado actual del coche para que sea ahora el valor del desplegable pulsado
+                onChanged: (nuevoEstado) {
+                  setState(() {
+                    estadoActual = nuevoEstado!;
+                  });
+                },
+              ),
+
+              const SizedBox(height: 50),
 
               // botón de añadir alquiler
               SizedBox(
@@ -212,9 +251,10 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   icon: const Icon(Icons.save),
                   label: const Text("GUARDAR ALQUILER"),
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade700,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                      side: const BorderSide(),
                     ),
                   ),
                 ),
@@ -224,5 +264,39 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
         ),
       ),
     );
+  }
+
+  /// metodo para elegir una fecha
+  Future<void> seleccionarFecha(bool esInicio) async {
+    DateTime fechaHoy = DateTime.now();
+
+    // dejamos que el usuario elija la fecha y la guardamos esa fecha
+    final DateTime? fechaElegida = await showDatePicker(
+      context: context,
+      // el día en el que se abrirá el calendario
+      // si no ha escogido fecha de inicio es el dia de hoy
+      // si ya la ha elegido (es porque va a rellenar la fecha de fin)
+      // por lo que mostramos es calendario a partir de la fecha de inicio
+      initialDate: esInicio ? fechaHoy : (fechaInicio ?? fechaHoy),
+      firstDate: DateTime(2024),
+      // limite es dentro de 5 años
+      lastDate: fechaHoy.add(const Duration(days: 365 * 5)),
+    );
+
+    if (fechaElegida != null) {
+      setState(() {
+        // Guardamos la fecha y la formateamos para el texto (Año-Mes-Día)
+        String fechaFormateada =
+            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+
+        if (esInicio) {
+          fechaInicio = fechaElegida;
+          _fechaInicioController.text = fechaFormateada;
+        } else {
+          fechaFin = fechaElegida;
+          _fechaFinController.text = fechaFormateada;
+        }
+      });
+    }
   }
 }

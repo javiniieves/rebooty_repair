@@ -108,7 +108,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                       // guardamos la base de datos
                       final baseDatos = await DatabaseHelper.proyectodb();
 
-                      // insertamos en la tabal "clientes" los datos que hemos cogido
+                      // insertamos en la tabla "clientes" los datos que hemos cogido
                       await baseDatos.insert("clientes", {
                         "nombre": _nombreController.text,
                         "dni": _dniController.text,
@@ -127,9 +127,10 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                     icon: const Icon(Icons.save),
                     label: const Text("GUARDAR CLIENTE"),
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade700,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(),
                       ),
                     ),
                   ),

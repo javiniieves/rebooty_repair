@@ -71,7 +71,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 40),
 
                 // introducir marca
                 TextField(
@@ -83,7 +83,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 40),
 
                 // introducir modelo
                 TextField(
@@ -95,7 +95,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 40),
 
                 // elegir estado del coche
                 DropdownButtonFormField(
@@ -130,7 +130,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   },
                 ),
 
-                const SizedBox(height: 60),
+                const SizedBox(height: 70),
 
                 // TODO: validaciones campos
                 // botón de añadir coche
@@ -161,9 +161,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     icon: const Icon(Icons.save),
                     label: const Text("GUARDAR"),
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade700,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(),
                       ),
                     ),
                   ),
