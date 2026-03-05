@@ -26,7 +26,9 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   // metodo encargado de rellenar la variable vehiculo con
   // los datos del coche con el id recibido por parametro
   Future<void> cargarDatosVehiculo(int idVehiculo) async {
-    final vehiculosConIdRecibido = await DatabaseHelper.obtenerVehiculoPorId(idVehiculo);
+    final vehiculosConIdRecibido = await DatabaseHelper.obtenerVehiculoPorId(
+      idVehiculo,
+    );
 
     setState(() {
       vehiculo = vehiculosConIdRecibido.first;
@@ -100,65 +102,116 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                     child: Column(
                       children: [
                         // información matrícula
-                        GestureDetector(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => _ventanaCambio(vehiculo!["id"], "matricula", _matriculaController),
-                            );
-                          },
-                          child: _infoRow(Icons.badge, "Matrícula", vehiculo!['matricula']),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _infoRow(
+                                Icons.badge,
+                                "Matrícula",
+                                vehiculo!['matricula'],
+                              ),
+                            ),
+
+                            IconButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => _ventanaCambio(
+                                    vehiculo!["id"],
+                                    "matricula",
+                                    _matriculaController,
+                                  ),
+                                );
+                              },
+                              icon: Icon(Icons.edit),
+                            ),
+                          ],
                         ),
 
                         const Divider(height: 30),
 
                         // información marca
-                        GestureDetector(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => _ventanaCambio(vehiculo!["id"], "marca", _marcaController),
-                            );
-                          },
-                          child: _infoRow(
-                            Icons.branding_watermark,
-                            "Marca",
-                            vehiculo!['marca'],
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _infoRow(
+                                Icons.branding_watermark,
+                                "Marca",
+                                vehiculo!['marca'],
+                              ),
+                            ),
+
+                            IconButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => _ventanaCambio(
+                                    vehiculo!["id"],
+                                    "marca",
+                                    _marcaController,
+                                  ),
+                                );
+                              },
+                              icon: Icon(Icons.edit),
+                            ),
+                          ],
                         ),
 
                         const Divider(height: 30),
 
                         // información modelo
-                        GestureDetector(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => _ventanaCambio(vehiculo!["id"], "modelo", _modeloController),
-                            );
-                          },
-                          child: _infoRow(
-                            Icons.model_training,
-                            "Modelo",
-                            vehiculo!['modelo'],
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _infoRow(
+                                Icons.model_training,
+                                "Modelo",
+                                vehiculo!['modelo'],
+                              ),
+                            ),
+
+                            IconButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => _ventanaCambio(
+                                    vehiculo!["id"],
+                                    "modelo",
+                                    _modeloController,
+                                  ),
+                                );
+                              },
+                              icon: Icon(Icons.edit),
+                            ),
+                          ],
                         ),
 
                         const Divider(height: 30),
 
                         // información estado
-                        GestureDetector(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => _ventanaCambioEstado(
-                                vehiculo!["id"],
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _infoRow(
+                                Icons.model_training,
                                 "Estado",
-                                vehiculo!["estado"],
+                                vehiculo!['estado'],
                               ),
-                            );
-                          },
-                          child: _infoRow(Icons.model_training, "Estado", vehiculo!['estado']),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => _ventanaCambioEstado(
+                                    vehiculo!["id"],
+                                    "Estado",
+                                    vehiculo!["estado"],
+                                  ),
+                                );
+                              },
+                              icon: Icon(Icons.edit),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -262,8 +315,11 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     );
   }
 
-
-  Widget _ventanaCambioEstado(int idVehiculo, String campoACambiar, String estadoActual) {
+  Widget _ventanaCambioEstado(
+    int idVehiculo,
+    String campoACambiar,
+    String estadoActual,
+  ) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: Text("Actualizar $campoACambiar"),
@@ -292,7 +348,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                 value: estadoActual,
                 child: Text(estadoActual),
               );
-            }).toList(), // convertimos a lista porque items nos pide la lista con los valores del DropdownButtonFormField
+            }).toList(),
+            // convertimos a lista porque items nos pide la lista con los valores del DropdownButtonFormField
 
             // al pulsar en uno de los desplegables del menú, actualizamos la variable con
             // el estado actual del coche para que sea ahora el valor del desplegable pulsado
@@ -300,7 +357,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
               final baseDatos = await DatabaseHelper.proyectodb();
 
               await baseDatos.update(
-                "vehiculos", {"estado": nuevoEstado},
+                "vehiculos",
+                {"estado": nuevoEstado},
                 where: "id = ?",
                 whereArgs: [idVehiculo],
               );
