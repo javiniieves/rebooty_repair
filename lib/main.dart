@@ -36,7 +36,6 @@ class AppAlquilerCoches extends StatelessWidget {
         "buscar_cliente" : (context) => PantallaBusquedaCliente(),
         "buscar_vehiculo" : (context) => PantallaBusquedaVehiculo(),
         //"buscar_alquiler" : (context) => PantallaAnyadirAlquiler(),
-
       },
     );
   }
