@@ -110,7 +110,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                         title: Text(alquiler['matricula'] ?? 'Sin coche'),
                         subtitle: Text(alquiler['estado'] ?? 'Sin estado'),
                         onTap: (){
-                          Navigator.pushNamed(context, "routeName");
+                          Navigator.pushNamed(context, "detalles_alquiler", arguments: alquiler);
                         },
                       );
                     },
