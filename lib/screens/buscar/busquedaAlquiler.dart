@@ -16,9 +16,12 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
   Future<List<Map<String, dynamic>>> cargarAlquileres() async {
     final baseDatos = await DatabaseHelper.proyectodb();
 
-    final List<Map<String, dynamic>> alquileres = await baseDatos.query(
-      "alquileres",
-    );
+    final alquileres = await baseDatos.rawQuery('''
+    SELECT alquileres.*, vehiculos.matricula
+    FROM alquileres
+    INNER JOIN vehiculos
+    ON alquileres.id_coche = vehiculos.id
+    ''');
     return alquileres;
   }
 
@@ -58,7 +61,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                   child: TextField(
                     controller: _idController,
                     decoration: InputDecoration(
-                      labelText: "Alquiler",
+                      labelText: "Matricula",
                       prefixIcon: const Icon(Icons.car_rental),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -104,7 +107,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                       final alquiler = alquileresFiltrados[index];
                       return ListTile(
                         leading: const Icon(Icons.directions_car_filled),
-                        title: Text(alquiler['id_coche'] ?? 'Sin coche'),
+                        title: Text(alquiler['matricula'] ?? 'Sin coche'),
                         subtitle: Text(alquiler['estado'] ?? 'Sin estado'),
                       );
                     },

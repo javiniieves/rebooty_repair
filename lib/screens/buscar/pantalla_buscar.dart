@@ -86,7 +86,7 @@ class _PantallabuscarState extends State<Pantallabuscar> {
                     width: 500,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.pushNamed(context, "añadir_alquiler");
+                        Navigator.pushNamed(context, "buscar_alquiler");
                       },
                       icon: Icon(Icons.assignment_turned_in, size: 40),
                       label: Text("Alquiler"),
