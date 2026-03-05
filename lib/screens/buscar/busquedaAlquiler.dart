@@ -105,7 +105,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                       return ListTile(
                         leading: const Icon(Icons.directions_car_filled),
                         title: Text(alquiler['id_coche'] ?? 'Sin coche'),
-                        subtitle: Text(alquiler['modelo'] ?? 'Sin modelo'),
+                        subtitle: Text(alquiler['estado'] ?? 'Sin estado'),
                       );
                     },
                   );
