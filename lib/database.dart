@@ -22,7 +22,7 @@ class DatabaseHelper {
 
       // Tabla de los Alquileres (La que une coche y cliente)
 
-      await db.execute("CREATE TABLE alquileres (id INTEGER PRIMARY KEY, id_coche INTEGER, id_cliente INTEGER, fecha_inicio TEXT, fecha_fin TEXT, fecha_devolucion TEXT, estado TEXT)");
+      await db.execute("CREATE TABLE alquileres (id INTEGER PRIMARY KEY, id_coche INTEGER, id_cliente INTEGER, fecha_inicio TEXT, fecha_fin TEXT, fecha_devolucion TEXT, coste REAL, estado TEXT)");
 
 
       // tabla fotos (se relaciona con alquileres)
