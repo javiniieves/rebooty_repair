@@ -93,7 +93,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                               onPressed: () {
                                 _ventanaCambioFecha("fecha_inicio", _fechaInicioControler);
                               },
-                              icon: const Icon(Icons.edit, color: Colors.deepPurple),
+                              icon: const Icon(Icons.edit),
                             ),
                           ],
                         ),
@@ -109,7 +109,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                               onPressed: () {
                                 _ventanaCambioFecha("fecha_fin", _fechaLimiteControler);
                               },
-                              icon: const Icon(Icons.edit, color: Colors.deepPurple),
+                              icon: const Icon(Icons.edit),
                             ),
                           ],
                         ),
@@ -130,7 +130,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                   builder: (context) => _ventanaCambioEstado("estado", _estadoActual),
                                 );
                               },
-                              icon: const Icon(Icons.edit, color: Colors.deepPurple),
+                              icon: const Icon(Icons.edit),
                             ),
                           ],
                         ),
@@ -146,7 +146,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 180.0),
                 child: Row(
                   children: [
-                    const Icon(Icons.camera_alt, size: 24, color: Colors.deepPurple),
+                    const Icon(Icons.camera_alt, size: 24),
                     const SizedBox(width: 10),
                     const Text("Imágenes del vehículo", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   ],
@@ -181,9 +181,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                             child: const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.add_photo_alternate_outlined, size: 50, color: Colors.deepPurple),
+                                Icon(Icons.add_photo_alternate_outlined, size: 50),
                                 SizedBox(height: 10),
-                                Text("Añadir Foto", style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w600)),
+                                Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ),
@@ -272,13 +272,6 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
             ],
           ),
         ),
-
-        IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: () {
-            _editarCampo(titulo, controller);
-          },
-        )
       ],
     );
   }
@@ -289,7 +282,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(color: Colors.deepPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-          child: Icon(icon, color: Colors.deepPurple),
+          child: Icon(icon),
         ),
         const SizedBox(width: 15),
         Expanded(
