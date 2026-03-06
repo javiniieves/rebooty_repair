@@ -37,6 +37,23 @@ class AppTheme {
       ),
     ),
 
+    dialogTheme: DialogThemeData(
+      backgroundColor: const Color(0xFF2F3136), // fondo madera
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20), // bordes redondeados
+      ),
+      titleTextStyle: const TextStyle(
+        color: Color(0xFFC8A97E),
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+      contentTextStyle: const TextStyle(
+        color: Color(0xFFC8A97E),
+        fontSize: 16,
+      ),
+      elevation: 8, // sombra del dialog
+    ),
+
     cardTheme: CardThemeData(
       color: Color(0xFF2F3136),
       elevation: 4,
