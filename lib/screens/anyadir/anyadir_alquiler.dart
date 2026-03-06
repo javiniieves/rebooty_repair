@@ -88,6 +88,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                     _idClienteSeleccionado = nuevoId;
                   });
                 },
+                // Validación para asegurar que se elija un cliente
+                validator: (value) => value == null ? "Selecciona un cliente" : null,
               ),
 
               const SizedBox(height: 25),
@@ -109,6 +111,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                     idVehiculoSeleccionado = nuevoId;
                   });
                 },
+                // Validación para asegurar que se elija un vehículo
+                validator: (value) => value == null ? "Selecciona un vehículo" : null,
               ),
 
               const SizedBox(height: 25),
@@ -124,6 +128,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onTap: () => seleccionarFecha(true),
+                // Validación de fecha obligatoria
+                validator: (value) => (value == null || value.isEmpty) ? "Selecciona la fecha de inicio" : null,
               ),
 
               const SizedBox(height: 25),
@@ -139,6 +145,16 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onTap: () => seleccionarFecha(false),
+                // Validación de fecha obligatoria y coherencia temporal
+                validator: (value) {
+                  if (value == null || value.isEmpty) return "Selecciona la fecha de fin";
+                  if (fechaInicio != null && fechaFin != null) {
+                    if (fechaFin!.isBefore(fechaInicio!)) {
+                      return "La fecha de fin no puede ser anterior al inicio";
+                    }
+                  }
+                  return null;
+                },
               ),
 
               const SizedBox(height: 25),
@@ -165,6 +181,11 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   // Si el resultado es null, es que no es un número válido
                   if (numero == null) {
                     return "Introduce un número válido (ej: 10.50)";
+                  }
+
+                  // Validación extra: precio no negativo
+                  if (numero < 0) {
+                    return "El precio no puede ser negativo";
                   }
 
                   // Si está bien, devolvemos null
@@ -221,7 +242,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       await baseDatos.insert("alquileres", {
                         "id_coche": idVehiculoSeleccionado,
                         "id_cliente": _idClienteSeleccionado,
-                        "precio": _precioController.text,
+                        "precio": double.parse(_precioController.text),
                         "fecha_inicio": _fechaInicioController.text,
                         "fecha_fin": _fechaFinController.text,
                         "estado": estadoActual,
@@ -229,9 +250,14 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       _precioController.clear();
 
                       // Aviso de éxito
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(const SnackBar(content: Text("Alquiler guardado correctamente")));
+                      if (mounted) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text("Alquiler guardado correctamente")));
+
+                        // Volvemos atrás después de guardar
+                        Navigator.pop(context);
+                      }
                     }
                   },
                   icon: const Icon(Icons.save),
@@ -262,7 +288,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
       // si no ha escogido fecha de inicio es el dia de hoy
       // si ya la ha elegido (es porque va a rellenar la fecha de fin)
       // por lo que mostramos es calendario a partir de la fecha de inicio
-      initialDate: esInicio ? fechaHoy : (fechaInicio ?? fechaHoy),
+      initialDate: esInicio ? (fechaInicio ?? fechaHoy) : (fechaFin ?? fechaInicio ?? fechaHoy),
       firstDate: DateTime(2024),
       // limite es dentro de 5 años
       lastDate: fechaHoy.add(const Duration(days: 365 * 5)),
@@ -271,12 +297,16 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     if (fechaElegida != null) {
       setState(() {
         // Guardamos la fecha y la formateamos para el texto (Año-Mes-Día)
-        String fechaFormateada =
-            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+        String fechaFormateada = "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 
         if (esInicio) {
           fechaInicio = fechaElegida;
           _fechaInicioController.text = fechaFormateada;
+          // Si la fecha de fin es anterior a la nueva fecha de inicio, la reseteamos
+          if (fechaFin != null && fechaFin!.isBefore(fechaInicio!)) {
+            fechaFin = null;
+            _fechaFinController.clear();
+          }
         } else {
           fechaFin = fechaElegida;
           _fechaFinController.text = fechaFormateada;

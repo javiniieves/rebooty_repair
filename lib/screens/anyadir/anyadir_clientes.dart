@@ -35,6 +35,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
     _nombreController.dispose();
     _dniController.dispose();
     _telefonoController.dispose();
+    _direccionController.dispose();
     super.dispose();
   }
 
@@ -62,7 +63,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                 const SizedBox(height: 20),
 
                 // introducir nombre
-                TextField(
+                TextFormField(
                   style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _nombreController,
                   decoration: InputDecoration(
@@ -70,12 +71,19 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                     prefixIcon: const Icon(Icons.person),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
+                  // Validación de nombre
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Por favor, escribe un nombre";
+                    }
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 30),
 
                 // introducir DNI
-                TextField(
+                TextFormField(
                   style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _dniController,
                   decoration: InputDecoration(
@@ -83,12 +91,22 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                     prefixIcon: const Icon(Icons.badge),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
+                  // Validación de DNI
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "El DNI es obligatorio";
+                    }
+                    if (value.length < 9) {
+                      return "El DNI debe tener al menos 9 caracteres";
+                    }
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 30),
 
                 // introducir teléfono
-                TextField(
+                TextFormField(
                   style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _telefonoController,
                   keyboardType: TextInputType.phone,
@@ -97,12 +115,22 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                     prefixIcon: const Icon(Icons.phone),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
+                  // Validación de teléfono
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "El teléfono es obligatorio";
+                    }
+                    if (value.length < 9) {
+                      return "Introduce un número válido";
+                    }
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 30),
 
                 // introducir direccion
-                TextField(
+                TextFormField(
                   style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _direccionController,
                   decoration: InputDecoration(
@@ -110,38 +138,49 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                     prefixIcon: const Icon(Icons.home),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
+                  // Validación de dirección
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "La dirección es obligatoria";
+                    }
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 100),
 
-                // TODO: validaciones campos
                 // botón de añadir cliente
                 SizedBox(
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton.icon(
                     onPressed: () async {
-                      // guardamos la base de datos
-                      final baseDatos = await DatabaseHelper.proyectodb();
+                      // Comprobamos si las validaciones del formulario son correctas
+                      if (_formKey.currentState!.validate()) {
+                        // guardamos la base de datos
+                        final baseDatos = await DatabaseHelper.proyectodb();
 
-                      // insertamos en la tabla "clientes" los datos que hemos cogido
-                      await baseDatos.insert("clientes", {
-                        "nombre": _nombreController.text,
-                        "dni": _dniController.text,
-                        "telefono": _telefonoController.text,
-                        "direccion": _direccionController.text,
-                      });
+                        // insertamos en la tabla "clientes" los datos que hemos cogido
+                        await baseDatos.insert("clientes", {
+                          "nombre": _nombreController.text,
+                          "dni": _dniController.text,
+                          "telefono": _telefonoController.text,
+                          "direccion": _direccionController.text,
+                        });
 
-                      _nombreController.clear();
-                      _dniController.clear();
-                      _telefonoController.clear();
-                      _direccionController.clear();
-                      _direccionController.clear();
+                        _nombreController.clear();
+                        _dniController.clear();
+                        _telefonoController.clear();
+                        _direccionController.clear();
 
-                      // Aviso de éxito
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(const SnackBar(content: Text("Cliente guardado correctamente")));
+                        // Aviso de éxito
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text("Cliente guardado correctamente")));
+
+                        // Cerramos la pantalla al terminar
+                        Navigator.pop(context);
+                      }
                     },
                     icon: const Icon(Icons.save),
                     label: const Text("GUARDAR CLIENTE"),

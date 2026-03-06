@@ -6,8 +6,7 @@ class PantallaAnyadirVehiculos extends StatefulWidget {
   const PantallaAnyadirVehiculos({super.key});
 
   @override
-  State<PantallaAnyadirVehiculos> createState() =>
-      _PantallaAnyadirVehiculosState();
+  State<PantallaAnyadirVehiculos> createState() => _PantallaAnyadirVehiculosState();
 }
 
 class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
@@ -62,7 +61,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                 const SizedBox(height: 20),
 
                 // introducir matricula
-                TextField(
+                TextFormField(
                   style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _matriculaController,
                   decoration: InputDecoration(
@@ -70,12 +69,22 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     prefixIcon: const Icon(Icons.badge),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
+                  // Validación de matrícula
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Escribe la matrícula";
+                    }
+                    if (value.length < 4) {
+                      return "Matrícula demasiado corta";
+                    }
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 40),
 
                 // introducir marca
-                TextField(
+                TextFormField(
                   style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _marcaController,
                   decoration: InputDecoration(
@@ -83,12 +92,19 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     prefixIcon: const Icon(Icons.directions_car),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
+                  // Validación de marca
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Escribe la marca";
+                    }
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 40),
 
                 // introducir modelo
-                TextField(
+                TextFormField(
                   style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _modeloController,
                   decoration: InputDecoration(
@@ -96,6 +112,13 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     prefixIcon: const Icon(Icons.model_training),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
+                  // Validación de modelo
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Escribe el modelo";
+                    }
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 40),
@@ -114,9 +137,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   // el desplegable tiene 3 estado a elegir
                   // cada uno de esos estados lo mapeamos para crearlo como DropdownMenuItem
                   // su valor y es el mismo que su texto (ej: "Alquilado", "Taller"...)
-                  items: ["Disponible", "Alquilado", "Taller"].map((
-                      estadoActual,
-                      ) {
+                  items: ["Disponible", "Alquilado", "Taller"].map((estadoActual) {
                     return DropdownMenuItem(
                       value: estadoActual,
                       child: Text(estadoActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
@@ -135,38 +156,40 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
                 const SizedBox(height: 70),
 
-                // TODO: validaciones campos
                 // botón de añadir coche
                 SizedBox(
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton.icon(
                     onPressed: () async {
-                      // guardamos la base de datos
-                      final baseDatos = await DatabaseHelper.proyectodb();
+                      // Validamos el formulario antes de guardar
+                      if (_formKey.currentState!.validate()) {
+                        // guardamos la base de datos
+                        final baseDatos = await DatabaseHelper.proyectodb();
 
-                      // insertamos en la tabal "vehiculos" el coche con los datos que hemos cogido
-                      await baseDatos.insert("vehiculos", {
-                        "matricula": _matriculaController.text,
-                        "marca": _marcaController.text,
-                        "modelo": _modeloController.text,
-                        "estado": estadoActual,
-                      });
+                        // insertamos en la tabal "vehiculos" el coche con los datos que hemos cogido
+                        await baseDatos.insert("vehiculos", {
+                          "matricula": _matriculaController.text,
+                          "marca": _marcaController.text,
+                          "modelo": _modeloController.text,
+                          "estado": estadoActual,
+                        });
 
-                      _matriculaController.clear();
-                      _marcaController.clear();
-                      _modeloController.clear();
+                        _matriculaController.clear();
+                        _marcaController.clear();
+                        _modeloController.clear();
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Vehículo guardado correctamente")),
-                      );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text("Vehículo guardado correctamente")));
+                        // Volvemos atrás tras el éxito
+                        Navigator.pop(context);
+                      }
                     },
                     icon: const Icon(Icons.save),
                     label: const Text("GUARDAR"),
                     style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                 ),
