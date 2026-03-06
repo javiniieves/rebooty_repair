@@ -12,6 +12,9 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
   Map<String, dynamic> vehiculoReparado = {};
   Map<String, dynamic> reparacion = {};
 
+  final _descripcionController = TextEditingController();
+  final _costeController = TextEditingController();
+
   // metodo encargado de rellenar la variable reparacion con
   // los datos de la reparacion con el id recibido por parametro
   Future<void> cargarDatosReparacion(int idReparacion) async {
@@ -53,7 +56,7 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back)),
-        title: const Text("Detalles de Reparación"),
+        title: const Text("Detalles de Reparación", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -81,26 +84,68 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Card(
-                  elevation: 3,
+                  elevation: 4,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
                         // Fecha inicio
-                        _infoRow(Icons.calendar_today, "Fecha de Inicio", reparacion['fecha_inicio']),
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.calendar_today, "Fecha de Inicio", reparacion['fecha_inicio'])),
+                            IconButton(
+                              onPressed: () => _ventanaCambioFecha("fecha_inicio"),
+                              icon: const Icon(Icons.edit),
+                            ),
+                          ],
+                        ),
                         const Divider(height: 30),
 
                         // Fecha fin
-                        _infoRow(Icons.event_available, "Fecha de Fin", reparacion['fecha_fin']),
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.event_available, "Fecha de Fin", reparacion['fecha_fin'])),
+                            IconButton(
+                              onPressed: () => _ventanaCambioFecha("fecha_fin"),
+                              icon: const Icon(Icons.edit),
+                            ),
+                          ],
+                        ),
                         const Divider(height: 30),
 
                         // Descripción de la avería
-                        _infoRow(Icons.description, "Descripción", reparacion['descripcion']),
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.description, "Descripción", reparacion['descripcion'])),
+                            IconButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => _ventanaCambio("descripcion", _descripcionController),
+                                );
+                              },
+                              icon: const Icon(Icons.edit),
+                            ),
+                          ],
+                        ),
                         const Divider(height: 30),
 
                         // Coste de la reparación
-                        _infoRow(Icons.monetization_on, "Coste Total", "${reparacion['coste']} €"),
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.monetization_on, "Coste Total", "${reparacion['coste']} €")),
+                            IconButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => _ventanaCambio("coste", _costeController),
+                                );
+                              },
+                              icon: const Icon(Icons.edit),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -115,7 +160,7 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
     );
   }
 
-  // Tu metodo infoRow para mantener la misma estética que en DetallesVehiculo
+  // información de los campos
   Widget _infoRow(IconData icon, String titulo, String valor) {
     return Row(
       children: [
@@ -126,11 +171,75 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(titulo, style: const TextStyle(fontSize: 13)),
-              Text(valor, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500)),
+              Text(valor, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
       ],
     );
+  }
+
+  // Ventana para cambiar texto (descripcion o coste)
+  Widget _ventanaCambio(String campoACambiar, TextEditingController controller) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      title: Text("Actualizar $campoACambiar"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text("Introduce el nuevo valor:"),
+          const SizedBox(height: 15),
+          TextFormField(
+            controller: controller,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              hintText: "Escribe aquí...",
+            ),
+          ),
+          const SizedBox(height: 25),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () async {
+                final baseDatos = await DatabaseHelper.proyectodb();
+                await baseDatos.update(
+                  "reparaciones",
+                  {campoACambiar: controller.text},
+                  where: "id = ?",
+                  whereArgs: [reparacion["id"]],
+                );
+                controller.clear();
+                cargarDatosReparacion(reparacion["id"]);
+                Navigator.pop(context);
+              },
+              child: const Text("GUARDAR CAMBIOS"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Funcion para cambiar las fechas con el calendario
+  Future<void> _ventanaCambioFecha(String campoFecha) async {
+    DateTime? fechaElegida = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+
+    if (fechaElegida != null) {
+      String fechaFormateada = "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+
+      final baseDatos = await DatabaseHelper.proyectodb();
+      await baseDatos.update(
+        "reparaciones",
+        {campoFecha: fechaFormateada},
+        where: "id = ?",
+        whereArgs: [reparacion["id"]],
+      );
+      cargarDatosReparacion(reparacion["id"]);
+    }
   }
 }

@@ -89,7 +89,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                               onPressed: () {
                                 showDialog(
                                   context: context,
-                                  builder: (context) => _ventanaCambio(vehiculo!["id"], "matricula", _matriculaController),
+                                  builder: (context) =>
+                                      _ventanaCambio(vehiculo!["id"], "matricula", _matriculaController),
                                 );
                               },
                               icon: const Icon(Icons.edit),
@@ -167,12 +168,9 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      "HISTORIAL DE REPARACIONES",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
+                    Text("HISTORIAL DE REPARACIONES", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
 
-                    SizedBox(width: 20,),
+                    SizedBox(width: 20),
 
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
@@ -180,7 +178,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                       ),
                       onPressed: () async {
                         await Navigator.pushNamed(context, "añadir_reparacion", arguments: vehiculo?["id"]);
-                        // Recargar tras volver
+                        // Recargamos cuando volvemos
                         cargarHistoriasReparaciones(vehiculo!["id"]);
                       },
                       icon: const Icon(Icons.add, size: 18),
@@ -200,45 +198,50 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                   child: listaRepaciones == null || listaRepaciones!.isEmpty
                       ? const Center(child: Text("No hay reparaciones registradas"))
                       : ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: listaRepaciones?.length,
-                    itemBuilder: (context, index) {
-                      // guardamos la reparacion actual y mostramos su informacion
-                      Map<String, dynamic>? reparacionActual = listaRepaciones?[index];
+                          scrollDirection: Axis.horizontal,
+                          itemCount: listaRepaciones?.length,
+                          itemBuilder: (context, index) {
+                            // guardamos la reparacion actual y mostramos su informacion
+                            Map<String, dynamic>? reparacionActual = listaRepaciones?[index];
 
-                      return Card(
-                        elevation: 2,
-                        margin: const EdgeInsets.only(right: 15, bottom: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        child: Container(
-                          width: 200,
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.history, color: Colors.deepPurple.withOpacity(0.7)),
-                              const SizedBox(height: 8),
-                              Text(
-                                "${reparacionActual?["fecha_inicio"]}",
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 10),
-                              TextButton.icon(
-                                style: TextButton.styleFrom(
-                                  visualDensity: VisualDensity.compact,
+                            return Card(
+                              elevation: 2,
+                              margin: const EdgeInsets.only(right: 15, bottom: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              child: Container(
+                                width: 200,
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.history, color: Colors.deepPurple.withOpacity(0.7)),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "${reparacionActual?["fecha_inicio"]} / ${reparacionActual?["fecha_fin"]}",
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    TextButton.icon(
+                                      style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                                      onPressed: () {
+                                        Navigator.pushNamed(
+                                          context,
+                                          "detalles_reparacion",
+                                          arguments: reparacionActual?["id"],
+                                        );
+                                      },
+                                      icon: const Icon(Icons.remove_red_eye, size: 16, color: Colors.white),
+                                      label: const Text(
+                                        "Ver detalles",
+                                        style: TextStyle(fontSize: 13, color: Colors.white),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                onPressed: () {
-                                  Navigator.pushNamed(context, "detalles_reparacion", arguments: reparacionActual?["id"]);
-                                },
-                                icon: const Icon(Icons.remove_red_eye, size: 16, color: Colors.white,),
-                                label: const Text("Ver detalles", style: TextStyle(fontSize: 13, color: Colors.white)),
                               ),
-                            ],
-                          ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ),
               const SizedBox(height: 30),
