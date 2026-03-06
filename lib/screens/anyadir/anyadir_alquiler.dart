@@ -85,8 +85,9 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   prefixIcon: const Icon(Icons.person_search),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
+                dropdownColor: Theme.of(context).colorScheme.primary,
                 items: listaIdsClientes.map((idActual) {
-                  return DropdownMenuItem(value: idActual, child: Text(idActual));
+                  return DropdownMenuItem(value: idActual, child: Text(idActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)));
                 }).toList(),
                 onChanged: (nuevoId) {
                   setState(() {
@@ -105,8 +106,9 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   prefixIcon: const Icon(Icons.car_rental),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
+                dropdownColor: Theme.of(context).colorScheme.primary,
                 items: listaIdsVehiculos.map((idActual) {
-                  return DropdownMenuItem(value: idActual, child: Text(idActual));
+                  return DropdownMenuItem(value: idActual, child: Text(idActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)));
                 }).toList(),
                 onChanged: (nuevoId) {
                   setState(() {
@@ -119,6 +121,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
               // elegir fecha inicio
               TextFormField(
+                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 controller: _fechaInicioController,
                 readOnly: true,
                 decoration: InputDecoration(
@@ -133,6 +136,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
               // elegir fecha fin
               TextFormField(
+                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 controller: _fechaFinController,
                 readOnly: true,
                 decoration: InputDecoration(
@@ -147,6 +151,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
               // introducir precio
               TextFormField(
+                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                 controller: _precioController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
@@ -185,14 +190,14 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   prefixIcon: const Icon(Icons.info_outline),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-
+                dropdownColor: Theme.of(context).colorScheme.primary,
                 // el desplegable tiene 3 estado a elegir
                 // cada uno de esos estados lo mapeamos para crearlo como DropdownMenuItem
                 // su valor y es el mismo que su texto (ej: "Pendiente", "Terminado"...)
                 items: ["Pendiente", "En proceso", "Terminado"].map((estadoActual) {
                   return DropdownMenuItem(
                     value: estadoActual,
-                    child: Text(estadoActual),
+                    child: Text(estadoActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary),),
                   );
                 }).toList(),
                 // convertimos a lista porque items nos pide la lista con los valores del DropdownButtonFormField
@@ -240,8 +245,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   icon: const Icon(Icons.save),
                   label: const Text("GUARDAR ALQUILER"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade700,
-                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),

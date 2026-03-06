@@ -44,20 +44,17 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
         ),
         title: const Text(
           "Detalles del Cliente",
-          style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.deepPurple,
         centerTitle: true,
       ),
       body: SafeArea(
@@ -68,14 +65,14 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
 
               // Avatar
               CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.secondary,
                 radius: 35,
-                backgroundColor: Colors.deepPurple,
                 child: Text(
                   cliente!['nombre'][0],
                   style: const TextStyle(
                     fontSize: 35,
-                    color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    color: Color(0xFF2F3136),
                   ),
                 ),
               ),
@@ -196,7 +193,7 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
   Widget _infoRow(IconData icon, String titulo, String valor) {
     return Row(
       children: [
-        Icon(icon, color: Colors.deepPurple),
+        Icon(icon),
         const SizedBox(width: 15),
         Expanded(
           child: Text("$titulo: $valor", style: const TextStyle(fontSize: 17)),
@@ -232,8 +229,6 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:rebooty_repair/AppTheme.dart';
 import 'package:rebooty_repair/screens/Principal.dart';
 import 'package:rebooty_repair/screens/anyadir/anyadir_alquiler.dart';
 import 'package:rebooty_repair/screens/anyadir/anyadir_clientes.dart';
@@ -30,20 +31,22 @@ class AppAlquilerCoches extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+
+      theme: AppTheme.tema,
+
       home: Principal(),
 
       routes: {
+        "añadir_cliente": (context) => PantallaAnyadirClientes(),
+        "añadir_vehiculo": (context) => PantallaAnyadirVehiculos(),
+        "añadir_alquiler": (context) => PantallaAnyadirAlquiler(),
+        "buscar_cliente": (context) => PantallaBusquedaCliente(),
+        "buscar_vehiculo": (context) => PantallaBusquedaVehiculo(),
+        "buscar_alquiler": (context) => PantallaBusquedaAlquiler(),
 
-        "añadir_cliente" : (context) => PantallaAnyadirClientes(),
-        "añadir_vehiculo" : (context) => PantallaAnyadirVehiculos(),
-        "añadir_alquiler" : (context) => PantallaAnyadirAlquiler(),
-        "buscar_cliente" : (context) => PantallaBusquedaCliente(),
-        "buscar_vehiculo" : (context) => PantallaBusquedaVehiculo(),
-        "buscar_alquiler" : (context) => PantallaBusquedaAlquiler(),
-
-        "detalles_cliente" : (context) => DetallesClienteScreen(),
-        "detalles_vehiculo" : (context) => DetallesVehiculoScreen(),
-        "detalles_alquiler" : (context) => DetallesAlquilerScreen(),
+        "detalles_cliente": (context) => DetallesClienteScreen(),
+        "detalles_vehiculo": (context) => DetallesVehiculoScreen(),
+        "detalles_alquiler": (context) => DetallesAlquilerScreen(),
       },
     );
   }

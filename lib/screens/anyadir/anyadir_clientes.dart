@@ -5,12 +5,10 @@ class PantallaAnyadirClientes extends StatefulWidget {
   const PantallaAnyadirClientes({super.key});
 
   @override
-  State<PantallaAnyadirClientes> createState() =>
-      _PantallaAnyadirClientesState();
+  State<PantallaAnyadirClientes> createState() => _PantallaAnyadirClientesState();
 }
 
 class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
-
   late final _formKey;
 
   late TextEditingController _nombreController;
@@ -65,6 +63,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
 
                 // introducir nombre
                 TextField(
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _nombreController,
                   decoration: InputDecoration(
                     labelText: "Nombre",
@@ -77,6 +76,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
 
                 // introducir DNI
                 TextField(
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _dniController,
                   decoration: InputDecoration(
                     labelText: "DNI",
@@ -89,6 +89,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
 
                 // introducir teléfono
                 TextField(
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _telefonoController,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
@@ -102,6 +103,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
 
                 // introducir direccion
                 TextField(
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _direccionController,
                   decoration: InputDecoration(
                     labelText: "Dirección",
@@ -127,7 +129,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                         "nombre": _nombreController.text,
                         "dni": _dniController.text,
                         "telefono": _telefonoController.text,
-                        "direccion": _direccionController.text
+                        "direccion": _direccionController.text,
                       });
 
                       _nombreController.clear();
@@ -137,18 +139,14 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                       _direccionController.clear();
 
                       // Aviso de éxito
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Cliente guardado correctamente")),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text("Cliente guardado correctamente")));
                     },
                     icon: const Icon(Icons.save),
                     label: const Text("GUARDAR CLIENTE"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                 ),
