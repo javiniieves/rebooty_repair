@@ -266,6 +266,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
           const Text("Introduce el nuevo valor para el campo:"),
           const SizedBox(height: 15),
           TextFormField(
+            style: const TextStyle(color: Color(0xFFC8A97E)),
             controller: controllerCampoACambiar,
             decoration: InputDecoration(
               border: OutlineInputBorder(

@@ -63,16 +63,14 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
           },
           icon: const Icon(Icons.arrow_back),
         ),
-        title: const Text(
-          "Detalles del Alquiler",
-        ),
+        title: const Text("Detalles del Alquiler"),
         centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              SizedBox(height: 20,),
+              SizedBox(height: 20),
               // Card con información de los campos del alquiler
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 180),
@@ -173,7 +171,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                             width: 200,
                             margin: const EdgeInsets.only(bottom: 10),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.primary,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
                               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
@@ -206,7 +204,11 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                     // envolvemos la imagen en ClipRRect para redondear sus bordes
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(15),
-                                      child: Image(image: FileImage(File(fotos[index]["ruta"])), height: 450, fit: BoxFit.contain),
+                                      child: Image(
+                                        image: FileImage(File(fotos[index]["ruta"])),
+                                        height: 450,
+                                        fit: BoxFit.contain,
+                                      ),
                                     ),
 
                                     const SizedBox(height: 25),
@@ -214,15 +216,19 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                     // boton borrar foto
                                     ElevatedButton.icon(
                                       style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.redAccent,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                                        backgroundColor: Colors.redAccent,
+                                        foregroundColor: Theme.of(context).colorScheme.primary,
+                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       ),
                                       onPressed: () async {
                                         final baseDatos = await DatabaseHelper.proyectodb();
                                         // borramos la foto con el id de la foto actual
-                                        await baseDatos.delete("fotos", where: "id = ?", whereArgs: [fotos[index]["id"]]);
+                                        await baseDatos.delete(
+                                          "fotos",
+                                          where: "id = ?",
+                                          whereArgs: [fotos[index]["id"]],
+                                        );
                                         cargarFotos(alquiler["id"]);
                                         Navigator.pop(context);
                                       },
@@ -241,7 +247,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                           margin: EdgeInsets.only(right: 20, bottom: 10),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: Offset(0, 10))],
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: Offset(0, 10)),
+                            ],
                             image: DecorationImage(image: FileImage(File(fotos[index]["ruta"])), fit: BoxFit.cover),
                           ),
                         ),
