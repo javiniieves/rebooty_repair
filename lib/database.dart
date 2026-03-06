@@ -23,7 +23,6 @@ class DatabaseHelper {
       // Tabla de los Alquileres (La que une coche y cliente)
       await db.execute("CREATE TABLE alquileres (id INTEGER PRIMARY KEY, id_coche INTEGER, id_cliente INTEGER, fecha_inicio TEXT, fecha_fin TEXT, fecha_devolucion TEXT, precio REAL, estado TEXT)");
 
-
       // tabla fotos (se relaciona con alquileres)
       await db.execute("CREATE TABLE fotos (id INTEGER PRIMARY KEY, id_alquiler INTEGER, ruta TEXT)");
     });
@@ -52,5 +51,15 @@ class DatabaseHelper {
   static Future<List<Map<String, dynamic>>> obtenerFotosPorIdAlquiler(int idAlquiler) async {
     final baseDatos = await proyectodb();
     return await baseDatos.query("fotos", where: "id_alquiler = ?", whereArgs: [idAlquiler]);
+  }
+
+  static Future<List<Map<String, dynamic>>> obtenerReparacionesPorIdVehiculo(int idVehiculo) async {
+    final baseDatos = await proyectodb();
+    return await baseDatos.query("reparaciones", where: "id_coche = ?", whereArgs: [idVehiculo]);
+  }
+
+  static Future<List<Map<String, dynamic>>> obtenerReparacionesPorId(int idReparacion) async {
+    final baseDatos = await proyectodb();
+    return await baseDatos.query("reparaciones", where: "id = ?", whereArgs: [idReparacion]);
   }
 }

@@ -241,7 +241,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       // insertamos en la tabal "clientes" los datos que hemos cogido
                       await baseDatos.insert("alquileres", {
                         "id_coche": idVehiculoSeleccionado,
-                        "id_cliente": _idClienteSeleccionado,
+                        "descripcion": _idClienteSeleccionado,
                         "precio": double.parse(_precioController.text),
                         "fecha_inicio": _fechaInicioController.text,
                         "fecha_fin": _fechaFinController.text,
@@ -250,14 +250,12 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       _precioController.clear();
 
                       // Aviso de éxito
-                      if (mounted) {
                         ScaffoldMessenger.of(
                           context,
                         ).showSnackBar(const SnackBar(content: Text("Alquiler guardado correctamente")));
 
                         // Volvemos atrás después de guardar
                         Navigator.pop(context);
-                      }
                     }
                   },
                   icon: const Icon(Icons.save),
