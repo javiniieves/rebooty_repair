@@ -108,7 +108,6 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                         subtitle: Text(alquiler['estado'] ?? 'Sin estado'),
                         onTap: () async {
                           await Navigator.pushNamed(context, "detalles_alquiler", arguments: alquiler["id"]);
-
                           setState(() {});
                         },
                       );
