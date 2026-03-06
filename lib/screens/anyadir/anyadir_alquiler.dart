@@ -5,8 +5,7 @@ class PantallaAnyadirAlquiler extends StatefulWidget {
   const PantallaAnyadirAlquiler({super.key});
 
   @override
-  State<PantallaAnyadirAlquiler> createState() =>
-      _PantallaAnyadirAlquilerState();
+  State<PantallaAnyadirAlquiler> createState() => _PantallaAnyadirAlquilerState();
 }
 
 class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
@@ -35,9 +34,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     // convertimos cada cliente a un String con su dni
     // una vez todos convertidos, actualizamos la lista con los id de los clientes
     setState(() {
-      listaIdsClientes = clientes
-          .map((clienteActual) => clienteActual["id"].toString())
-          .toList();
+      listaIdsClientes = clientes.map((clienteActual) => clienteActual["id"].toString()).toList();
     });
   }
 
@@ -65,10 +62,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
       appBar: AppBar(
         title: const Text("Añade un nuevo alquiler"),
         centerTitle: true,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.chevron_left_outlined),
-        ),
+        leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.chevron_left_outlined)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(30.0),
@@ -230,16 +224,14 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         "precio": _precioController.text,
                         "fecha_inicio": _fechaInicioController.text,
                         "fecha_fin": _fechaFinController.text,
-                        "estado": estadoActual
+                        "estado": estadoActual,
                       });
                       _precioController.clear();
 
                       // Aviso de éxito
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Alquiler guardado correctamente"),
-                        ),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text("Alquiler guardado correctamente")));
                     }
                   },
                   icon: const Icon(Icons.save),
@@ -248,6 +240,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
+
                   ),
                 ),
               ),
