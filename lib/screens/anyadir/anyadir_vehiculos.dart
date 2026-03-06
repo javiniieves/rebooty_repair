@@ -63,6 +63,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
                 // introducir matricula
                 TextField(
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _matriculaController,
                   decoration: InputDecoration(
                     labelText: "Matricula",
@@ -75,6 +76,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
                 // introducir marca
                 TextField(
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _marcaController,
                   decoration: InputDecoration(
                     labelText: "Marca",
@@ -87,6 +89,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
                 // introducir modelo
                 TextField(
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _modeloController,
                   decoration: InputDecoration(
                     labelText: "Modelo",
@@ -107,7 +110,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     prefixIcon: const Icon(Icons.info_outline),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-
+                  dropdownColor: Theme.of(context).colorScheme.primary,
                   // el desplegable tiene 3 estado a elegir
                   // cada uno de esos estados lo mapeamos para crearlo como DropdownMenuItem
                   // su valor y es el mismo que su texto (ej: "Alquilado", "Taller"...)
@@ -116,7 +119,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                       ) {
                     return DropdownMenuItem(
                       value: estadoActual,
-                      child: Text(estadoActual),
+                      child: Text(estadoActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
                     );
                   }).toList(),
                   // convertimos a lista porque items nos pide la lista con los valores del DropdownButtonFormField
@@ -161,8 +164,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     icon: const Icon(Icons.save),
                     label: const Text("GUARDAR"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
-                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),

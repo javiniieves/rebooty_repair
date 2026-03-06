@@ -42,20 +42,18 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
         ),
         title: const Text(
           "Detalles del Vehículo",
-          style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.deepPurple,
         centerTitle: true,
       ),
       body: SafeArea(
@@ -65,13 +63,13 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
               const SizedBox(height: 30),
 
               // Avatar
-              const CircleAvatar(
+              CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.secondary,
                 radius: 40,
-                backgroundColor: Colors.deepPurple,
                 child: Icon(
                   Icons.directions_car_filled,
-                  color: Colors.white,
                   size: 40,
+                  color: Color(0xFF2F3136),
                 ),
               ),
 
@@ -230,7 +228,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   Widget _infoRow(IconData icon, String titulo, String valor) {
     return Row(
       children: [
-        Icon(icon, color: Colors.deepPurple, size: 26),
+        Icon(icon, size: 26),
         const SizedBox(width: 15),
         Expanded(
           child: Column(
@@ -238,7 +236,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
             children: [
               Text(
                 titulo,
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: TextStyle(fontSize: 13),
               ),
               Text(
                 valor,
@@ -281,8 +279,6 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),

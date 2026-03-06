@@ -41,8 +41,6 @@ class _PantallabuscarState extends State<Pantallabuscar> {
                       icon: Icon(Icons.person, size: 40),
                       label: Text("Cliente"),
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        backgroundColor: Colors.white,
                         elevation: 2,
                         textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(
@@ -66,8 +64,6 @@ class _PantallabuscarState extends State<Pantallabuscar> {
                       icon: Icon(Icons.directions_car_filled, size: 40),
                       label: Text("Vehículo"),
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        backgroundColor: Colors.white,
                         elevation: 2,
                         textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(
@@ -91,8 +87,6 @@ class _PantallabuscarState extends State<Pantallabuscar> {
                       icon: Icon(Icons.assignment_turned_in, size: 40),
                       label: Text("Alquiler"),
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        backgroundColor: Colors.white,
                         elevation: 2,
                         textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(

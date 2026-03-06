@@ -55,17 +55,17 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         elevation: 2,
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
         ),
-        title: const Text("Detalles del Alquiler", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.deepPurple,
+        title: const Text(
+          "Detalles del Alquiler",
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -261,11 +261,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   Widget _infoRow(IconData icon, String titulo, TextEditingController controller) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: Colors.deepPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-          child: Icon(icon, color: Colors.deepPurple),
-        ),
+        Icon(icon),
         const SizedBox(width: 15),
         Expanded(
           child: Column(
@@ -276,6 +272,13 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
             ],
           ),
         ),
+
+        IconButton(
+          icon: const Icon(Icons.edit),
+          onPressed: () {
+            _editarCampo(titulo, controller);
+          },
+        )
       ],
     );
   }

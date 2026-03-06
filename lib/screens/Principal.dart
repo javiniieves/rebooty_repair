@@ -19,9 +19,10 @@ class _PrincipalState extends State<Principal> {
       body: listaPantallas[indicePantallaActual],
 
       bottomNavigationBar: NavigationBar(
+        backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+
         destinations: [
           NavigationDestination(icon: Icon(Icons.add), label: "Añadir"),
-
           NavigationDestination(icon: Icon(Icons.search), label: "Buscar"),
         ],
 
