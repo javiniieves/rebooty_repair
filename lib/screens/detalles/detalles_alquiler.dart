@@ -20,10 +20,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
   TextEditingController _fechaInicioControler = TextEditingController();
   TextEditingController _fechaLimiteControler = TextEditingController();
-  TextEditingController _clienteIdControler = TextEditingController();
-  TextEditingController _cocheIdControler = TextEditingController();
-  TextEditingController _clienteNombreController = TextEditingController();
-  TextEditingController _cocheMatriculaController = TextEditingController();
+  final TextEditingController _clienteNombreController = TextEditingController();
+  final TextEditingController _cocheMatriculaController = TextEditingController();
   String _estadoActual = "";
 
   Future<void> cargarAlquiler(int idAlquiler) async {
@@ -35,8 +33,6 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     setState(() {
       _fechaInicioControler = TextEditingController(text: alquiler['fecha_inicio']);
       _fechaLimiteControler = TextEditingController(text: alquiler['fecha_fin']);
-      _clienteIdControler = TextEditingController(text: alquiler['id_cliente']);
-      _cocheIdControler = TextEditingController(text: alquiler['id_coche']);
       _estadoActual = alquiler['estado'];
     });
 
@@ -44,7 +40,6 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   }
 
   Future<void> cargarCocheYCliente(int idCoche, int idCliente) async {
-
     final cochesConId = await DatabaseHelper.obtenerVehiculoPorId(idCoche);
     final clienteConId = await DatabaseHelper.obtenerClientesPorId(idCliente);
 
@@ -105,8 +100,10 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                     child: Column(
                       children: [
                         // fecha inicio
-                        _infoRow(Icons.calendar_today, "Cliente", _clienteNombreController),
-                        _infoRow(Icons.calendar_today, "Coche", _cocheMatriculaController),
+                        _infoRow(Icons.person, "Cliente", _clienteNombreController),
+                        const Divider(height: 40),
+                        _infoRow(Icons.car_rental, "Coche", _cocheMatriculaController),
+                        const Divider(height: 40),
                         Row(
                           children: [
                             Expanded(child: _infoRow(Icons.calendar_today, "Fecha de inicio", _fechaInicioControler)),
