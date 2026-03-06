@@ -128,7 +128,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                   builder: (context) => _ventanaCambioEstado("estado", _estadoActual),
                                 );
                               },
-                              icon: const Icon(Icons.edit, color: Colors.deepPurple),
+                              icon: const Icon(Icons.edit),
                             ),
                           ],
                         ),

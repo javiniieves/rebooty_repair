@@ -29,6 +29,13 @@ class AppTheme {
       titleLarge: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFC8A97E)),
     ),
 
+    textButtonTheme: const TextButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: MaterialStatePropertyAll<Color>(Color(0xFF2F3136)), // Color de fondo
+        foregroundColor: MaterialStatePropertyAll<Color>(Color(0xFFC8A97E)), // Color del texto
+      ),
+    ),
+
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         foregroundColor: Color(0xFFC8A97E),
