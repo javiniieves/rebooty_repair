@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rebooty_repair/screens/anyadir/pantalla_anyadir.dart';
 import 'package:rebooty_repair/screens/buscar/pantalla_buscar.dart';
+import 'package:rebooty_repair/screens/pantallaMultas.dart';
 
 class Principal extends StatefulWidget {
   const Principal({super.key});
@@ -10,7 +11,7 @@ class Principal extends StatefulWidget {
 }
 
 class _PrincipalState extends State<Principal> {
-  List<Widget> listaPantallas = [PantallaAnyadir(), Pantallabuscar()];
+  List<Widget> listaPantallas = [PantallaAnyadir(), Pantallabuscar(), PantallaMultas()];
   int indicePantallaActual = 0;
 
   @override
@@ -24,6 +25,7 @@ class _PrincipalState extends State<Principal> {
         destinations: [
           NavigationDestination(icon: Icon(Icons.add), label: "Añadir"),
           NavigationDestination(icon: Icon(Icons.search), label: "Buscar"),
+          NavigationDestination(icon: Icon(Icons.monetization_on_outlined), label: "Multas"),
         ],
 
         selectedIndex: indicePantallaActual,
