@@ -107,8 +107,9 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                         leading: const Icon(Icons.person),
                         title: Text(cliente['nombre'] ?? 'Sin nombre'),
                         subtitle: Text(cliente['dni'] ?? 'Sin DNI'),
-                        onTap: (){
-                          Navigator.pushNamed(context, "detalles_cliente", arguments: cliente);
+                        onTap: () async {
+                          await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente['id']);
+                          setState(() {});
                         },
                       );
                     },
