@@ -15,24 +15,35 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
 
   Map<String, dynamic>? vehiculo;
 
+  List<Map<String, dynamic>>? listaRepaciones;
+
+  // metodo encargado de rellenar la variable vehiculo con
+  // los datos del coche con el id recibido por parametro
+  Future<void> cargarDatosVehiculo(int idVehiculo) async {
+    final vehiculosConIdRecibido = await DatabaseHelper.obtenerVehiculoPorId(idVehiculo);
+
+    setState(() {
+      vehiculo = vehiculosConIdRecibido.first;
+    });
+  }
+
+  // metodo encargado de rellenar la variable listaReparaciones con
+  // los datos de las reparaciones del coche con el id recibido por parametro
+  Future<void> cargarHistoriasReparaciones(int idVehiculo) async {
+    final listaReparacionesDelVehiculo = await DatabaseHelper.obtenerReparacionesPorIdVehiculo(idVehiculo);
+
+    setState(() {
+      listaRepaciones = listaReparacionesDelVehiculo;
+    });
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     int idVehiculo = ModalRoute.of(context)?.settings.arguments as int;
 
     cargarDatosVehiculo(idVehiculo);
-  }
-
-  // metodo encargado de rellenar la variable vehiculo con
-  // los datos del coche con el id recibido por parametro
-  Future<void> cargarDatosVehiculo(int idVehiculo) async {
-    final vehiculosConIdRecibido = await DatabaseHelper.obtenerVehiculoPorId(
-      idVehiculo,
-    );
-
-    setState(() {
-      vehiculo = vehiculosConIdRecibido.first;
-    });
+    cargarHistoriasReparaciones(idVehiculo);
   }
 
   @override
@@ -42,7 +53,6 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     }
 
     return Scaffold(
-
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(
@@ -51,9 +61,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
           },
           icon: const Icon(Icons.arrow_back),
         ),
-        title: const Text(
-          "Detalles del Vehículo",
-        ),
+        title: const Text("Detalles del Vehículo", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -62,39 +70,12 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
             children: [
               const SizedBox(height: 30),
 
-              // Avatar
-              CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                radius: 40,
-                child: Icon(
-                  Icons.directions_car_filled,
-                  size: 40,
-                  color: Color(0xFF2F3136),
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              // informacion coche
-              Text(
-                "${vehiculo!['marca']} ${vehiculo!['modelo']}",
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
               // Card con información
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Card(
-                  elevation: 3,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -102,26 +83,16 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                         // información matrícula
                         Row(
                           children: [
-                            Expanded(
-                              child: _infoRow(
-                                Icons.badge,
-                                "Matrícula",
-                                vehiculo!['matricula'],
-                              ),
-                            ),
+                            Expanded(child: _infoRow(Icons.badge, "Matrícula", vehiculo!['matricula'])),
 
                             IconButton(
                               onPressed: () {
                                 showDialog(
                                   context: context,
-                                  builder: (context) => _ventanaCambio(
-                                    vehiculo!["id"],
-                                    "matricula",
-                                    _matriculaController,
-                                  ),
+                                  builder: (context) => _ventanaCambio(vehiculo!["id"], "matricula", _matriculaController),
                                 );
                               },
-                              icon: Icon(Icons.edit),
+                              icon: const Icon(Icons.edit),
                             ),
                           ],
                         ),
@@ -131,26 +102,16 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                         // información marca
                         Row(
                           children: [
-                            Expanded(
-                              child: _infoRow(
-                                Icons.branding_watermark,
-                                "Marca",
-                                vehiculo!['marca'],
-                              ),
-                            ),
+                            Expanded(child: _infoRow(Icons.branding_watermark, "Marca", vehiculo!['marca'])),
 
                             IconButton(
                               onPressed: () {
                                 showDialog(
                                   context: context,
-                                  builder: (context) => _ventanaCambio(
-                                    vehiculo!["id"],
-                                    "marca",
-                                    _marcaController,
-                                  ),
+                                  builder: (context) => _ventanaCambio(vehiculo!["id"], "marca", _marcaController),
                                 );
                               },
-                              icon: Icon(Icons.edit),
+                              icon: const Icon(Icons.edit),
                             ),
                           ],
                         ),
@@ -160,26 +121,16 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                         // información modelo
                         Row(
                           children: [
-                            Expanded(
-                              child: _infoRow(
-                                Icons.model_training,
-                                "Modelo",
-                                vehiculo!['modelo'],
-                              ),
-                            ),
+                            Expanded(child: _infoRow(Icons.model_training, "Modelo", vehiculo!['modelo'])),
 
                             IconButton(
                               onPressed: () {
                                 showDialog(
                                   context: context,
-                                  builder: (context) => _ventanaCambio(
-                                    vehiculo!["id"],
-                                    "modelo",
-                                    _modeloController,
-                                  ),
+                                  builder: (context) => _ventanaCambio(vehiculo!["id"], "modelo", _modeloController),
                                 );
                               },
-                              icon: Icon(Icons.edit),
+                              icon: const Icon(Icons.edit),
                             ),
                           ],
                         ),
@@ -189,25 +140,16 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                         // información estado
                         Row(
                           children: [
-                            Expanded(
-                              child: _infoRow(
-                                Icons.model_training,
-                                "Estado",
-                                vehiculo!['estado'],
-                              ),
-                            ),
+                            Expanded(child: _infoRow(Icons.info_outline, "Estado", vehiculo!['estado'])),
                             IconButton(
                               onPressed: () {
                                 showDialog(
                                   context: context,
-                                  builder: (context) => _ventanaCambioEstado(
-                                    vehiculo!["id"],
-                                    "Estado",
-                                    vehiculo!["estado"],
-                                  ),
+                                  builder: (context) =>
+                                      _ventanaCambioEstado(vehiculo!["id"], "Estado", vehiculo!["estado"]),
                                 );
                               },
-                              icon: Icon(Icons.edit),
+                              icon: const Icon(Icons.edit),
                             ),
                           ],
                         ),
@@ -217,6 +159,88 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                 ),
               ),
 
+              const SizedBox(height: 40),
+
+              // historial de reparaciones cabecera
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "HISTORIAL DE REPARACIONES",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+
+                    SizedBox(width: 20,),
+
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () async {
+                        await Navigator.pushNamed(context, "añadir_reparacion", arguments: vehiculo?["id"]);
+                        // Recargar tras volver
+                        cargarHistoriasReparaciones(vehiculo!["id"]);
+                      },
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text("Añadir"),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // lista de reparaciones mejorada
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  height: 130,
+                  child: listaRepaciones == null || listaRepaciones!.isEmpty
+                      ? const Center(child: Text("No hay reparaciones registradas"))
+                      : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: listaRepaciones?.length,
+                    itemBuilder: (context, index) {
+                      // guardamos la reparacion actual y mostramos su informacion
+                      Map<String, dynamic>? reparacionActual = listaRepaciones?[index];
+
+                      return Card(
+                        elevation: 2,
+                        margin: const EdgeInsets.only(right: 15, bottom: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: Container(
+                          width: 200,
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.history, color: Colors.deepPurple.withOpacity(0.7)),
+                              const SizedBox(height: 8),
+                              Text(
+                                "${reparacionActual?["fecha_inicio"]}",
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 10),
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                                onPressed: () {
+                                  Navigator.pushNamed(context, "detalles_reparacion", arguments: reparacionActual?["id"]);
+                                },
+                                icon: const Icon(Icons.remove_red_eye, size: 16, color: Colors.white,),
+                                label: const Text("Ver detalles", style: TextStyle(fontSize: 13, color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
               const SizedBox(height: 30),
             ],
           ),
@@ -234,17 +258,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                titulo,
-                style: TextStyle(fontSize: 13),
-              ),
-              Text(
-                valor,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text(titulo, style: const TextStyle(fontSize: 13)),
+              Text(valor, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -252,11 +267,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     );
   }
 
-  Widget _ventanaCambio(
-    int idVehiculo,
-    String campoACambiar,
-    TextEditingController controllerCampoACambiar,
-  ) {
+  Widget _ventanaCambio(int idVehiculo, String campoACambiar, TextEditingController controllerCampoACambiar) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: Text("Actualizar $campoACambiar"),
@@ -269,9 +280,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
             style: const TextStyle(color: Color(0xFFC8A97E)),
             controller: controllerCampoACambiar,
             decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               hintText: "Escribe aquí...",
             ),
           ),
@@ -281,9 +290,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () async {
                 final baseDatos = await DatabaseHelper.proyectodb();
@@ -312,11 +319,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     );
   }
 
-  Widget _ventanaCambioEstado(
-    int idVehiculo,
-    String campoACambiar,
-    String estadoActual,
-  ) {
+  Widget _ventanaCambioEstado(int idVehiculo, String campoACambiar, String estadoActual) {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: Text("Actualizar $campoACambiar"),
@@ -332,19 +335,14 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
             decoration: InputDecoration(
               labelText: "Estado",
               prefixIcon: const Icon(Icons.info_outline),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
 
             // el desplegable tiene 3 estado a elegir
             // cada uno de esos estados lo mapeamos para crearlo como DropdownMenuItem
             // su valor y es el mismo que su texto (ej: "Alquilado", "Taller"...)
             items: ["Disponible", "Alquilado", "Taller"].map((estadoActual) {
-              return DropdownMenuItem(
-                value: estadoActual,
-                child: Text(estadoActual),
-              );
+              return DropdownMenuItem(value: estadoActual, child: Text(estadoActual));
             }).toList(),
             // convertimos a lista porque items nos pide la lista con los valores del DropdownButtonFormField
 
@@ -353,12 +351,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
             onChanged: (nuevoEstado) async {
               final baseDatos = await DatabaseHelper.proyectodb();
 
-              await baseDatos.update(
-                "vehiculos",
-                {"estado": nuevoEstado},
-                where: "id = ?",
-                whereArgs: [idVehiculo],
-              );
+              await baseDatos.update("vehiculos", {"estado": nuevoEstado}, where: "id = ?", whereArgs: [idVehiculo]);
 
               setState(() {
                 estadoActual = nuevoEstado!;
