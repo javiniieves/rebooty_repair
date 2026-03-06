@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:rebooty_repair/database.dart';
+import 'package:image_picker/image_picker.dart';
 
 class DetallesAlquilerScreen extends StatefulWidget {
   const DetallesAlquilerScreen({super.key});
@@ -10,6 +13,8 @@ class DetallesAlquilerScreen extends StatefulWidget {
 
 class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   Map<String, dynamic> alquiler = {};
+
+  List<Map<String, dynamic>> fotos = [];
 
   TextEditingController _fechaInicioControler = TextEditingController();
   TextEditingController _fechaLimiteControler = TextEditingController();
@@ -29,12 +34,22 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     _estadoActual = alquiler['estado'];
   }
 
+  Future<void> cargarFotos(int idAlquiler) async {
+    final fotosDelAlquiler = await DatabaseHelper.obtenerFotosPorIdAlquiler(idAlquiler);
+
+    setState(() {
+      fotos = fotosDelAlquiler;
+    });
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     int idAlquiler = ModalRoute.of(context)?.settings.arguments as int;
 
     cargarAlquiler(idAlquiler);
+
+    cargarFotos(idAlquiler);
   }
 
   @override
@@ -42,14 +57,14 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        elevation: 0,
+        elevation: 2,
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
           icon: const Icon(Icons.arrow_back, color: Colors.white),
         ),
-        title: const Text("Detalles del Alquiler", style: TextStyle(color: Colors.white)),
+        title: const Text("Detalles del Alquiler", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.deepPurple,
         centerTitle: true,
       ),
@@ -57,60 +72,65 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              const SizedBox(height: 100),
-
+              SizedBox(height: 20,),
               // Card con información de los campos del alquiler
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 180),
                 child: Card(
-                  elevation: 5,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  elevation: 8,
+                  shadowColor: Colors.black26,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
                     child: Column(
                       children: [
                         // fecha inicio
                         Row(
                           children: [
-                            Expanded(child: _infoRow(Icons.date_range, "Fecha de inicio", _fechaInicioControler)),
+                            Expanded(child: _infoRow(Icons.calendar_today, "Fecha de inicio", _fechaInicioControler)),
 
                             IconButton(
                               onPressed: () {
                                 _ventanaCambioFecha("fecha_inicio", _fechaInicioControler);
                               },
-                              icon: Icon(Icons.edit),
+                              icon: const Icon(Icons.edit, color: Colors.deepPurple),
                             ),
                           ],
                         ),
 
-                        const Divider(),
+                        const Divider(height: 40),
 
                         // fecha límite
                         Row(
                           children: [
-                            Expanded(child: _infoRow(Icons.date_range_outlined, "Fecha limite", _fechaLimiteControler)),
+                            Expanded(child: _infoRow(Icons.event_busy, "Fecha limite", _fechaLimiteControler)),
 
                             IconButton(
                               onPressed: () {
                                 _ventanaCambioFecha("fecha_fin", _fechaLimiteControler);
                               },
-                              icon: Icon(Icons.edit),
+                              icon: const Icon(Icons.edit, color: Colors.deepPurple),
                             ),
                           ],
                         ),
 
-                        const Divider(),
+                        const Divider(height: 40),
 
                         // estado de la devolución
                         Row(
                           children: [
-                            Expanded(child: _infoRowEstado(Icons.directions_car, "Estado de la devolucion", _estadoActual)),
+                            Expanded(
+                              child: _infoRowEstado(Icons.info_outline, "Estado de la devolucion", _estadoActual),
+                            ),
 
                             IconButton(
                               onPressed: () {
-                                showDialog(context: context, builder: (context) => _ventanaCambioEstado("estado", _estadoActual),);
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => _ventanaCambioEstado("estado", _estadoActual),
+                                );
                               },
-                              icon: Icon(Icons.edit),
+                              icon: const Icon(Icons.edit, color: Colors.deepPurple),
                             ),
                           ],
                         ),
@@ -120,7 +140,117 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                 ),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 50),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 180.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.camera_alt, size: 24, color: Colors.deepPurple),
+                    const SizedBox(width: 10),
+                    const Text("Imágenes del vehículo", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // lista de fotos
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 170.0),
+                child: SizedBox(
+                  height: 250,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    // longitud lista de fotos más 1 para que el último elemento sea el botón de añadir
+                    itemCount: fotos.length + 1,
+                    itemBuilder: (context, index) {
+                      // Si es el último índice, mostramos el botón de añadir
+                      if (index == fotos.length) {
+                        return GestureDetector(
+                          onTap: () => _ventanaAnyadirFoto(),
+                          child: Container(
+                            width: 200,
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                            ),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_photo_alternate_outlined, size: 50, color: Colors.deepPurple),
+                                SizedBox(height: 10),
+                                Text("Añadir Foto", style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Imagen actual de la lista de fotos
+                      return GestureDetector(
+                        // al pulsar mostramos la imagen en grande y la opción de borrar
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                contentPadding: const EdgeInsets.all(15),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // envolvemos la imagen en ClipRRect para redondear sus bordes
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(15),
+                                      child: Image(image: FileImage(File(fotos[index]["ruta"])), height: 450, fit: BoxFit.contain),
+                                    ),
+
+                                    const SizedBox(height: 25),
+
+                                    // boton borrar foto
+                                    ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.redAccent,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                                      ),
+                                      onPressed: () async {
+                                        final baseDatos = await DatabaseHelper.proyectodb();
+                                        // borramos la foto con el id de la foto actual
+                                        await baseDatos.delete("fotos", where: "id = ?", whereArgs: [fotos[index]["id"]]);
+                                        cargarFotos(alquiler["id"]);
+                                        Navigator.pop(context);
+                                      },
+                                      icon: Icon(Icons.delete_forever),
+                                      label: Text("Eliminar Imagen", style: TextStyle(fontSize: 16)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+
+                        child: Container(
+                          width: 200,
+                          margin: EdgeInsets.only(right: 20, bottom: 10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: Offset(0, 10))],
+                            image: DecorationImage(image: FileImage(File(fotos[index]["ruta"])), fit: BoxFit.cover),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              SizedBox(height: 60),
             ],
           ),
         ),
@@ -131,9 +261,21 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   Widget _infoRow(IconData icon, String titulo, TextEditingController controller) {
     return Row(
       children: [
-        Icon(icon, color: Colors.deepPurple),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: Colors.deepPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+          child: Icon(icon, color: Colors.deepPurple),
+        ),
         const SizedBox(width: 15),
-        Expanded(child: Text("$titulo: ${controller.text}", style: const TextStyle(fontSize: 17))),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(titulo, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+              Text(controller.text, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -141,9 +283,21 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   Widget _infoRowEstado(IconData icon, String titulo, String estado) {
     return Row(
       children: [
-        Icon(icon, color: Colors.deepPurple),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: Colors.deepPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+          child: Icon(icon, color: Colors.deepPurple),
+        ),
         const SizedBox(width: 15),
-        Expanded(child: Text("$titulo: $estado", style: const TextStyle(fontSize: 17))),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(titulo, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+              Text(estado, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -164,13 +318,22 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
       lastDate: fechaHoy.add(const Duration(days: 365 * 5)),
     );
     if (fechaElegida != null) {
-        // Guardamos la fecha y la formateamos para el texto (Año-Mes-Día)
-        String fechaFormateada = "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+      // Guardamos la fecha y la formateamos para el texto (Año-Mes-Día)
+      String fechaFormateada =
+          "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 
-        final baseDatos = await DatabaseHelper.proyectodb();
+      final baseDatos = await DatabaseHelper.proyectodb();
 
-        // cambiamos la fecha (inicio o fin) del alquiler del que estamos mostrando los detalles
-        await baseDatos.update("alquileres", {nombreCampo: fechaFormateada}, where: "id = ?", whereArgs: [alquiler["id"]]);
+      // cambiamos la fecha (inicio o fin) del alquiler del que estamos mostrando los detalles
+      await baseDatos.update(
+        "alquileres",
+        {nombreCampo: fechaFormateada},
+        where: "id = ?",
+        whereArgs: [alquiler["id"]],
+      );
+
+      // Actualizamos los datos tras el cambio
+      cargarAlquiler(alquiler["id"]);
     }
   }
 
@@ -207,16 +370,36 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
               final baseDatos = await DatabaseHelper.proyectodb();
 
               // cambiamos el estado del alquiler del que estamos mostrando los detalles
-              await baseDatos.update("alquileres", {"estado": nuevoEstado}, where: "id = ?", whereArgs: [alquiler["id"]]);
+              await baseDatos.update(
+                "alquileres",
+                {"estado": nuevoEstado},
+                where: "id = ?",
+                whereArgs: [alquiler["id"]],
+              );
 
               setState(() {
                 estadoActual = nuevoEstado!;
                 Navigator.pop(context);
+                cargarAlquiler(alquiler["id"]);
               });
             },
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _ventanaAnyadirFoto() async {
+    final ImagePicker imagePicker = ImagePicker();
+
+    final XFile? imagen = await imagePicker.pickImage(source: ImageSource.gallery);
+
+    if (imagen != null) {
+      final baseDatos = await DatabaseHelper.proyectodb();
+
+      await baseDatos.insert("fotos", {"id_alquiler": alquiler["id"], "ruta": imagen.path});
+
+      cargarFotos(alquiler["id"]);
+    }
   }
 }
