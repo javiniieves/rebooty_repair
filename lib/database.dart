@@ -43,4 +43,9 @@ class DatabaseHelper {
     final baseDatos = await proyectodb();
     return await baseDatos.query("vehiculos", where: "estado = ?", whereArgs: ["Disponible"]);
   }
+
+  static Future<List<Map<String, dynamic>>> obtenerAlquilerPorId(int idAlquiler) async {
+    final baseDatos = await proyectodb();
+    return await baseDatos.query("alquileres", where: "id = ?", whereArgs: [idAlquiler]);
+  }
 }

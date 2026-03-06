@@ -6,8 +6,7 @@ class PantallaBusquedaAlquiler extends StatefulWidget {
   const PantallaBusquedaAlquiler({super.key});
 
   @override
-  State<PantallaBusquedaAlquiler> createState() =>
-      _PantallaBusquedaAlquilerState();
+  State<PantallaBusquedaAlquiler> createState() => _PantallaBusquedaAlquilerState();
 }
 
 class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
@@ -63,9 +62,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                     decoration: InputDecoration(
                       labelText: "Matricula",
                       prefixIcon: const Icon(Icons.car_rental),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                 ),
@@ -109,8 +106,10 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                         leading: const Icon(Icons.directions_car_filled),
                         title: Text(alquiler['matricula'] ?? 'Sin coche'),
                         subtitle: Text(alquiler['estado'] ?? 'Sin estado'),
-                        onTap: (){
-                          Navigator.pushNamed(context, "detalles_alquiler", arguments: alquiler);
+                        onTap: () async {
+                          await Navigator.pushNamed(context, "detalles_alquiler", arguments: alquiler["id"]);
+
+                          setState(() {});
                         },
                       );
                     },
