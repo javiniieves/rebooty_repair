@@ -153,13 +153,12 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                         const Divider(),
                         Row(
                           children: [
-                            Expanded(child: _infoRow(Icons.email, "Email", cliente!['email'])),
+                            Expanded(child: _infoRow(Icons.email, "Email", cliente!['email'] ?? "Sin correo")),
                             IconButton(
                               onPressed: () {
                                 showDialog(
                                   context: context,
-                                  builder: (context) =>
-                                      _ventanaCambio(cliente!["id"], "email", _correoControler),
+                                  builder: (context) => _ventanaCambio(cliente!["id"], "email", _correoControler),
                                 );
                               },
                               icon: Icon(Icons.edit),
