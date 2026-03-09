@@ -13,25 +13,43 @@ class DetallesAlquilerScreen extends StatefulWidget {
 
 class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   Map<String, dynamic> alquiler = {};
+  Map<String, dynamic> coche = {};
+  Map<String, dynamic> cliente = {};
 
   List<Map<String, dynamic>> fotos = [];
 
   TextEditingController _fechaInicioControler = TextEditingController();
   TextEditingController _fechaLimiteControler = TextEditingController();
+  final TextEditingController _clienteNombreController = TextEditingController();
+  final TextEditingController _cocheMatriculaController = TextEditingController();
   String _estadoActual = "";
 
   Future<void> cargarAlquiler(int idAlquiler) async {
     // guardamos el alquiler con el id recibido
     final alquileresConIdRecibido = await DatabaseHelper.obtenerAlquilerPorId(idAlquiler);
 
+    alquiler = alquileresConIdRecibido.first;
+
     setState(() {
-      alquiler = alquileresConIdRecibido.first;
+      _fechaInicioControler = TextEditingController(text: alquiler['fecha_inicio']);
+      _fechaLimiteControler = TextEditingController(text: alquiler['fecha_fin']);
+      _estadoActual = alquiler['estado'];
     });
 
-    // rellenamos los controladores con los campos del alquiler que acabamos de guardar
-    _fechaInicioControler = TextEditingController(text: alquiler['fecha_inicio']);
-    _fechaLimiteControler = TextEditingController(text: alquiler['fecha_fin']);
-    _estadoActual = alquiler['estado'];
+    await cargarCocheYCliente(alquiler['id_coche'], alquiler['id_cliente']);
+  }
+
+  Future<void> cargarCocheYCliente(int idCoche, int idCliente) async {
+    final cochesConId = await DatabaseHelper.obtenerVehiculoPorId(idCoche);
+    final clienteConId = await DatabaseHelper.obtenerClientesPorId(idCliente);
+
+    setState(() {
+      coche = cochesConId.first;
+      cliente = clienteConId.first;
+
+      _clienteNombreController.text = cliente['nombre'] ?? "";
+      _cocheMatriculaController.text = coche['matricula'] ?? "";
+    });
   }
 
   Future<void> cargarFotos(int idAlquiler) async {
@@ -48,7 +66,6 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     int idAlquiler = ModalRoute.of(context)?.settings.arguments as int;
 
     cargarAlquiler(idAlquiler);
-
     cargarFotos(idAlquiler);
   }
 
@@ -83,6 +100,30 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                     child: Column(
                       children: [
                         // fecha inicio
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.person, "Cliente", _clienteNombreController)),
+                            IconButton(
+                              onPressed: () async {
+                                await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente["id"]);
+                              },
+                              icon: const Icon(Icons.arrow_forward_ios),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 40),
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.directions_car, "Coche", _cocheMatriculaController)),
+                            IconButton(
+                              onPressed: () async {
+                                await Navigator.pushNamed(context, "detalles_vehiculo", arguments: coche["id"]);
+                              },
+                              icon: const Icon(Icons.arrow_forward_ios),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 40),
                         Row(
                           children: [
                             Expanded(child: _infoRow(Icons.calendar_today, "Fecha de inicio", _fechaInicioControler)),
