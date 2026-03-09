@@ -12,7 +12,10 @@ class DatabaseHelper {
     return openDatabase(path, version: 1, onCreate: (db, version) async {
 
       // tabla vehículos
-      await db.execute("CREATE TABLE vehiculos (id INTEGER PRIMARY KEY, matricula TEXT, marca TEXT, modelo TEXT, estado TEXT)");
+      await db.execute(
+        "CREATE TABLE vehiculos (id INTEGER PRIMARY KEY, matricula TEXT, marca TEXT, modelo TEXT, estado TEXT, "
+            "color INTEGER, kilometraje REAL, anyo INTEGER, combustible TEXT, observaciones TEXT, fecha_vencimiento_seguro TEXT)",
+      );
 
       // tabla reparaciones (se relacione con coche)
       await db.execute("CREATE TABLE reparaciones (id INTEGER PRIMARY KEY, id_coche INTEGER, descripcion TEXT, fecha_inicio TEXT, fecha_fin TEXT, coste REAL)");
