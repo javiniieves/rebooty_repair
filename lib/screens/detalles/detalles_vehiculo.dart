@@ -93,7 +93,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                 showDialog(
                                   context: context,
                                   builder: (context) =>
-                                      _ventanaCambio(vehiculo!["id"], "matricula", _matriculaController),
+                                      _ventanaCambio(vehiculo!["id"], "matricula", _matriculaController, esMatricula: true),
                                 );
                               },
                               icon: const Icon(Icons.edit),
@@ -409,55 +409,75 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     String campoACambiar,
     TextEditingController controllerCampoACambiar, {
     bool soloNumeros = false,
+    bool esMatricula = false,
   }) {
+    final formKeyCambio = GlobalKey<FormState>();
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: Text("Actualizar $campoACambiar"),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text("Introduce el nuevo valor para el campo:"),
-          const SizedBox(height: 15),
-          TextFormField(
-            style: const TextStyle(color: Color(0xFFC8A97E)),
-            controller: controllerCampoACambiar,
-            keyboardType: soloNumeros ? TextInputType.number : TextInputType.text,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              hintText: "Escribe aquí...",
-            ),
-          ),
-          const SizedBox(height: 25),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      content: Form(
+        key: formKeyCambio,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Introduce el nuevo valor para el campo:"),
+            const SizedBox(height: 15),
+            TextFormField(
+              style: const TextStyle(color: Color(0xFFC8A97E)),
+              controller: controllerCampoACambiar,
+              keyboardType: soloNumeros ? TextInputType.number : TextInputType.text,
+              textCapitalization: esMatricula ? TextCapitalization.characters : TextCapitalization.none,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                hintText: "Escribe aquí...",
               ),
-              onPressed: () async {
-                final baseDatos = await DatabaseHelper.proyectodb();
+              validator: (value) {
+                if (value == null || value.isEmpty) return "El campo no puede estar vacío";
 
-                // actualizamos en la tabla vehiculos
-                // de el vehiculo que tenga el id del vehiculo actual
-                // actualizamos el campo correspondiente
-                await baseDatos.update(
-                  "vehiculos",
-                  {campoACambiar: controllerCampoACambiar.text},
-                  where: "id = ?",
-                  whereArgs: [idVehiculo],
-                );
+                if (esMatricula) {
+                  final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZ]{3}$');
+                  if (!regex.hasMatch(value.toUpperCase())) {
+                    return "Formato inválido (ej: 1234ABC)";
+                  }
+                }
 
-                controllerCampoACambiar.clear();
+                if (soloNumeros && !RegExp(r'^\d+$').hasMatch(value)) {
+                  return "Introduce solo números válidos";
+                }
 
-                cargarDatosVehiculo(idVehiculo);
-
-                Navigator.pop(context);
+                return null;
               },
-              child: const Text("GUARDAR CAMBIOS"),
             ),
-          ),
-        ],
+            const SizedBox(height: 25),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () async {
+                  if (formKeyCambio.currentState!.validate()) {
+                    final baseDatos = await DatabaseHelper.proyectodb();
+
+                    await baseDatos.update(
+                      "vehiculos",
+                      {campoACambiar: controllerCampoACambiar.text},
+                      where: "id = ?",
+                      whereArgs: [idVehiculo],
+                    );
+
+                    controllerCampoACambiar.clear();
+                    cargarDatosVehiculo(idVehiculo);
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text("GUARDAR CAMBIOS"),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
