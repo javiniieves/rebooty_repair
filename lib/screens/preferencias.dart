@@ -40,18 +40,47 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
 
               ElevatedButton.icon(
                 onPressed: () async {
-                  await DatabaseHelper.limpiarRegistrosBaseDatos();
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text("¿Estás seguro de que quiere borrar TODOS los registros de la base de datos?"),
 
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text("Registros de la base de datos borrados con éxito")));
+                        content: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                await DatabaseHelper.limpiarRegistrosBaseDatos();
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Registros de la base de datos borrados con éxito")),
+                                );
+
+                                Navigator.pop(context);
+                              },
+                              label: Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                            ),
+
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              label: Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
                 },
                 label: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.delete, size: 30,),
+                    Icon(Icons.delete, size: 30),
                     SizedBox(width: 20),
-                    Text("Borrar todos los registro de la base de datos", style: TextStyle(fontSize: 30),),
+                    Text("Borrar todos los registro de la base de datos", style: TextStyle(fontSize: 30)),
                   ],
                 ),
               ),
