@@ -14,6 +14,7 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
   final _dniControler = TextEditingController();
   final _telefonoControler = TextEditingController();
   final _direccionControler = TextEditingController();
+  final _correoControler = TextEditingController();
 
   Map<String, dynamic>? cliente;
 
@@ -143,6 +144,22 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                                   context: context,
                                   builder: (context) =>
                                       _ventanaCambio(cliente!["id"], "direccion", _direccionControler),
+                                );
+                              },
+                              icon: Icon(Icons.edit),
+                            ),
+                          ],
+                        ),
+                        const Divider(),
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.email, "Email", cliente!['email'])),
+                            IconButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) =>
+                                      _ventanaCambio(cliente!["id"], "email", _correoControler),
                                 );
                               },
                               icon: Icon(Icons.edit),

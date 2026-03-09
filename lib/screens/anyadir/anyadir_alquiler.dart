@@ -241,7 +241,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       // insertamos en la tabal "clientes" los datos que hemos cogido
                       await baseDatos.insert("alquileres", {
                         "id_coche": idVehiculoSeleccionado,
-                        "descripcion": _idClienteSeleccionado,
+                        "id_cliente": _idClienteSeleccionado,
                         "precio": double.parse(_precioController.text),
                         "fecha_inicio": _fechaInicioController.text,
                         "fecha_fin": _fechaFinController.text,
