@@ -100,17 +100,24 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                     separatorBuilder: (context, index) => Divider(),
                     itemCount: vehiculosFiltrados.length,
                     itemBuilder: (context, index) {
-                      final vehiculo = vehiculosFiltrados[index];
+                      Map<String, dynamic>? vehiculo = vehiculosFiltrados[index];
                       return ListTile(
                         leading: const Icon(Icons.directions_car_filled),
                         title: Text(vehiculo['matricula'] ?? 'Sin matricula'),
                         subtitle: Text(vehiculo['estado'] ?? 'Sin estado'),
-
                         onTap: () async {
-                          await Navigator.pushNamed(context, "detalles_vehiculo", arguments: vehiculo["id"]);
-
+                          await Navigator.pushNamed(context, "detalles_vehiculo", arguments: vehiculo?["id"]);
                           setState(() {});
                         },
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () async {
+                            await DatabaseHelper.borrarVehiculo(vehiculo?["id"]);
+                            setState(() {
+                              vehiculo = null;
+                            });
+                          },
+                        ),
                       );
                     },
                   );

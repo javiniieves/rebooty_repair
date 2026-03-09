@@ -6,8 +6,7 @@ class PantallaBusquedaCliente extends StatefulWidget {
   const PantallaBusquedaCliente({super.key});
 
   @override
-  State<PantallaBusquedaCliente> createState() =>
-      _PantallaBusquedaClienteState();
+  State<PantallaBusquedaCliente> createState() => _PantallaBusquedaClienteState();
 }
 
 class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
@@ -16,9 +15,7 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
   Future<List<Map<String, dynamic>>> cargarClientes() async {
     final baseDatos = await DatabaseHelper.proyectodb();
 
-    final List<Map<String, dynamic>> clientes = await baseDatos.query(
-      "clientes",
-    );
+    final List<Map<String, dynamic>> clientes = await baseDatos.query("clientes");
     return clientes;
   }
 
@@ -61,9 +58,7 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                     decoration: InputDecoration(
                       labelText: "DNI",
                       prefixIcon: const Icon(Icons.badge),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                 ),
@@ -102,15 +97,24 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                     separatorBuilder: (context, index) => Divider(),
                     itemCount: clientesFiltrados.length,
                     itemBuilder: (context, index) {
-                      final cliente = clientesFiltrados[index];
+                      Map<String, dynamic>? cliente = clientesFiltrados[index];
                       return ListTile(
                         leading: const Icon(Icons.person),
                         title: Text(cliente['nombre'] ?? 'Sin nombre'),
                         subtitle: Text(cliente['dni'] ?? 'Sin DNI'),
                         onTap: () async {
-                          await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente['id']);
+                          await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente?['id']);
                           setState(() {});
                         },
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () async {
+                            await DatabaseHelper.borrarCliente(cliente?["id"]);
+                            setState(() {
+                              cliente = null;
+                            });
+                          },
+                        ),
                       );
                     },
                   );

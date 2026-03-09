@@ -123,4 +123,37 @@ class DatabaseHelper {
     final baseDatos = await proyectodb();
     return await baseDatos.query("reparaciones", where: "id = ?", whereArgs: [idReparacion]);
   }
+
+  static Future<void> borrarCliente(int idCliente) async {
+    final db = await proyectodb();
+    await db.delete("alquileres", where: "id_cliente = ?", whereArgs: [idCliente]);
+    await db.delete("clientes", where: "id = ?", whereArgs: [idCliente]);
+  }
+
+  static Future<void> borrarVehiculo(int idVehiculo) async {
+    final db = await proyectodb();
+    await db.delete("reparaciones", where: "id_coche = ?", whereArgs: [idVehiculo]);
+    await db.delete("alquileres", where: "id_coche = ?", whereArgs: [idVehiculo]);
+    await db.delete("vehiculos", where: "id = ?", whereArgs: [idVehiculo]);
+  }
+
+  static Future<void> borrarAlquiler(int idAlquiler) async {
+    final db = await proyectodb();
+
+    // obtener el alquiler para saber qué coche estaba alquilado
+    final alquiler = await db.query("alquileres", where: "id = ?", whereArgs: [idAlquiler]);
+
+    if (alquiler.isNotEmpty) {
+      Object? idCoche = alquiler.first["id_coche"];
+      // borrar alquiler
+      await db.delete("alquileres", where: "id = ?", whereArgs: [idAlquiler]);
+      // cambiar coche a disponible
+      await db.update("vehiculos", {"estado": "Disponible"}, where: "id = ?", whereArgs: [idCoche]);
+    }
+  }
+
+  static Future<void> borrarReparacion(int idReparacion) async {
+    final db = await proyectodb();
+    await db.delete("reparaciones", where: "id = ?", whereArgs: [idReparacion]);
+  }
 }

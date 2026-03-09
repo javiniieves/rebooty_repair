@@ -101,15 +101,24 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                     separatorBuilder: (context, index) => Divider(),
                     itemCount: alquileresFiltrados.length,
                     itemBuilder: (context, index) {
-                      final alquiler = alquileresFiltrados[index];
+                      Map<String, dynamic>? alquiler = alquileresFiltrados[index];
                       return ListTile(
                         leading: const Icon(Icons.directions_car_filled),
                         title: Text(alquiler['matricula'] ?? 'Sin coche'),
                         subtitle: Text(alquiler['estado'] ?? 'Sin estado'),
                         onTap: () async {
-                          await Navigator.pushNamed(context, "detalles_alquiler", arguments: alquiler["id"]);
+                          await Navigator.pushNamed(context, "detalles_alquiler", arguments: alquiler?["id"]);
                           setState(() {});
                         },
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () async {
+                            await DatabaseHelper.borrarAlquiler(alquiler?["id"]);
+                            setState(() {
+                              alquiler = null;
+                            });
+                          },
+                        ),
                       );
                     },
                   );
