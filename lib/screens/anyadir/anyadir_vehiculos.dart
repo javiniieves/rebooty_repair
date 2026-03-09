@@ -92,9 +92,13 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     if (value == null || value.isEmpty) {
                       return "Escribe la matrícula";
                     }
-                    if (value.length < 4) {
-                      return "Matrícula demasiado corta";
+
+                    final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZ]{3}$');
+
+                    if (!regex.hasMatch(value.toUpperCase())) {
+                      return "Formato inválido (ej: 1234ABC)";
                     }
+
                     return null;
                   },
                 ),
