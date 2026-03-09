@@ -58,9 +58,7 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                     decoration: InputDecoration(
                       labelText: "Matricula",
                       prefixIcon: const Icon(Icons.car_rental),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
                 ),
@@ -112,10 +110,39 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                         trailing: IconButton(
                           icon: const Icon(Icons.delete),
                           onPressed: () async {
-                            await DatabaseHelper.borrarVehiculo(vehiculo?["id"]);
-                            setState(() {
-                              vehiculo = null;
-                            });
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text("¿Estás seguro de que quieres borrar este campo de la base de datos?"),
+
+                                  content: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        onPressed: () async {
+                                          await DatabaseHelper.borrarVehiculo(vehiculo?["id"]);
+                                          setState(() {
+                                            vehiculo = null;
+                                          });
+
+                                          Navigator.pop(context);
+                                        },
+                                        label: Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                                      ),
+
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        label: Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
                           },
                         ),
                       );

@@ -109,10 +109,39 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                         trailing: IconButton(
                           icon: const Icon(Icons.delete),
                           onPressed: () async {
-                            await DatabaseHelper.borrarCliente(cliente?["id"]);
-                            setState(() {
-                              cliente = null;
-                            });
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text("¿Estás seguro de que quieres borrar este campo de la base de datos?"),
+
+                                  content: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        onPressed: () async {
+                                          await DatabaseHelper.borrarCliente(cliente?["id"]);
+                                          setState(() {
+                                            cliente = null;
+                                          });
+
+                                          Navigator.pop(context);
+                                        },
+                                        label: Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                                      ),
+
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        label: Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            );
                           },
                         ),
                       );
