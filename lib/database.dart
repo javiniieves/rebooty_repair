@@ -9,26 +9,35 @@ class DatabaseHelper {
 
     print("Ruta base de datos: $path");
 
-    return openDatabase(path, version: 1, onCreate: (db, version) async {
+    return openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) async {
+        // tabla vehículos
+        await db.execute(
+          "CREATE TABLE vehiculos (id INTEGER PRIMARY KEY, matricula TEXT, marca TEXT, modelo TEXT, estado TEXT, "
+          "color INTEGER, kilometraje REAL, anyo INTEGER, combustible TEXT, observaciones TEXT, fecha_vencimiento_seguro TEXT)",
+        );
 
-      // tabla vehículos
-      await db.execute(
-        "CREATE TABLE vehiculos (id INTEGER PRIMARY KEY, matricula TEXT, marca TEXT, modelo TEXT, estado TEXT, "
-            "color INTEGER, kilometraje REAL, anyo INTEGER, combustible TEXT, observaciones TEXT, fecha_vencimiento_seguro TEXT)",
-      );
+        // tabla reparaciones (se relacione con coche)
+        await db.execute(
+          "CREATE TABLE reparaciones (id INTEGER PRIMARY KEY, id_coche INTEGER, descripcion TEXT, fecha_inicio TEXT, fecha_fin TEXT, coste REAL)",
+        );
 
-      // tabla reparaciones (se relacione con coche)
-      await db.execute("CREATE TABLE reparaciones (id INTEGER PRIMARY KEY, id_coche INTEGER, descripcion TEXT, fecha_inicio TEXT, fecha_fin TEXT, coste REAL)");
+        // Tabla de los Clientes (se relaciona con coche mediante la tabla Alquileres)
+        await db.execute(
+          "CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT, dni TEXT, telefono TEXT, direccion TEXT, email TEXT)",
+        );
 
-      // Tabla de los Clientes (se relaciona con coche mediante la tabla Alquileres)
-      await db.execute("CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT, dni TEXT, telefono TEXT, direccion TEXT, email TEXT)");
+        // Tabla de los Alquileres (La que une coche y cliente)
+        await db.execute(
+          "CREATE TABLE alquileres (id INTEGER PRIMARY KEY, id_coche INTEGER, id_cliente INTEGER, fecha_inicio TEXT, fecha_fin TEXT, fecha_devolucion TEXT, precio REAL, estado TEXT)",
+        );
 
-      // Tabla de los Alquileres (La que une coche y cliente)
-      await db.execute("CREATE TABLE alquileres (id INTEGER PRIMARY KEY, id_coche INTEGER, id_cliente INTEGER, fecha_inicio TEXT, fecha_fin TEXT, fecha_devolucion TEXT, precio REAL, estado TEXT)");
-
-      // tabla fotos (se relaciona con alquileres)
-      await db.execute("CREATE TABLE fotos (id INTEGER PRIMARY KEY, id_alquiler INTEGER, ruta TEXT)");
-    });
+        // tabla fotos (se relaciona con alquileres)
+        await db.execute("CREATE TABLE fotos (id INTEGER PRIMARY KEY, id_alquiler INTEGER, ruta TEXT)");
+      },
+    );
   }
 
   static Future<List<Map<String, dynamic>>> obtenerClientesPorId(int idCliente) async {
@@ -64,5 +73,38 @@ class DatabaseHelper {
   static Future<List<Map<String, dynamic>>> obtenerReparacionesPorId(int idReparacion) async {
     final baseDatos = await proyectodb();
     return await baseDatos.query("reparaciones", where: "id = ?", whereArgs: [idReparacion]);
+  }
+
+  static Future<void> borrarCliente(int idCliente) async {
+    final db = await proyectodb();
+    await db.delete("alquileres", where: "id_cliente = ?", whereArgs: [idCliente]);
+    await db.delete("clientes", where: "id = ?", whereArgs: [idCliente]);
+  }
+
+  static Future<void> borrarVehiculo(int idVehiculo) async {
+    final db = await proyectodb();
+    await db.delete("reparaciones", where: "id_coche = ?", whereArgs: [idVehiculo]);
+    await db.delete("alquileres", where: "id_coche = ?", whereArgs: [idVehiculo]);
+    await db.delete("vehiculos", where: "id = ?", whereArgs: [idVehiculo]);
+  }
+
+  static Future<void> borrarAlquiler(int idAlquiler) async {
+    final db = await proyectodb();
+
+    // obtener el alquiler para saber qué coche estaba alquilado
+    final alquiler = await db.query("alquileres", where: "id = ?", whereArgs: [idAlquiler]);
+
+    if (alquiler.isNotEmpty) {
+      Object? idCoche = alquiler.first["id_coche"];
+      // borrar alquiler
+      await db.delete("alquileres", where: "id = ?", whereArgs: [idAlquiler]);
+      // cambiar coche a disponible
+      await db.update("vehiculos", {"estado": "Disponible"}, where: "id = ?", whereArgs: [idCoche]);
+    }
+  }
+
+  static Future<void> borrarReparacion(int idReparacion) async {
+    final db = await proyectodb();
+    await db.delete("reparaciones", where: "id = ?", whereArgs: [idReparacion]);
   }
 }
