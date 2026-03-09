@@ -56,7 +56,7 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back)),
-        title: const Text("Detalles de Reparación", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text("Detalles de Reparación", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: SafeArea(

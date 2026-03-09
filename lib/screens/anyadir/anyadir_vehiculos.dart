@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rebooty_repair/database.dart';
+import 'package:validators/validators.dart';
 
 class PantallaAnyadirVehiculos extends StatefulWidget {
   const PantallaAnyadirVehiculos({super.key});
@@ -15,9 +16,19 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
   late TextEditingController _matriculaController;
   late TextEditingController _marcaController;
   late TextEditingController _modeloController;
+  late TextEditingController _kilometrajeController;
+  late TextEditingController _anyoController;
+  late TextEditingController _observacionesController;
+  late TextEditingController _fechaController;
 
   // estado por defecto al añadir un coche
   String estadoActual = "Disponible";
+
+  int colorDelVehiculo = Colors.white.value;
+
+  String combustible = "Gasoil";
+
+  DateTime? fechaVencimientoSeguro;
 
   @override
   void initState() {
@@ -25,6 +36,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     _matriculaController = TextEditingController();
     _marcaController = TextEditingController();
     _modeloController = TextEditingController();
+    _kilometrajeController = TextEditingController();
+    _anyoController = TextEditingController();
+    _observacionesController = TextEditingController();
+    _fechaController = TextEditingController();
 
     _formKey = GlobalKey<FormState>();
   }
@@ -34,6 +49,11 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     _matriculaController.dispose();
     _marcaController.dispose();
     _modeloController.dispose();
+    _kilometrajeController.dispose();
+    _anyoController.dispose();
+    _observacionesController.dispose();
+    _fechaController.dispose();
+
     super.dispose();
   }
 
@@ -58,8 +78,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 20),
-
                 // introducir matricula
                 TextFormField(
                   style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
@@ -81,7 +99,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   },
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
 
                 // introducir marca
                 TextFormField(
@@ -101,7 +119,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   },
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
 
                 // introducir modelo
                 TextFormField(
@@ -121,7 +139,102 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   },
                 ),
 
-                const SizedBox(height: 40),
+                SizedBox(height: 20),
+
+                // Elegir el tipo de combustible
+                DropdownButtonFormField(
+                  value: combustible,
+
+                  decoration: InputDecoration(
+                    labelText: "Combustible",
+                    prefixIcon: Icon(Icons.local_gas_station_outlined),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+
+                  dropdownColor: Theme.of(context).colorScheme.primary,
+
+                  items: ["Diesel", "Gasoil", "Eléctrico", "Biocombustibles etanol y biodiésel", "Híbrido"].map((
+                    combustibleActual,
+                  ) {
+                    return DropdownMenuItem(
+                      value: combustibleActual,
+                      child: Text(combustibleActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
+                    );
+                  }).toList(),
+                  onChanged: (combustibleElegido) {
+                    setState(() {
+                      combustible = combustibleElegido!;
+                    });
+                  },
+                ),
+
+                SizedBox(height: 20),
+
+                // introducir año
+                TextFormField(
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                  controller: _anyoController,
+                  decoration: InputDecoration(
+                    labelText: "Año",
+                    prefixIcon: const Icon(Icons.calendar_month),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  // Validación del año
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Introduce un año";
+                    }
+                    if (!isNumeric(value)) {
+                      return "El año debe ser un valor numérico";
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 20),
+
+                // introducir kilometraje
+                TextFormField(
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                  controller: _kilometrajeController,
+                  decoration: InputDecoration(
+                    labelText: "Kilometraje",
+                    prefixIcon: Icon(Icons.receipt_long),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  // Validación del año
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Introduce un kilometraje";
+                    }
+                    if (!isNumeric(value)) {
+                      return "El kilometraje debe ser un valor numérico";
+                    }
+                    return null;
+                  },
+                ),
+
+                SizedBox(height: 20),
+
+                // elegir fecha de vencimiento del seguro
+                TextFormField(
+                  controller: _fechaController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: "Fecha vencimiento seguro",
+                    prefixIcon: const Icon(Icons.calendar_today),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onTap: () => seleccionarFecha(),
+                  // Validación de fecha obligatoria
+                  validator: (value) => (value == null || value.isEmpty) ? "Selecciona la fecha de inicio" : null,
+                ),
+
+                SizedBox(height: 20),
 
                 // elegir estado del coche
                 DropdownButtonFormField(
@@ -130,7 +243,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
                   decoration: InputDecoration(
                     labelText: "Estado",
-                    prefixIcon: const Icon(Icons.info_outline),
+                    prefixIcon: Icon(Icons.info_outline),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   dropdownColor: Theme.of(context).colorScheme.primary,
@@ -154,7 +267,80 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   },
                 ),
 
-                const SizedBox(height: 70),
+                SizedBox(height: 20),
+
+                // elegir color del vehiculo
+                TextFormField(
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: "Color del vehiculo",
+                    prefixIcon: const Icon(Icons.palette),
+                    filled: true,
+                    fillColor: Color(colorDelVehiculo),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onTap: () {
+                    // colores a elegir
+                    List<Color> coloresDisponibles = [
+                      Colors.white,
+                      Colors.red,
+                      Colors.blue,
+                      Colors.green,
+                      Colors.orange,
+                      Colors.yellow,
+                      Colors.pink,
+                      Colors.black,
+                      Colors.grey,
+                    ];
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text("Elige un color para el coche"),
+
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Wrap(
+                                spacing: 10,
+                                // con .map() recorremos la lista de colores y convetirmos (mapeamos)
+                                // cada elemento (color) a un CircleAvatar con su respectivo color
+                                children: coloresDisponibles.map((colorActual) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        colorDelVehiculo = colorActual.value;
+                                        Navigator.pop(context);
+                                      });
+                                    },
+                                    child: CircleAvatar(backgroundColor: colorActual, radius: 10),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  validator: (value) => null,
+                ),
+
+                SizedBox(height: 20),
+
+                // introducir observaciones
+                TextFormField(
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                  controller: _observacionesController,
+                  decoration: InputDecoration(
+                    labelText: "Observaciones",
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+
+                const SizedBox(height: 50),
 
                 // botón de añadir coche
                 SizedBox(
@@ -173,11 +359,20 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           "marca": _marcaController.text,
                           "modelo": _modeloController.text,
                           "estado": estadoActual,
+                          "color": colorDelVehiculo,
+                          "kilometraje": _kilometrajeController.text,
+                          "anyo": _anyoController.text,
+                          "combustible": combustible,
+                          "observaciones": _observacionesController.text,
+                          "fecha_vencimiento_seguro": _fechaController.text,
                         });
 
                         _matriculaController.clear();
                         _marcaController.clear();
                         _modeloController.clear();
+                        _observacionesController.clear();
+                        _kilometrajeController.clear();
+                        _anyoController.clear();
 
                         ScaffoldMessenger.of(
                           context,
@@ -199,5 +394,28 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
         ),
       ),
     );
+  }
+
+  /// metodo para elegir una fecha
+  Future<void> seleccionarFecha() async {
+    DateTime fechaHoy = DateTime.now();
+
+    // dejamos que el usuario elija la fecha y la guardamos esa fecha
+    final DateTime? fechaElegida = await showDatePicker(
+      context: context,
+      // el día en el que se abrirá el calendario
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2024),
+      // limite es dentro de 5 años
+      lastDate: fechaHoy.add(const Duration(days: 365 * 5)),
+    );
+
+    if (fechaElegida != null) {
+      setState(() {
+        String fechaFormateada =
+            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+        _fechaController.text = fechaFormateada;
+      });
+    }
   }
 }
