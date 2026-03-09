@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
 
 class DatabaseHelper {
   static Future<Database> proyectodb() async {
@@ -38,6 +41,52 @@ class DatabaseHelper {
         await db.execute("CREATE TABLE fotos (id INTEGER PRIMARY KEY, id_alquiler INTEGER, ruta TEXT)");
       },
     );
+  }
+
+  static Future<void> exportarBD() async {
+    try {
+      String pathBaseDatos = await getDatabasesPath();
+      String rutaBaseDatos = join(pathBaseDatos, "alquileres.db");
+      File archivo = File(rutaBaseDatos);
+
+      if (!await archivo.exists()) {
+        print("No se encuentra el archivo .db");
+        return;
+      }
+
+      if (Platform.isWindows) {
+        //si el windows Usa el explorador de archivos para guardar
+        String? rutaDestino = await FilePicker.platform.saveFile(
+          dialogTitle: '¿Dónde quieres guardar la base de datos?',
+          fileName: 'alquileres.db',
+        );
+
+        if (rutaDestino != null) {
+          await archivo.copy(rutaDestino);
+          print("Copiado a: $rutaDestino");
+        }
+      } else {
+        // si el movil usamos el menú de compartir (WhatsApp, Drive, etc)
+        await Share.shareXFiles([XFile(rutaBaseDatos)], text: "Copia de seguridad");
+      }
+    } catch (e) {
+      print("Error al exportar: $e");
+    }
+  }
+
+  static Future<void> limpiarRegistrosBaseDatos() async {
+    try{
+      final db = await proyectodb();
+
+      await db.delete("vehiculos");
+      await db.delete("reparaciones");
+      await db.delete("clientes");
+      await db.delete("alquileres");
+      await db.delete("fotos");
+
+    } catch(e){
+      print("Error al borrar los registros de la base de datos");
+    }
   }
 
   static Future<List<Map<String, dynamic>>> obtenerClientesPorId(int idCliente) async {
