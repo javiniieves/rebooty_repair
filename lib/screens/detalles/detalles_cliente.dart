@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../database.dart';
 
 class DetallesClienteScreen extends StatefulWidget {
@@ -11,12 +10,15 @@ class DetallesClienteScreen extends StatefulWidget {
 
 class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
   final _nombreControler = TextEditingController();
-  final _dniControler = TextEditingController();
+  final _documentoController = TextEditingController();
   final _telefonoControler = TextEditingController();
   final _direccionControler = TextEditingController();
   final _correoControler = TextEditingController();
 
   Map<String, dynamic>? cliente;
+
+  // Variable para controlar el tipo de documento en la edición
+  String _tipoDocumento = "DNI";
 
   @override
   void didChangeDependencies() {
@@ -33,6 +35,8 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
 
     setState(() {
       cliente = clienteConIdRecibido.first;
+      // Sincronizamos el tipo de documento actual
+      _tipoDocumento = cliente!['tipo_documento'] ?? "DNI";
     });
   }
 
@@ -107,12 +111,18 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                       children: [
                         Row(
                           children: [
-                            Expanded(child: _infoRow(Icons.badge, "DNI", cliente!['dni'])),
+                            Expanded(
+                              child: _infoRow(
+                                Icons.badge,
+                                cliente!['tipo_documento'] ?? "Documento",
+                                cliente!['documento_oficial'],
+                              ),
+                            ),
                             IconButton(
                               onPressed: () {
                                 showDialog(
                                   context: context,
-                                  builder: (context) => _ventanaCambio(cliente!["id"], "dni", _dniControler),
+                                  builder: (context) => _ventanaCambioDocumento(cliente!["id"]),
                                 );
                               },
                               icon: Icon(Icons.edit),
@@ -182,9 +192,101 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
     return Row(
       children: [
         Icon(icon),
-        const SizedBox(width: 15),
-        Expanded(child: Text("$titulo: $valor", style: const TextStyle(fontSize: 17))),
+        SizedBox(width: 15),
+        Expanded(child: Text("$titulo: $valor", style: TextStyle(fontSize: 17))),
       ],
+    );
+  }
+
+  // Ventana específica para cambiar Tipo y Número de documento
+  Widget _ventanaCambioDocumento(int idCliente) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      title: const Text("Actualizar Documento"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // elegir tipo de documento
+          DropdownButtonFormField<String>(
+            value: _tipoDocumento,
+            decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+            items: ["DNI", "NIE", "Pasaporte"]
+                .map((tipoDocumentoActual) => DropdownMenuItem(value: tipoDocumentoActual, child: Text(tipoDocumentoActual))).toList(),
+
+            onChanged: (nuevoTipoDocumento) {
+              setState(() {
+                _tipoDocumento = nuevoTipoDocumento!;
+                _documentoController.clear(); // al cambiar el tipo de docuemnto borramos lo escrito
+              });
+            },
+          ),
+          const SizedBox(height: 15),
+          TextFormField(
+            style: const TextStyle(color: Color(0xFFC8A97E)),
+            controller: _documentoController,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              hintText: "Escribe el nuevo $_tipoDocumento",
+            ),
+          ),
+          const SizedBox(height: 25),
+
+          // botón para guardar los campos
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+
+              // al pulsarlo validamos si está cumple el tipo de documento
+              // su patrón y si es así lo guardamos en la base de datos
+              onPressed: () async {
+                String valor = _documentoController.text.toUpperCase();
+
+                // Comprobamos que no esté vacío
+                if (valor.isEmpty) {
+                  ScaffoldMessenger.of(context,).showSnackBar(const SnackBar(content: Text("¡No puedes dejar el documento vacío!")));
+                  return;
+                }
+
+                // Comprobamos que cumple el patrón según el tipo de docuemnto elegido
+                if (_tipoDocumento == "DNI") {
+                  // 8 números y 1 letra
+                  if (!RegExp(r'^\d{8}[A-Z]$').hasMatch(valor)) {
+                    ScaffoldMessenger.of(context,).showSnackBar(const SnackBar(content: Text("Formato DNI incorrecto (Ej: 12345678Z)")));
+                    return;
+                  }
+                } else if (_tipoDocumento == "NIE") {
+                  // Letra inicial (XYZ), 7 números y letra final
+                  if (!RegExp(r'^[XYZ]\d{7}[A-Z]$').hasMatch(valor)) {
+                    ScaffoldMessenger.of(context,).showSnackBar(const SnackBar(content: Text("Formato NIE incorrecto (Ej: X1234567L)")));
+                    return;
+                  }
+                } else if (_tipoDocumento == "Pasaporte") {
+                  // Para pasaportes, al menos que tenga una longitud razonable (ej: 6-9 caracteres)
+                  if (valor.length < 6) {
+                    ScaffoldMessenger.of(context,).showSnackBar(const SnackBar(content: Text("El pasaporte debe tener al menos 6 caracteres")));
+                    return;
+                  }
+                }
+
+                // Si ha pasado los filtros, guardamos
+                final baseDatos = await DatabaseHelper.proyectodb();
+
+                await baseDatos.update(
+                  "clientes",
+                  {"tipo_documento": _tipoDocumento, "documento_oficial": valor},
+                  where: "id = ?",
+                  whereArgs: [idCliente],
+                );
+
+                _documentoController.clear();
+                cargarDatosCliente(idCliente);
+                Navigator.pop(context);
+              },
+              child: const Text("GUARDAR CAMBIOS"),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

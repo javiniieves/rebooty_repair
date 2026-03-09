@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../database.dart';
+import 'package:email_validator/email_validator.dart';
 
 class PantallaAnyadirClientes extends StatefulWidget {
   const PantallaAnyadirClientes({super.key});
@@ -17,8 +18,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
   late TextEditingController _direccionController;
   late TextEditingController _emailController;
 
-  // estado por defecto al añadir un coche
-  String estadoActual = "Disponible";
+  String _tipoDocumentoSeleccionado = "DNI";
 
   @override
   void initState() {
@@ -85,22 +85,62 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
 
                 const SizedBox(height: 30),
 
-                // introducir DNI
+                // Selector del tipo de documento
+                DropdownButtonFormField<String>(
+                  value: _tipoDocumentoSeleccionado,
+                  decoration: InputDecoration(
+                    labelText: "Tipo de documento",
+                    prefixIcon: const Icon(Icons.description),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  items: ["DNI", "NIE", "Pasaporte"].map((String tipo) {
+                    return DropdownMenuItem(
+                      value: tipo,
+                      child: Text(tipo),
+                    );
+                  }).toList(),
+                  onChanged: (nuevoValor) {
+                    setState(() {
+                      _tipoDocumentoSeleccionado = nuevoValor!;
+                      _dniController.clear(); // Limpiamos al cambiar de tipo de documento
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 30),
+
+                // introducir DNI / NIE / Pasaporte
                 TextFormField(
                   style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                   controller: _dniController,
                   decoration: InputDecoration(
-                    labelText: "DNI",
+                    labelText: "Introduce tu $_tipoDocumentoSeleccionado",
                     prefixIcon: const Icon(Icons.badge),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  // Validación de DNI
+                  // Validación según el tipo de docuemnto elegido
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "El DNI es obligatorio";
+                      return "El documento es obligatorio";
                     }
-                    if (value.length < 9) {
-                      return "El DNI debe tener al menos 9 caracteres";
+
+                    if (_tipoDocumentoSeleccionado == "DNI") {
+                      // Patrón: 8 números y 1 letra
+                      final regExp = RegExp(r'^\d{8}[A-Z]$');
+                      if (!regExp.hasMatch(value.toUpperCase())) {
+                        return "Formato incorrecto (Ej: 12345678Z)";
+                      }
+                    } else if (_tipoDocumentoSeleccionado == "NIE") {
+                      // Patrón: 1 letra (XYZ), 7 números y 1 letra
+                      final regExp = RegExp(r'^[XYZ]\d{7}[A-Z]$');
+                      if (!regExp.hasMatch(value.toUpperCase())) {
+                        return "Formato incorrecto (Ej: X1234567L)";
+                      }
+                    } else if (_tipoDocumentoSeleccionado == "Pasaporte") {
+                      // Validación más simple para pasaportes
+                      if (value.length < 6) {
+                        return "El pasaporte debe ser más largo";
+                      }
                     }
                     return null;
                   },
@@ -165,8 +205,8 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                   // Validación opcional
                   validator: (value) {
                     if (value != null && value.isNotEmpty) {
-                      if (!value.contains("@")) {
-                        return "Introduce un correo válido";
+                      if (!EmailValidator.validate(value)) {
+                        return "El correo electrónico no es válido";
                       }
                     }
                     return null;
@@ -189,7 +229,8 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                         // insertamos en la tabla "clientes" los datos que hemos cogido
                         await baseDatos.insert("clientes", {
                           "nombre": _nombreController.text,
-                          "dni": _dniController.text,
+                          "tipo_documento": _tipoDocumentoSeleccionado,
+                          "documento_oficial": _dniController.text.toUpperCase(),
                           "telefono": _telefonoController.text,
                           "direccion": _direccionController.text,
                           "email": _emailController.text.isEmpty ? null : _emailController.text,

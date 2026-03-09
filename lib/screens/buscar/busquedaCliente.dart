@@ -56,10 +56,13 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                   child: TextField(
                     controller: _dniController,
                     decoration: InputDecoration(
-                      labelText: "DNI",
+                      labelText: "Documento",
                       prefixIcon: const Icon(Icons.badge),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
+                    onChanged: (value) {
+                      setState(() {});
+                    },
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -89,21 +92,22 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                   // Filtrado por DNI según lo escrito en el TextField
                   final filtro = _dniController.text.toLowerCase();
                   final clientesFiltrados = snapshot.data!.where((cliente) {
-                    final dni = cliente['dni']?.toString().toLowerCase() ?? '';
-                    return dni.startsWith(filtro);
+                    // Usamos documento_oficial que es el nombre en la nueva tabla
+                    final doc = cliente['documento_oficial']?.toString().toLowerCase() ?? '';
+                    return doc.contains(filtro);
                   }).toList();
 
                   return ListView.separated(
-                    separatorBuilder: (context, index) => Divider(),
+                    separatorBuilder: (context, index) => const Divider(),
                     itemCount: clientesFiltrados.length,
                     itemBuilder: (context, index) {
-                      Map<String, dynamic>? cliente = clientesFiltrados[index];
+                      final cliente = clientesFiltrados[index];
                       return ListTile(
                         leading: const Icon(Icons.person),
                         title: Text(cliente['nombre'] ?? 'Sin nombre'),
-                        subtitle: Text(cliente['dni'] ?? 'Sin DNI'),
+                        subtitle: Text("${cliente['tipo_documento']}: ${cliente['documento_oficial']}"),
                         onTap: () async {
-                          await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente?['id']);
+                          await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente['id']);
                           setState(() {});
                         },
                         trailing: IconButton(
@@ -113,7 +117,7 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                               context: context,
                               builder: (context) {
                                 return AlertDialog(
-                                  title: Text("¿Estás seguro de que quieres borrar este campo de la base de datos?"),
+                                  title: const Text("¿Estás seguro de que quieres borrar este campo de la base de datos?"),
 
                                   content: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -121,21 +125,20 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                                     children: [
                                       ElevatedButton.icon(
                                         onPressed: () async {
-                                          await DatabaseHelper.borrarCliente(cliente?["id"]);
-                                          setState(() {
-                                            cliente = null;
-                                          });
+                                          await DatabaseHelper.borrarCliente(cliente["id"]);
+
+                                          setState(() {});
 
                                           Navigator.pop(context);
                                         },
-                                        label: Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                                        label: const Row(children: [Icon(Icons.check), Text("Confirmar")]),
                                       ),
 
                                       ElevatedButton.icon(
                                         onPressed: () {
                                           Navigator.pop(context);
                                         },
-                                        label: Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                                        label: const Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
                                       ),
                                     ],
                                   ),
