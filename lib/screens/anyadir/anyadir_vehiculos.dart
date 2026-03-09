@@ -96,7 +96,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZ]{3}$');
 
                     if (!regex.hasMatch(value.toUpperCase())) {
-                      return "Formato inválido (ej: 1234ABC)";
+                      return "Formato inválido, necesitas exclusivamente 4 numeros y 3 vocales";
                     }
 
                     return null;

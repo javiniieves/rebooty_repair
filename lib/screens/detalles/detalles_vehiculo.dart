@@ -438,7 +438,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                 if (esMatricula) {
                   final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZ]{3}$');
                   if (!regex.hasMatch(value.toUpperCase())) {
-                    return "Formato inválido (ej: 1234ABC)";
+                    return "Exclusivamente 4 numeros y 3 vocales";
                   }
                 }
 
