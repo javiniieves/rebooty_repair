@@ -20,6 +20,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
   TextEditingController _fechaInicioControler = TextEditingController();
   TextEditingController _fechaLimiteControler = TextEditingController();
+  TextEditingController _fechaDevoControler = TextEditingController();
   final TextEditingController _clienteNombreController = TextEditingController();
   final TextEditingController _cocheMatriculaController = TextEditingController();
   String _estadoActual = "";
@@ -33,6 +34,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     setState(() {
       _fechaInicioControler = TextEditingController(text: alquiler['fecha_inicio']);
       _fechaLimiteControler = TextEditingController(text: alquiler['fecha_fin']);
+      _fechaDevoControler = TextEditingController(text: alquiler['fecha_devolucion'] ?? "");
       _estadoActual = alquiler['estado'];
     });
 
@@ -136,10 +138,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                             ),
                           ],
                         ),
-
                         const Divider(height: 40),
-
-                        // fecha límite
                         Row(
                           children: [
                             Expanded(child: _infoRow(Icons.event_busy, "Fecha limite", _fechaLimiteControler)),
@@ -152,9 +151,20 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                             ),
                           ],
                         ),
-
                         const Divider(height: 40),
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.event_available, "Fecha entrega", _fechaDevoControler)),
 
+                            IconButton(
+                              onPressed: () {
+                                _ventanaCambioFecha("fecha_devolucion", _fechaDevoControler);
+                              },
+                              icon: const Icon(Icons.edit),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 40),
                         // estado de la devolución
                         Row(
                           children: [
@@ -317,7 +327,10 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(titulo, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-              Text(controller.text, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+              Text(
+                controller.text.isEmpty ? "Sin registrar" : controller.text,
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              ),
             ],
           ),
         ),
@@ -372,10 +385,18 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
       // cambiamos la fecha (inicio o fin) del alquiler del que estamos mostrando los detalles
       await baseDatos.update(
         "alquileres",
-        {nombreCampo: fechaFormateada},
+        {nombreCampo: fechaFormateada, "estado": "Terminado"},
         where: "id = ?",
         whereArgs: [alquiler["id"]],
       );
+
+      await baseDatos.update("vehiculos", {"estado": "Disponible"}, where: "id = ?", whereArgs: [alquiler["id_coche"]]);
+
+      setState(() {
+        _estadoActual = "Terminado";
+      });
+
+      cargarAlquiler(alquiler["id"]);
 
       // Actualizamos los datos tras el cambio
       cargarAlquiler(alquiler["id"]);

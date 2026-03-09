@@ -12,7 +12,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   final _formKey = GlobalKey<FormState>();
 
   String? _idClienteSeleccionado;
-  String? idVehiculoSeleccionado;
+  String? _idVehiculoSeleccionado;
 
   List<String> listaIdsClientes = [];
   List<String> listaIdsVehiculos = [];
@@ -96,7 +96,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
               // menú con los ids de los vehiculos disponibles
               DropdownButtonFormField(
-                value: idVehiculoSeleccionado,
+                value: _idVehiculoSeleccionado,
                 decoration: InputDecoration(
                   labelText: "Id del vehículo",
                   prefixIcon: const Icon(Icons.car_rental),
@@ -108,7 +108,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 }).toList(),
                 onChanged: (nuevoId) {
                   setState(() {
-                    idVehiculoSeleccionado = nuevoId;
+                    _idVehiculoSeleccionado = nuevoId;
                   });
                 },
                 // Validación para asegurar que se elija un vehículo
@@ -240,13 +240,22 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
                       // insertamos en la tabal "clientes" los datos que hemos cogido
                       await baseDatos.insert("alquileres", {
-                        "id_coche": idVehiculoSeleccionado,
+                        "id_coche": _idVehiculoSeleccionado,
                         "id_cliente": _idClienteSeleccionado,
                         "precio": double.parse(_precioController.text),
                         "fecha_inicio": _fechaInicioController.text,
                         "fecha_fin": _fechaFinController.text,
                         "estado": estadoActual,
                       });
+
+                      // cambiar estado del coche a alquilado
+                      await baseDatos.update(
+                        "vehiculos",
+                        {"estado": "Alquilado"},
+                        where: "id = ?",
+                        whereArgs: [_idVehiculoSeleccionado],
+                      );
+
                       _precioController.clear();
 
                       // Aviso de éxito
