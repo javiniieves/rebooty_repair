@@ -100,9 +100,29 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                     child: Column(
                       children: [
                         // fecha inicio
-                        _infoRow(Icons.person, "Cliente", _clienteNombreController),
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.person, "Cliente", _clienteNombreController)),
+                            IconButton(
+                              onPressed: () async {
+                                await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente["id"]);
+                              },
+                              icon: const Icon(Icons.arrow_forward_ios),
+                            ),
+                          ],
+                        ),
                         const Divider(height: 40),
-                        _infoRow(Icons.car_rental, "Coche", _cocheMatriculaController),
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.directions_car, "Coche", _cocheMatriculaController)),
+                            IconButton(
+                              onPressed: () async {
+                                await Navigator.pushNamed(context, "detalles_vehiculo", arguments: coche["id"]);
+                              },
+                              icon: const Icon(Icons.arrow_forward_ios),
+                            ),
+                          ],
+                        ),
                         const Divider(height: 40),
                         Row(
                           children: [
