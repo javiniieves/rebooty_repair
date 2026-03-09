@@ -15,6 +15,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
   late TextEditingController _dniController;
   late TextEditingController _telefonoController;
   late TextEditingController _direccionController;
+  late TextEditingController _emailController;
 
   // estado por defecto al añadir un coche
   String estadoActual = "Disponible";
@@ -26,6 +27,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
     _dniController = TextEditingController();
     _telefonoController = TextEditingController();
     _direccionController = TextEditingController();
+    _emailController = TextEditingController();
 
     _formKey = GlobalKey<FormState>();
   }
@@ -36,6 +38,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
     _dniController.dispose();
     _telefonoController.dispose();
     _direccionController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -147,6 +150,29 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                   },
                 ),
 
+                const SizedBox(height: 30),
+
+                TextFormField(
+                  controller: _emailController,
+                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: "Correo electrónico (opcional)",
+                    prefixIcon: const Icon(Icons.email),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+
+                  // Validación opcional
+                  validator: (value) {
+                    if (value != null && value.isNotEmpty) {
+                      if (!value.contains("@")) {
+                        return "Introduce un correo válido";
+                      }
+                    }
+                    return null;
+                  },
+                ),
+
                 const SizedBox(height: 100),
 
                 // botón de añadir cliente
@@ -166,12 +192,14 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                           "dni": _dniController.text,
                           "telefono": _telefonoController.text,
                           "direccion": _direccionController.text,
+                          "email": _emailController.text.isEmpty ? null : _emailController.text,
                         });
 
                         _nombreController.clear();
                         _dniController.clear();
                         _telefonoController.clear();
                         _direccionController.clear();
+                        _emailController.clear();
 
                         // Aviso de éxito
                         ScaffoldMessenger.of(
