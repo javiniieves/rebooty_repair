@@ -14,10 +14,7 @@ class _PantallaAnyadirState extends State<PantallaAnyadir> {
       child: Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: Text(
-            "Elige qué quieres añadir",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
-          ),
+          title: Text("Elige qué quieres añadir", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28)),
         ),
 
         body: Padding(
@@ -31,75 +28,49 @@ class _PantallaAnyadirState extends State<PantallaAnyadir> {
                   SizedBox(height: 50),
 
                   // Botón añadir cliente
-                  SizedBox(
-                    height: 100,
-                    width: 500,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(context, "añadir_cliente");
-                      },
-                      icon: Icon(Icons.person, size: 40),
-                      label: Text("Nuevo Cliente"),
-                      style: ElevatedButton.styleFrom(
-                        elevation: 2,
-                        textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          side: BorderSide(width: 2),
-                        ),
-                      ),
-                    ),
-                  ),
+                  Boton(icono: Icons.person, titulo: "Nuevo Cliente", ruta: "añadir_cliente"),
 
                   SizedBox(height: 60),
 
                   // Botón añadir vehículo
-                  SizedBox(
-                    height: 100,
-                    width: 500,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(context, "añadir_vehiculo");
-                      },
-                      icon: Icon(Icons.directions_car_filled, size: 40),
-                      label: Text("Nuevo Vehículo"),
-                      style: ElevatedButton.styleFrom(
-                        elevation: 2,
-                        textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          side: BorderSide(width: 2),
-                        ),
-                      ),
-                    ),
-                  ),
+                  Boton(icono: Icons.directions_car_filled, titulo: "Nuevo vehiculo", ruta: "añadir_vehiculo"),
 
                   SizedBox(height: 60),
 
                   // Botón añadir alquiler
-                  SizedBox(
-                    height: 100,
-                    width: 500,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(context, "añadir_alquiler");
-                      },
-                      icon: Icon(Icons.assignment_turned_in, size: 40),
-                      label: Text("Nuevo Alquiler"),
-                      style: ElevatedButton.styleFrom(
-                        elevation: 2,
-                        textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          side: BorderSide(width: 2),
-                        ),
-                      ),
-                    ),
-                  ),
+                  Boton(icono: Icons.assignment_turned_in, titulo: "Nuevo alquiler", ruta: "añadir_alquiler"),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class Boton extends StatelessWidget {
+  final IconData icono;
+  final String titulo;
+  final String ruta;
+
+  const Boton({super.key, required this.icono, required this.titulo, required this.ruta});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 100,
+      width: 500,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Navigator.pushNamed(context, ruta);
+        },
+        icon: Icon(icono, size: 40),
+        label: Text(titulo),
+        style: ElevatedButton.styleFrom(
+          elevation: 2,
+          textStyle: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: BorderSide(width: 2)),
         ),
       ),
     );

@@ -11,21 +11,21 @@ class DetallesReparacionScreen extends StatefulWidget {
 class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
   Map<String, dynamic> vehiculoReparado = {};
   Map<String, dynamic> reparacion = {};
+  late int idReparacion;
 
   final _descripcionController = TextEditingController();
   final _costeController = TextEditingController();
 
   // metodo encargado de rellenar la variable reparacion con
   // los datos de la reparacion con el id recibido por parametro
-  Future<void> cargarDatosReparacion(int idReparacion) async {
-    final reparacionesConIdRecibido = await DatabaseHelper.obtenerReparacionesPorId(idReparacion);
+  Future<void> cargarDatosReparacion() async {
+    final reparaciones = await DatabaseHelper.obtenerReparacionesPorId(idReparacion);
+    reparacion = reparaciones.first;
 
-    setState(() {
-      reparacion = reparacionesConIdRecibido.first;
-    });
+    final vehiculos = await DatabaseHelper.obtenerVehiculoPorId(reparacion["id_coche"]);
+    vehiculoReparado = vehiculos.first;
 
-    // aprovechamos para cargar ya los datos del coche usando id_coche de la tabla reparaciones
-    cargarDatosVehiculo(reparacion["id_coche"]);
+    setState(() {});
   }
 
   // metodo encargado de rellenar la variable vehiculo con
@@ -41,8 +41,8 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    int idReparacion = ModalRoute.of(context)?.settings.arguments as int;
-    cargarDatosReparacion(idReparacion);
+    idReparacion = ModalRoute.of(context)?.settings.arguments as int;
+    cargarDatosReparacion();
   }
 
   @override
@@ -90,62 +90,36 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
-                        // Fecha inicio
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.calendar_today, "Fecha de Inicio", reparacion['fecha_inicio'])),
-                            IconButton(
-                              onPressed: () => _ventanaCambioFecha("fecha_inicio"),
-                              icon: const Icon(Icons.edit),
-                            ),
-                          ],
+                        _filaEditable(
+                          Icons.calendar_today,
+                          "Fecha Inicio",
+                          reparacion['fecha_inicio'],
+                          () => _ventanaCambioFecha("fecha_inicio"),
                         ),
-                        const Divider(height: 30),
 
-                        // Fecha fin
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.event_available, "Fecha de Fin", reparacion['fecha_fin'])),
-                            IconButton(
-                              onPressed: () => _ventanaCambioFecha("fecha_fin"),
-                              icon: const Icon(Icons.edit),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 30),
+                        const Divider(),
 
-                        // Descripción de la avería
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.description, "Descripción", reparacion['descripcion'])),
-                            IconButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => _ventanaCambio("descripcion", _descripcionController),
-                                );
-                              },
-                              icon: const Icon(Icons.edit),
-                            ),
-                          ],
+                        _filaEditable(
+                          Icons.event_available,
+                          "Fecha Fin",
+                          reparacion['fecha_fin'],
+                          () => _ventanaCambioFecha("fecha_fin"),
                         ),
-                        const Divider(height: 30),
 
-                        // Coste de la reparación
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.monetization_on, "Coste Total", "${reparacion['coste']} €")),
-                            IconButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => _ventanaCambio("coste", _costeController),
-                                );
-                              },
-                              icon: const Icon(Icons.edit),
-                            ),
-                          ],
-                        ),
+                        const Divider(),
+
+                        _filaEditable(Icons.description, "Descripción", reparacion['descripcion'], () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => _ventanaCambio("descripcion", _descripcionController),
+                          );
+                        }),
+
+                        const Divider(),
+
+                        _filaEditable(Icons.monetization_on, "Coste", "${reparacion['coste']} €", () {
+                          showDialog(context: context, builder: (_) => _ventanaCambio("coste", _costeController));
+                        }),
                       ],
                     ),
                   ),
@@ -179,6 +153,15 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
     );
   }
 
+  Widget _filaEditable(IconData icono, String titulo, String valor, VoidCallback onEdit) {
+    return Row(
+      children: [
+        Expanded(child: _infoRow(icono, titulo, valor)),
+        IconButton(icon: const Icon(Icons.edit), onPressed: onEdit),
+      ],
+    );
+  }
+
   // Ventana para cambiar texto (descripcion o coste)
   Widget _ventanaCambio(String campoACambiar, TextEditingController controller) {
     return AlertDialog(
@@ -201,15 +184,9 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
-                final baseDatos = await DatabaseHelper.proyectodb();
-                await baseDatos.update(
-                  "reparaciones",
-                  {campoACambiar: controller.text},
-                  where: "id = ?",
-                  whereArgs: [reparacion["id"]],
-                );
+                await actualizarCampo(campoACambiar, controller.text);
+
                 controller.clear();
-                cargarDatosReparacion(reparacion["id"]);
                 Navigator.pop(context);
               },
               child: const Text("GUARDAR CAMBIOS"),
@@ -221,25 +198,25 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
   }
 
   // Funcion para cambiar las fechas con el calendario
-  Future<void> _ventanaCambioFecha(String campoFecha) async {
-    DateTime? fechaElegida = await showDatePicker(
+  Future<void> _ventanaCambioFecha(String campo) async {
+    final fecha = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
 
-    if (fechaElegida != null) {
-      String fechaFormateada = "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+    if (fecha == null) return;
 
-      final baseDatos = await DatabaseHelper.proyectodb();
-      await baseDatos.update(
-        "reparaciones",
-        {campoFecha: fechaFormateada},
-        where: "id = ?",
-        whereArgs: [reparacion["id"]],
-      );
-      cargarDatosReparacion(reparacion["id"]);
-    }
+    String fechaFormateada =
+        "${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}";
+
+    await actualizarCampo(campo, fechaFormateada);
+  }
+
+  Future<void> actualizarCampo(String campo, dynamic valor) async {
+    final db = await DatabaseHelper.proyectodb();
+    await db.update("reparaciones", {campo: valor}, where: "id = ?", whereArgs: [idReparacion]);
+    await cargarDatosReparacion();
   }
 }
