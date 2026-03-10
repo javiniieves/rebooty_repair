@@ -137,7 +137,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                         return "Formato incorrecto (Ej: X1234567L)";
                       }
                     } else if (_tipoDocumentoSeleccionado == "Pasaporte") {
-                      // Validación más simple para pasaportes
+                      // Validación para pasaportes
                       if (value.length < 6) {
                         return "El pasaporte debe ser más largo";
                       }

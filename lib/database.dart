@@ -39,6 +39,12 @@ class DatabaseHelper {
 
         // tabla fotos (se relaciona con alquileres)
         await db.execute("CREATE TABLE fotos (id INTEGER PRIMARY KEY, id_alquiler INTEGER, ruta TEXT)");
+
+        // tabla multas (se relaciona con alquiler)
+        // tiene el campo pagada que es un int ya que no hay bool (0 = no pagada, 1 = si pagada)
+        await db.execute(
+          "CREATE TABLE multas (id INTEGER PRIMARY KEY, id_alquiler INTEGER, descripcion TEXT, fecha TEXT, fecha_limite TEXT, precio REAL, pagada INTEGER)",
+        );
       },
     );
   }
@@ -75,7 +81,7 @@ class DatabaseHelper {
   }
 
   static Future<void> limpiarRegistrosBaseDatos() async {
-    try{
+    try {
       final db = await proyectodb();
 
       await db.delete("vehiculos");
@@ -83,8 +89,7 @@ class DatabaseHelper {
       await db.delete("clientes");
       await db.delete("alquileres");
       await db.delete("fotos");
-
-    } catch(e){
+    } catch (e) {
       print("Error al borrar los registros de la base de datos");
     }
   }
@@ -122,6 +127,16 @@ class DatabaseHelper {
   static Future<List<Map<String, dynamic>>> obtenerReparacionesPorId(int idReparacion) async {
     final baseDatos = await proyectodb();
     return await baseDatos.query("reparaciones", where: "id = ?", whereArgs: [idReparacion]);
+  }
+
+  static Future<List<Map<String, dynamic>>> obtenerMultasPorId(int idMulta) async {
+    final baseDatos = await proyectodb();
+    return await baseDatos.query("multas", where: "id = ?", whereArgs: [idMulta]);
+  }
+
+  static Future<List<Map<String, dynamic>>> obtenerMultasPorIdAlquiler(int idAlquiler) async {
+    final baseDatos = await proyectodb();
+    return await baseDatos.query("multas", where: "id_alquiler = ?", whereArgs: [idAlquiler]);
   }
 
   static Future<void> borrarCliente(int idCliente) async {

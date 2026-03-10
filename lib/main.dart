@@ -5,6 +5,7 @@ import 'package:rebooty_repair/AppTheme.dart';
 import 'package:rebooty_repair/screens/Principal.dart';
 import 'package:rebooty_repair/screens/anyadir/anyadir_alquiler.dart';
 import 'package:rebooty_repair/screens/anyadir/anyadir_clientes.dart';
+import 'package:rebooty_repair/screens/anyadir/anyadir_multa.dart';
 import 'package:rebooty_repair/screens/anyadir/anyadir_reparacion.dart';
 import 'package:rebooty_repair/screens/anyadir/anyadir_vehiculos.dart';
 import 'package:rebooty_repair/screens/buscar/busquedaAlquiler.dart';
@@ -12,6 +13,7 @@ import 'package:rebooty_repair/screens/buscar/busquedaCliente.dart';
 import 'package:rebooty_repair/screens/buscar/busquedaVehiculo.dart';
 import 'package:rebooty_repair/screens/detalles/detalles_alquiler.dart';
 import 'package:rebooty_repair/screens/detalles/detalles_cliente.dart';
+import 'package:rebooty_repair/screens/detalles/detalles_multa.dart';
 import 'package:rebooty_repair/screens/detalles/detalles_reparacion.dart';
 import 'package:rebooty_repair/screens/detalles/detalles_vehiculo.dart';
 
@@ -43,6 +45,10 @@ class AppAlquilerCoches extends StatelessWidget {
         "añadir_vehiculo": (context) => PantallaAnyadirVehiculos(),
         "añadir_alquiler": (context) => PantallaAnyadirAlquiler(),
         "añadir_reparacion": (context) => PantallaAnyadirReparacion(),
+        "añadir_multa": (context) {
+          final idAlquiler = ModalRoute.of(context)!.settings.arguments as int;
+          return PantallaAnyadirMulta(idAlquiler: idAlquiler);
+        },
 
         "buscar_cliente": (context) => PantallaBusquedaCliente(),
         "buscar_vehiculo": (context) => PantallaBusquedaVehiculo(),
@@ -52,6 +58,7 @@ class AppAlquilerCoches extends StatelessWidget {
         "detalles_vehiculo": (context) => DetallesVehiculoScreen(),
         "detalles_alquiler": (context) => DetallesAlquilerScreen(),
         "detalles_reparacion": (context) => DetallesReparacionScreen(),
+        "detalles_multa": (context) => DetallesMultaScreen()
       },
     );
   }
