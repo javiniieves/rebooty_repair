@@ -17,6 +17,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   Map<String, dynamic> cliente = {};
 
   List<Map<String, dynamic>> fotos = [];
+  List<Map<String, dynamic>> multas = [];
 
   TextEditingController _fechaInicioControler = TextEditingController();
   TextEditingController _fechaLimiteControler = TextEditingController();
@@ -54,11 +55,21 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     });
   }
 
+  // metodo para rellenar la variable fotos con los datos de la base de datos asociados al alquiler con el id recibido
   Future<void> cargarFotos(int idAlquiler) async {
     final fotosDelAlquiler = await DatabaseHelper.obtenerFotosPorIdAlquiler(idAlquiler);
 
     setState(() {
       fotos = fotosDelAlquiler;
+    });
+  }
+
+  // metodo para rellenar la variable multas con los datos de la base de datos asociados al alquiler con el id recibido
+  Future<void> cargarMultas(int idAlquiler) async {
+    final multasDelAlquiler = await DatabaseHelper.obtenerMultasPorIdAlquiler(idAlquiler);
+
+    setState(() {
+      multas = multasDelAlquiler;
     });
   }
 
@@ -69,6 +80,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
     cargarAlquiler(idAlquiler);
     cargarFotos(idAlquiler);
+    cargarMultas(idAlquiler);
   }
 
   @override
@@ -238,7 +250,6 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                           ),
                         );
                       }
-
                       // Imagen actual de la lista de fotos
                       return GestureDetector(
                         // al pulsar mostramos la imagen en grande y la opción de borrar
@@ -310,6 +321,102 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                 ),
               ),
               SizedBox(height: 60),
+
+              // Título sección Multas
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 180.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.receipt_long, size: 24),
+                    const SizedBox(width: 10),
+                    const Text("Multas asociadas", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // Lista de multas
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 170.0),
+                child: SizedBox(
+                  height: 180,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: multas.length + 1,
+                    itemBuilder: (context, index) {
+                      // Botón para añadir nueva multa
+                      if (index == multas.length) {
+                        return GestureDetector(
+                          onTap: () async {
+                            // Navegamos a la pantalla de añadir multa pasando el id del alquiler
+                            await Navigator.pushNamed(context, "añadir_multa", arguments: alquiler["id"]);
+                            cargarMultas(alquiler["id"]); // Recargamos las multas al volver por si se ha añdadido nuevas
+                          },
+                          child: Container(
+                            width: 200,
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                            ),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_circle_outline, size: 50),
+                                SizedBox(height: 10),
+                                Text("Añadir Multa", style: TextStyle(fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      // Información de la multa actual
+                      final multaActual = multas[index];
+                      return GestureDetector(
+                        onTap: () async {
+                          // Navegamos a detalles de la multa
+                          await Navigator.pushNamed(context, "detalles_multa", arguments: multaActual["id"]);
+                          cargarMultas(alquiler["id"]); // Recargamos al volver por si se han modificado sus datos
+                        },
+                        child: Container(
+                          width: 200,
+                          margin: const EdgeInsets.only(right: 20, bottom: 10),
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 5))],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: multaActual["pagada"] == 1 ? Colors.green : Colors.red,
+                                  size: 40
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                  multaActual["descripcion"],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.bold)
+                              ),
+                              const SizedBox(height: 5),
+                              Text("${multaActual["precio"]} €", style: const TextStyle(fontSize: 18, color: Colors.deepPurple)),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 60),
             ],
           ),
         ),
