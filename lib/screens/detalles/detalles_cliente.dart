@@ -20,11 +20,12 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
   // Variable para controlar el tipo de documento en la edición
   String _tipoDocumento = "DNI";
 
+  late int idCliente;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    int idCliente = ModalRoute.of(context)?.settings.arguments as int;
-
+    idCliente = ModalRoute.of(context)!.settings.arguments as int;
     cargarDatosCliente(idCliente);
   }
 
@@ -38,6 +39,13 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
       // Sincronizamos el tipo de documento actual
       _tipoDocumento = cliente!['tipo_documento'] ?? "DNI";
     });
+  }
+
+  Future<void> actualizarCliente(int idCliente, Map<String, dynamic> valores) async {
+    final db = await DatabaseHelper.proyectodb();
+
+    await db.update("clientes", valores, where: "id = ?", whereArgs: [idCliente]);
+    cargarDatosCliente(idCliente);
   }
 
   @override
@@ -69,7 +77,7 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 radius: 35,
                 child: Text(
-                  cliente!['nombre'][0],
+                  cliente!['nombre'].substring(0, 1).toUpperCase(),
                   style: const TextStyle(fontSize: 35, fontWeight: FontWeight.bold, color: Color(0xFF2F3136)),
                 ),
               ),
@@ -130,51 +138,11 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                           ],
                         ),
                         const Divider(),
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.phone, "Telefono", cliente!['telefono'])),
-                            IconButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => _ventanaCambio(cliente!["id"], "telefono", _telefonoControler),
-                                );
-                              },
-                              icon: Icon(Icons.edit),
-                            ),
-                          ],
-                        ),
+                        _filaEditable(Icons.phone, "Telefono", cliente!['telefono'], _telefonoControler, "telefono"),
                         const Divider(),
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.location_on, "Direccion", cliente!['direccion'])),
-                            IconButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) =>
-                                      _ventanaCambio(cliente!["id"], "direccion", _direccionControler),
-                                );
-                              },
-                              icon: Icon(Icons.edit),
-                            ),
-                          ],
-                        ),
+                        _filaEditable(Icons.location_on, "Direccion", cliente!['direccion'], _direccionControler, "direccion",),
                         const Divider(),
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.email, "Email", cliente!['email'] ?? "Sin correo")),
-                            IconButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => _ventanaCambio(cliente!["id"], "email", _correoControler),
-                                );
-                              },
-                              icon: Icon(Icons.edit),
-                            ),
-                          ],
-                        ),
+                        _filaEditable(Icons.email, "Email", cliente!['email'] ?? "Sin correo", _correoControler, "email",),
                       ],
                     ),
                   ),
@@ -185,6 +153,20 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _filaEditable(IconData icono, String titulo, String valor, TextEditingController controller, String campo) {
+    return Row(
+      children: [
+        Expanded(child: _infoRow(icono, titulo, valor)),
+        IconButton(
+          icon: const Icon(Icons.edit),
+          onPressed: () {
+            showDialog(context: context, builder: (_) => _ventanaCambio(cliente!["id"], campo, controller));
+          },
+        ),
+      ],
     );
   }
 
@@ -200,6 +182,10 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
 
   // Ventana específica para cambiar Tipo y Número de documento
   Widget _ventanaCambioDocumento(int idCliente) {
+    void mostrarMensaje(String mensaje) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje)));
+    }
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: const Text("Actualizar Documento"),
@@ -211,7 +197,11 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
             value: _tipoDocumento,
             decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
             items: ["DNI", "NIE", "Pasaporte"]
-                .map((tipoDocumentoActual) => DropdownMenuItem(value: tipoDocumentoActual, child: Text(tipoDocumentoActual))).toList(),
+                .map(
+                  (tipoDocumentoActual) =>
+                      DropdownMenuItem(value: tipoDocumentoActual, child: Text(tipoDocumentoActual)),
+                )
+                .toList(),
 
             onChanged: (nuevoTipoDocumento) {
               setState(() {
@@ -235,7 +225,6 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-
               // al pulsarlo validamos si está cumple el tipo de documento
               // su patrón y si es así lo guardamos en la base de datos
               onPressed: () async {
@@ -243,7 +232,7 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
 
                 // Comprobamos que no esté vacío
                 if (valor.isEmpty) {
-                  ScaffoldMessenger.of(context,).showSnackBar(const SnackBar(content: Text("¡No puedes dejar el documento vacío!")));
+                  mostrarMensaje("¡No puedes dejar el documento vacío!");
                   return;
                 }
 
@@ -251,19 +240,19 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                 if (_tipoDocumento == "DNI") {
                   // 8 números y 1 letra
                   if (!RegExp(r'^\d{8}[A-Z]$').hasMatch(valor)) {
-                    ScaffoldMessenger.of(context,).showSnackBar(const SnackBar(content: Text("Formato DNI incorrecto (Ej: 12345678Z)")));
+                    mostrarMensaje("Formato DNI incorrecto (Ej: 12345678Z)");
                     return;
                   }
                 } else if (_tipoDocumento == "NIE") {
                   // Letra inicial (XYZ), 7 números y letra final
                   if (!RegExp(r'^[XYZ]\d{7}[A-Z]$').hasMatch(valor)) {
-                    ScaffoldMessenger.of(context,).showSnackBar(const SnackBar(content: Text("Formato NIE incorrecto (Ej: X1234567L)")));
+                    mostrarMensaje("Formato NIE incorrecto (Ej: X1234567L)");
                     return;
                   }
                 } else if (_tipoDocumento == "Pasaporte") {
                   // Para pasaportes, al menos que tenga una longitud razonable (ej: 6-9 caracteres)
                   if (valor.length < 6) {
-                    ScaffoldMessenger.of(context,).showSnackBar(const SnackBar(content: Text("El pasaporte debe tener al menos 6 caracteres")));
+                    mostrarMensaje("El pasaporte debe tener al menos 6 caracteres");
                     return;
                   }
                 }
@@ -291,50 +280,77 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
   }
 
   Widget _ventanaCambio(int idCliente, String campoACambiar, TextEditingController controllerCampoACambiar) {
+
+    final formKey = GlobalKey<FormState>();
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: Text("Actualizar $campoACambiar"),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text("Introduce el nuevo valor para el campo:"),
-          const SizedBox(height: 15),
-          TextFormField(
-            style: const TextStyle(color: Color(0xFFC8A97E)),
-            controller: controllerCampoACambiar,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              hintText: "Escribe aquí...",
-            ),
-          ),
-          const SizedBox(height: 25),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+
+      content: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+
+            const Text("Introduce el nuevo valor para el campo:"),
+
+            const SizedBox(height: 15),
+
+            TextFormField(
+              controller: controllerCampoACambiar,
+              style: const TextStyle(color: Color(0xFFC8A97E)),
+
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                hintText: "Escribe aquí...",
               ),
-              onPressed: () async {
-                final baseDatos = await DatabaseHelper.proyectodb();
 
-                await baseDatos.update(
-                  "clientes",
-                  {campoACambiar: controllerCampoACambiar.text},
-                  where: "id = ?",
-                  whereArgs: [idCliente],
-                );
-
-                controllerCampoACambiar.clear();
-
-                cargarDatosCliente(idCliente);
-
-                Navigator.pop(context);
+              validator: (value) {
+                // Si es email permitimos vacío
+                if (campoACambiar == "email") {
+                  if (value != null && value.isNotEmpty) {
+                    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                    if (!emailRegex.hasMatch(value)) {
+                      return "Email no válido";
+                    }
+                  }
+                  return null;
+                }
+                // Para el resto de campos no permitimos vacío
+                if (value == null || value.trim().isEmpty) {
+                  return "Este campo no puede estar vacío";
+                }
+                return null;
               },
-              child: const Text("GUARDAR CAMBIOS"),
             ),
-          ),
-        ],
+            const SizedBox(height: 25),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+
+                onPressed: () async {
+                  // Validar formulario
+                  if (!formKey.currentState!.validate()) {
+                    return;
+                  }
+                  await actualizarCliente(
+                    idCliente,
+                    {campoACambiar: controllerCampoACambiar.text},
+                  );
+                  controllerCampoACambiar.clear();
+                  cargarDatosCliente(idCliente);
+                  Navigator.pop(context);
+                },
+                child: const Text("GUARDAR CAMBIOS"),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -129,7 +129,6 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                         Row(
                           children: [
                             Expanded(child: _infoRow(Icons.calendar_today, "Fecha de inicio", _fechaInicioControler)),
-
                             IconButton(
                               onPressed: () {
                                 _ventanaCambioFecha("fecha_inicio", _fechaInicioControler);
@@ -142,7 +141,6 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                         Row(
                           children: [
                             Expanded(child: _infoRow(Icons.event_busy, "Fecha limite", _fechaLimiteControler)),
-
                             IconButton(
                               onPressed: () {
                                 _ventanaCambioFecha("fecha_fin", _fechaLimiteControler);
@@ -155,7 +153,6 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                         Row(
                           children: [
                             Expanded(child: _infoRow(Icons.event_available, "Fecha entrega", _fechaDevoControler)),
-
                             IconButton(
                               onPressed: () {
                                 _ventanaCambioFecha("fecha_devolucion", _fechaDevoControler);
@@ -168,10 +165,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                         // estado de la devolución
                         Row(
                           children: [
-                            Expanded(
-                              child: _infoRowEstado(Icons.info_outline, "Estado de la devolucion", _estadoActual),
-                            ),
-
+                            Expanded(child: _infoRowEstado(Icons.info_outline, "Estado de la devolucion", _estadoActual)),
                             IconButton(
                               onPressed: () {
                                 showDialog(
