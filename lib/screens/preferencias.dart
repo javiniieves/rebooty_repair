@@ -44,30 +44,95 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                     context: context,
                     builder: (context) {
                       return AlertDialog(
-                        title: Text("¿Estás seguro de que quiere borrar TODOS los registros de la base de datos?"),
+                        backgroundColor: Colors.black,
+                        title: Text(
+                          "¿Estás seguro de que quiere borrar TODOS los registros de la base de datos?",
+                          style: TextStyle(color: Colors.white),
+                        ),
 
                         content: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             ElevatedButton.icon(
-                              onPressed: () async {
-                                await DatabaseHelper.limpiarRegistrosBaseDatos();
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return AlertDialog(
+                                      backgroundColor: Colors.red,
 
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Registros de la base de datos borrados con éxito")),
+                                      title: Text(
+                                        "Está apunto de ELIMINAR para SIEMPRE la base de datos ¿Está seguro de que quiere eliminarla?)",
+                                        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                                      ),
+
+                                      content: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          ElevatedButton.icon(
+                                            onPressed: () async {
+                                              await DatabaseHelper.limpiarRegistrosBaseDatos();
+
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text("Registros de la base de datos borrados con éxito"),
+                                                ),
+                                              );
+
+                                              Navigator.pop(context);
+                                            },
+                                            label: Row(
+                                              children: [
+                                                Icon(Icons.delete_forever, color: Colors.white),
+                                                Text(
+                                                  "Si, eliminar para siempre",
+                                                  style: TextStyle(color: Colors.white),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+
+                                          SizedBox(width: 40,),
+
+                                          ElevatedButton.icon(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            label: Row(
+                                              children: [
+                                                Icon(Icons.back_hand, color: Colors.white),
+                                                Text("No borrar y volver atrás", style: TextStyle(color: Colors.white)),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 );
-
-                                Navigator.pop(context);
                               },
-                              label: Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                              label: Row(
+                                children: [
+                                  Icon(Icons.check, color: Colors.red),
+                                  Text("Confirmar", style: TextStyle(color: Colors.red)),
+                                ],
+                              ),
                             ),
+
+                            SizedBox(width: 50),
 
                             ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.pop(context);
                               },
-                              label: Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                              label: Row(
+                                children: [
+                                  Icon(Icons.cancel_outlined, color: Colors.white),
+                                  Text("Cancelar", style: TextStyle(color: Colors.white)),
+                                ],
+                              ),
                             ),
                           ],
                         ),
