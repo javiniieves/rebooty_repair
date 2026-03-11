@@ -106,7 +106,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 items: listaVehiculos.map((vehiculo) {
                   return DropdownMenuItem(
                     value: vehiculo["id"].toString(), // lo que se guarda
-                    child: Text("${vehiculo["matricula"]} - ${vehiculo["marca"]} ${vehiculo["modelo"]}", // lo que se muestra
+                    child: Text("${vehiculo["matricula"]} - ${vehiculo["marca"]} - ${vehiculo["modelo"]} - ${vehiculo["anyo"]}", // lo que se muestra
                       style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                     ),
                   );
