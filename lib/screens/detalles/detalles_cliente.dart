@@ -21,6 +21,7 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
   String _tipoDocumento = "DNI";
 
   late int idCliente;
+  late bool confirmar;
 
   @override
   void didChangeDependencies() {
@@ -257,9 +258,11 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                   }
                 }
 
+                confirmar = await confirmacion();
+                if (!confirmar) return Navigator.pop(context);
+
                 // Si ha pasado los filtros, guardamos
                 final baseDatos = await DatabaseHelper.proyectodb();
-
                 await baseDatos.update(
                   "clientes",
                   {"tipo_documento": _tipoDocumento, "documento_oficial": valor},
@@ -280,7 +283,6 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
   }
 
   Widget _ventanaCambio(int idCliente, String campoACambiar, TextEditingController controllerCampoACambiar) {
-
     final formKey = GlobalKey<FormState>();
 
     return AlertDialog(
@@ -292,7 +294,6 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-
             const Text("Introduce el nuevo valor para el campo:"),
 
             const SizedBox(height: 15),
@@ -334,14 +335,15 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                 ),
 
                 onPressed: () async {
+
+                  confirmar = await confirmacion();
+                  if (!confirmar) return Navigator.pop(context);
+
                   // Validar formulario
                   if (!formKey.currentState!.validate()) {
                     return;
                   }
-                  await actualizarCliente(
-                    idCliente,
-                    {campoACambiar: controllerCampoACambiar.text},
-                  );
+                  await actualizarCliente(idCliente, {campoACambiar: controllerCampoACambiar.text});
                   controllerCampoACambiar.clear();
                   cargarDatosCliente(idCliente);
                   Navigator.pop(context);
@@ -353,5 +355,29 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
         ),
       ),
     );
+  }
+
+  Future<bool> confirmacion() async {
+     confirmar =
+        await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text("Confirmar cambio"),
+              content: const Text("¿Seguro que quieres actualizar el precio?"),
+              actions: [
+                TextButton(
+                  child: const Text("Cancelar"),
+                  onPressed: () {Navigator.pop(context, false);},
+                ),
+                ElevatedButton(
+                  child: const Text("Confirmar"),
+                  onPressed: () {Navigator.pop(context, true);},
+                ),
+              ],
+            );
+          },
+        ) ?? false;
+    return confirmar;
   }
 }

@@ -24,6 +24,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   List<Map<String, dynamic>>? listaReparaciones;
 
   late int idVehiculo;
+  late bool confirmar;
 
   @override
   void didChangeDependencies() {
@@ -377,6 +378,9 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
+                  confirmar = await confirmacion();
+                  if (!confirmar) return Navigator.pop(context);
+
                   if (formKey.currentState!.validate()) {
                     // si son numeros lo guardamos como entero
                     dynamic valorAGuardar = soloNumeros ? int.parse(controller.text) : controller.text;
@@ -403,6 +407,9 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
           value: valorActual,
           items: opciones.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
           onChanged: (nuevo) async {
+            confirmar = await confirmacion();
+            if (!confirmar) return Navigator.pop(context);
+
             await actualizarVehiculo(campo, nuevo);
             Navigator.pop(context);
           },
@@ -451,6 +458,9 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
           children: colores.map((colorActual) {
             return GestureDetector(
               onTap: () async {
+                confirmar = await confirmacion();
+                if (!confirmar) return Navigator.pop(context);
+
                 await actualizarVehiculo("color", colorActual.value);
                 Navigator.pop(context);
               },
@@ -460,5 +470,29 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
         ),
       ),
     );
+  }
+
+  Future<bool> confirmacion() async {
+    confirmar =
+        await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text("Confirmar cambio"),
+              content: const Text("¿Seguro que quieres actualizar el precio?"),
+              actions: [
+                TextButton(
+                  child: const Text("Cancelar"),
+                  onPressed: () {Navigator.pop(context, false);},
+                ),
+                ElevatedButton(
+                  child: const Text("Confirmar"),
+                  onPressed: () {Navigator.pop(context, true);},
+                ),
+              ],
+            );
+          },
+        ) ?? false;
+    return confirmar;
   }
 }

@@ -17,6 +17,7 @@ class _DetallesMultaScreenState extends State<DetallesMultaScreen> {
   final TextEditingController _fechaController = TextEditingController();
   final TextEditingController _fechaLimiteController = TextEditingController();
   int _pagadaStatus = 0; // 0 o 1
+  late bool confirmar;
 
   Future<void> cargarMulta(int idMulta) async {
     final baseDatos = await DatabaseHelper.proyectodb();
@@ -264,6 +265,9 @@ class _DetallesMultaScreenState extends State<DetallesMultaScreen> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCELAR")),
           TextButton(
             onPressed: () async {
+              confirmar = await confirmacion();
+              if (!confirmar) return Navigator.pop(context);
+
               final baseDatos = await DatabaseHelper.proyectodb();
               dynamic nuevoValor = tempController.text;
 
@@ -325,6 +329,9 @@ class _DetallesMultaScreenState extends State<DetallesMultaScreen> {
               DropdownMenuItem(value: 1, child: Text("Sí, pagada")),
             ],
             onChanged: (nuevoValor) async {
+              confirmar = await confirmacion();
+              if (!confirmar) return Navigator.pop(context);
+
               final baseDatos = await DatabaseHelper.proyectodb();
               await baseDatos.update("multas", {"pagada": nuevoValor}, where: "id = ?", whereArgs: [multa["id"]]);
 
@@ -338,5 +345,29 @@ class _DetallesMultaScreenState extends State<DetallesMultaScreen> {
         ],
       ),
     );
+  }
+
+  Future<bool> confirmacion() async {
+    confirmar =
+        await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text("Confirmar cambio"),
+              content: const Text("¿Seguro que quieres actualizar estos datos?"),
+              actions: [
+                TextButton(
+                  child: const Text("Cancelar"),
+                  onPressed: () {Navigator.pop(context, false);},
+                ),
+                ElevatedButton(
+                  child: const Text("Confirmar"),
+                  onPressed: () {Navigator.pop(context, true);},
+                ),
+              ],
+            );
+          },
+        ) ?? false;
+    return confirmar;
   }
 }
