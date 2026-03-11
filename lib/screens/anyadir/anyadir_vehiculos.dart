@@ -1,5 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:rebooty_repair/database.dart';
 import 'package:validators/validators.dart';
 
@@ -29,6 +31,8 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
   String combustible = "Gasoil";
 
   DateTime? fechaVencimientoSeguro;
+
+  String? rutaFoto;
 
   @override
   void initState() {
@@ -72,255 +76,63 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
       ),
 
       body: Padding(
-        padding: const EdgeInsets.all(30.0),
+        padding: EdgeInsets.all(30.0),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
             child: Column(
               children: [
-                // introducir matricula
-                TextFormField(
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                  controller: _matriculaController,
-                  decoration: InputDecoration(
-                    labelText: "Matricula",
-                    prefixIcon: const Icon(Icons.badge),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                // Para añadir una foto del coche
+                rutaFoto == null
+                // si aún no ha elegido foto, le damos la opción
+                    ? GestureDetector(
+                  onTap: () => _ventanaAnyadirFoto(),
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    margin: EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_photo_alternate_outlined, size: 50),
+                        SizedBox(height: 10),
+                        Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
+                      ],
+                    ),
                   ),
-                  // Validación de matrícula
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Escribe la matrícula";
-                    }
-
-                    final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZ]{3}$');
-
-                    if (!regex.hasMatch(value.toUpperCase())) {
-                      return "Formato inválido, necesitas exclusivamente 4 numeros y 3 vocales";
-                    }
-
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 20),
-
-                // introducir marca
-                TextFormField(
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                  controller: _marcaController,
-                  decoration: InputDecoration(
-                    labelText: "Marca",
-                    prefixIcon: const Icon(Icons.directions_car),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  // Validación de marca
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Escribe la marca";
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 20),
-
-                // introducir modelo
-                TextFormField(
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                  controller: _modeloController,
-                  decoration: InputDecoration(
-                    labelText: "Modelo",
-                    prefixIcon: const Icon(Icons.model_training),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  // Validación de modelo
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Escribe el modelo";
-                    }
-                    return null;
-                  },
-                ),
-
-                SizedBox(height: 20),
-
-                // Elegir el tipo de combustible
-                DropdownButtonFormField(
-                  value: combustible,
-
-                  decoration: InputDecoration(
-                    labelText: "Combustible",
-                    prefixIcon: Icon(Icons.local_gas_station_outlined),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-
-                  dropdownColor: Theme.of(context).colorScheme.primary,
-
-                  items: ["Diesel", "Gasoil", "Eléctrico", "Biocombustibles etanol y biodiésel", "Híbrido"].map((
-                    combustibleActual,
-                  ) {
-                    return DropdownMenuItem(
-                      value: combustibleActual,
-                      child: Text(combustibleActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
-                    );
-                  }).toList(),
-                  onChanged: (combustibleElegido) {
-                    setState(() {
-                      combustible = combustibleElegido!;
-                    });
-                  },
-                ),
-
-                SizedBox(height: 20),
-
-                // introducir año
-                TextFormField(
-                  keyboardType: TextInputType.number,
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                  controller: _anyoController,
-                  decoration: InputDecoration(
-                    labelText: "Año",
-                    prefixIcon: const Icon(Icons.calendar_month),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  // Validación del año
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Introduce un año";
-                    }
-                    if (!isNumeric(value)) {
-                      return "El año debe ser un valor numérico";
-                    }
-                    return null;
-                  },
-                ),
-
-                SizedBox(height: 20),
-
-                // introducir kilometraje
-                TextFormField(
-                  keyboardType: TextInputType.number,
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                  controller: _kilometrajeController,
-                  decoration: InputDecoration(
-                    labelText: "Kilometraje",
-                    prefixIcon: Icon(Icons.receipt_long),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  // Validación del año
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Introduce un kilometraje";
-                    }
-                    if (!isNumeric(value)) {
-                      return "El kilometraje debe ser un valor numérico";
-                    }
-                    return null;
-                  },
-                ),
-
-                SizedBox(height: 20),
-
-                // elegir fecha de vencimiento del seguro
-                TextFormField(
-                  controller: _fechaController,
-                  keyboardType: TextInputType.number,
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    labelText: "Fecha vencimiento seguro",
-                    prefixIcon: const Icon(Icons.calendar_today),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  onTap: () => seleccionarFecha(),
-                  // Validación de fecha obligatoria
-                  validator: (value) => (value == null || value.isEmpty) ? "Selecciona la fecha de inicio" : null,
-                ),
-
-                SizedBox(height: 20),
-
-                // elegir estado del coche
-                DropdownButtonFormField(
-                  // el valor será la variable que indica el estado actual del coche
-                  value: estadoActual,
-
-                  decoration: InputDecoration(
-                    labelText: "Estado",
-                    prefixIcon: Icon(Icons.info_outline),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  dropdownColor: Theme.of(context).colorScheme.primary,
-                  // el desplegable tiene 3 estado a elegir
-                  // cada uno de esos estados lo mapeamos para crearlo como DropdownMenuItem
-                  // su valor y es el mismo que su texto (ej: "Alquilado", "Taller"...)
-                  items: ["Disponible", "Alquilado", "Taller"].map((estadoActual) {
-                    return DropdownMenuItem(
-                      value: estadoActual,
-                      child: Text(estadoActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
-                    );
-                  }).toList(),
-                  // convertimos a lista porque items nos pide la lista con los valores del DropdownButtonFormField
-
-                  // al pulsar en uno de los desplegables del menú, actualizamos la variable con
-                  // el estado actual del coche para que sea ahora el valor del desplegable pulsado
-                  onChanged: (nuevoEstado) {
-                    setState(() {
-                      estadoActual = nuevoEstado!;
-                    });
-                  },
-                ),
-
-                SizedBox(height: 20),
-
-                // elegir color del vehiculo
-                TextFormField(
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    labelText: "Color del vehiculo",
-                    prefixIcon: const Icon(Icons.palette),
-                    filled: true,
-                    fillColor: Color(colorDelVehiculo),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+                  // si hay foto elegida la mostramos
+                )
+                    : GestureDetector(
                   onTap: () {
-                    // colores a elegir
-                    List<Color> coloresDisponibles = [
-                      Colors.white,
-                      Colors.red,
-                      Colors.blue,
-                      Colors.green,
-                      Colors.orange,
-                      Colors.yellow,
-                      Colors.pink,
-                      Colors.black,
-                      Colors.grey,
-                    ];
                     showDialog(
                       context: context,
                       builder: (context) {
                         return AlertDialog(
-                          title: Text("Elige un color para el coche"),
-
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
+                          title: Text("¿Eliminar imagen?"),
+                          content: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              Wrap(
-                                spacing: 10,
-                                // con .map() recorremos la lista de colores y convetirmos (mapeamos)
-                                // cada elemento (color) a un CircleAvatar con su respectivo color
-                                children: coloresDisponibles.map((colorActual) {
-                                  return GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        colorDelVehiculo = colorActual.value;
-                                        Navigator.pop(context);
-                                      });
-                                    },
-                                    child: CircleAvatar(backgroundColor: colorActual, radius: 10),
-                                  );
-                                }).toList(),
+                              ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    rutaFoto = null;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                child: Text("Eliminar"),
+                              ),
+
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text("Cancelar"),
                               ),
                             ],
                           ),
@@ -328,20 +140,287 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                       },
                     );
                   },
-                  validator: (value) => null,
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    margin: EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: Offset(0, 10)),
+                      ],
+                      image: DecorationImage(image: FileImage(File(rutaFoto!)), fit: BoxFit.cover),
+                    ),
+                  ),
+                ),
+
+                // Matricula y Marca
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        controller: _matriculaController,
+                        decoration: InputDecoration(
+                          labelText: "Matricula",
+                          prefixIcon: const Icon(Icons.badge),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        // Validación de matrícula
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Escribe la matrícula";
+                          }
+                          final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZ]{3}$');
+                          if (!regex.hasMatch(value.toUpperCase())) {
+                            return "4 num y 3 voc"; // Texto más corto para que quepa bien
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: TextFormField(
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        controller: _marcaController,
+                        decoration: InputDecoration(
+                          labelText: "Marca",
+                          prefixIcon: const Icon(Icons.directions_car),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        // Validación de marca
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Escribe la marca";
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // Modelo y Combustible
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        controller: _modeloController,
+                        decoration: InputDecoration(
+                          labelText: "Modelo",
+                          prefixIcon: const Icon(Icons.model_training),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        // Validación de modelo
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Escribe el modelo";
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: DropdownButtonFormField(
+                        value: combustible,
+                        decoration: InputDecoration(
+                          labelText: "Combustible",
+                          prefixIcon: Icon(Icons.local_gas_station_outlined),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        dropdownColor: Theme.of(context).colorScheme.primary,
+                        items: ["Diesel", "Gasoil", "Eléctrico", "Híbrido"].map((combustibleActual) {
+                          return DropdownMenuItem(
+                            value: combustibleActual,
+                            child: Text(combustibleActual,
+                                style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12)),
+                          );
+                        }).toList(),
+                        onChanged: (combustibleElegido) {
+                          setState(() {
+                            combustible = combustibleElegido!;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
                 ),
 
                 SizedBox(height: 20),
 
-                // introducir observaciones
-                TextFormField(
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                  controller: _observacionesController,
-                  decoration: InputDecoration(
-                    labelText: "Observaciones",
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+                // Año y Kilometraje
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        controller: _anyoController,
+                        decoration: InputDecoration(
+                          labelText: "Año",
+                          prefixIcon: const Icon(Icons.calendar_month),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        // Validación del año
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Escribe año";
+                          }
+                          if (!isNumeric(value)) {
+                            return "Solo números";
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: TextFormField(
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        controller: _kilometrajeController,
+                        decoration: InputDecoration(
+                          labelText: "Kilometraje",
+                          prefixIcon: Icon(Icons.receipt_long),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        // Validación del año
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Escribe km";
+                          }
+                          if (!isNumeric(value)) {
+                            return "Solo números";
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 20),
+
+                // Seguro y Estado
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _fechaController,
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: "Seguro",
+                          prefixIcon: const Icon(Icons.calendar_today),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onTap: () => seleccionarFecha(),
+                        // Validación de fecha obligatoria
+                        validator: (value) => (value == null || value.isEmpty) ? "Falta fecha" : null,
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: DropdownButtonFormField(
+                        value: estadoActual,
+                        decoration: InputDecoration(
+                          labelText: "Estado",
+                          prefixIcon: Icon(Icons.info_outline),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        dropdownColor: Theme.of(context).colorScheme.primary,
+                        items: ["Disponible", "Alquilado", "Taller"].map((estadoActual) {
+                          return DropdownMenuItem(
+                            value: estadoActual,
+                            child: Text(estadoActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
+                          );
+                        }).toList(),
+                        onChanged: (nuevoEstado) {
+                          setState(() {
+                            estadoActual = nuevoEstado!;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 20),
+
+                // Color y Observaciones
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: "Color",
+                          prefixIcon: const Icon(Icons.palette),
+                          filled: true,
+                          fillColor: Color(colorDelVehiculo),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onTap: () {
+                          // colores a elegir
+                          List<Color> coloresDisponibles = [
+                            Colors.white, Colors.red, Colors.blue, Colors.green, Colors.orange,
+                            Colors.yellow, Colors.pink, Colors.black, Colors.grey, Colors.purple,
+                          ];
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text("Elige un color"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Wrap(
+                                      spacing: 10,
+                                      runSpacing: 10,
+                                      children: coloresDisponibles.map((colorActual) {
+                                        return GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              colorDelVehiculo = colorActual.value;
+                                              Navigator.pop(context);
+                                            });
+                                          },
+                                          child: CircleAvatar(backgroundColor: colorActual, radius: 15),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: TextFormField(
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        controller: _observacionesController,
+                        decoration: InputDecoration(
+                          labelText: "Notas",
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 50),
@@ -354,6 +433,17 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     onPressed: () async {
                       // Validamos el formulario antes de guardar
                       if (_formKey.currentState!.validate()) {
+
+                        if (rutaFoto == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Debes seleccionar una foto del vehículo"),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return; // detenemos la ejecucion
+                        }
+
                         // guardamos la base de datos
                         final baseDatos = await DatabaseHelper.proyectodb();
 
@@ -369,6 +459,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           "combustible": combustible,
                           "observaciones": _observacionesController.text,
                           "fecha_vencimiento_seguro": _fechaController.text,
+                          "ruta_foto": rutaFoto,
                         });
 
                         _matriculaController.clear();
@@ -419,6 +510,17 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
         String fechaFormateada =
             "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
         _fechaController.text = fechaFormateada;
+      });
+    }
+  }
+
+  Future<void> _ventanaAnyadirFoto() async {
+    final ImagePicker imagePicker = ImagePicker();
+    final XFile? imagen = await imagePicker.pickImage(source: ImageSource.gallery);
+
+    if (imagen != null) {
+      setState(() {
+        rutaFoto = imagen.path;
       });
     }
   }

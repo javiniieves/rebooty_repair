@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:rebooty_repair/database.dart';
+import 'package:image_picker/image_picker.dart';
 
 class DetallesVehiculoScreen extends StatefulWidget {
   const DetallesVehiculoScreen({super.key});
@@ -55,6 +57,16 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     await cargarDatosVehiculo();
   }
 
+  // Función para cambiar la foto
+  Future<void> cambiarFoto() async {
+    final picker = ImagePicker();
+    final XFile? imagen = await picker.pickImage(source: ImageSource.gallery);
+
+    if (imagen != null) {
+      await actualizarVehiculo("ruta_foto", imagen.path);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (vehiculo == null) {
@@ -69,118 +81,151 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
           children: [
             const SizedBox(height: 20),
 
-            Padding(
-              padding: const EdgeInsets.all(20),
-
-              child: Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-
-                  child: Column(
-                    children: [
-                      filaEditable(
-                        Icons.badge,
-                        "Matrícula",
-                        vehiculo!["matricula"],
-                        () => mostrarDialogoTexto("matricula", _matriculaController, esMatricula: true),
-                      ),
-
-                      const Divider(),
-
-                      filaEditable(
-                        Icons.branding_watermark,
-                        "Marca",
-                        vehiculo!["marca"],
-                        () => mostrarDialogoTexto("marca", _marcaController),
-                      ),
-
-                      const Divider(),
-
-                      filaEditable(
-                        Icons.model_training,
-                        "Modelo",
-                        vehiculo!["modelo"],
-                        () => mostrarDialogoTexto("modelo", _modeloController),
-                      ),
-
-                      const Divider(),
-
-                      filaEditable(
-                        Icons.calendar_month,
-                        "Año",
-                        vehiculo!["anyo"].toString(),
-                        () => mostrarDialogoTexto("anyo", _anyoController, soloNumeros: true),
-                      ),
-
-                      const Divider(),
-
-                      filaEditable(
-                        Icons.speed,
-                        "Kilometraje",
-                        "${vehiculo!["kilometraje"]} km",
-                        () => mostrarDialogoTexto("kilometraje", _kilometrajeController, soloNumeros: true),
-                      ),
-
-                      const Divider(),
-
-                      filaEditable(
-                        Icons.local_gas_station,
-                        "Combustible",
-                        vehiculo!["combustible"],
-                        () => mostrarDropdown("combustible", vehiculo!["combustible"], [
-                          "Diesel",
-                          "Gasoil",
-                          "Eléctrico",
-                          "Híbrido",
-                        ]),
-                      ),
-
-                      const Divider(),
-
-                      filaEditable(Icons.security, "Seguro", vehiculo!["fecha_vencimiento_seguro"], seleccionarFecha),
-
-                      const Divider(),
-
-                      filaEditable(
-                        Icons.info_outline,
-                        "Estado",
-                        vehiculo!["estado"],
-                        () => mostrarDropdown("estado", vehiculo!["estado"], ["Disponible", "Alquilado", "Taller"]),
-                      ),
-
-                      const Divider(),
-
-                      filaEditable(
-                        Icons.note,
-                        "Observaciones",
-                        vehiculo!["observaciones"] ?? "Sin observaciones",
-                        () => mostrarDialogoTexto("observaciones", _observacionesController),
-                      ),
-
-                      const Divider(),
-
-                      Row(
-                        children: [
-                          Icon(Icons.palette, color: Color(vehiculo!["color"])),
-
-                          const SizedBox(width: 15),
-
-                          const Expanded(
-                            child: Text("Color del vehículo", style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-
-                          IconButton(icon: const Icon(Icons.edit), onPressed: mostrarSelectorColor),
-                        ],
-                      ),
+            // Mostramos la imagen del coche si existe
+            if (vehiculo!["ruta_foto"] != null)
+              GestureDetector(
+                onTap: cambiarFoto, // Al pulsar, permite editar
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 10)),
                     ],
+                    image: DecorationImage(image: FileImage(File(vehiculo!["ruta_foto"])), fit: BoxFit.cover),
                   ),
                 ),
               ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // BLOQUE IZQUIERDO (CON SU PROPIA CARD)
+                  Expanded(
+                    child: Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                        child: Column(
+                          children: [
+                            filaEditable(
+                              Icons.badge,
+                              "Matrícula",
+                              vehiculo!["matricula"],
+                              () => mostrarDialogoTexto("matricula", _matriculaController, esMatricula: true),
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.model_training,
+                              "Modelo",
+                              vehiculo!["modelo"],
+                              () => mostrarDialogoTexto("modelo", _modeloController),
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.speed,
+                              "Kilometraje",
+                              "${vehiculo!["kilometraje"]} km",
+                              () => mostrarDialogoTexto("kilometraje", _kilometrajeController, soloNumeros: true),
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.security,
+                              "Seguro",
+                              vehiculo!["fecha_vencimiento_seguro"],
+                              seleccionarFecha,
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.note,
+                              "Notas",
+                              vehiculo!["observaciones"] ?? "Sin notas",
+                              () => mostrarDialogoTexto("observaciones", _observacionesController),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 5), // Separación entre las dos Cards
+                  // BLOQUE DERECHO (CON SU PROPIA CARD)
+                  Expanded(
+                    child: Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                        child: Column(
+                          children: [
+                            filaEditable(
+                              Icons.branding_watermark,
+                              "Marca",
+                              vehiculo!["marca"],
+                              () => mostrarDialogoTexto("marca", _marcaController),
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.calendar_month,
+                              "Año",
+                              vehiculo!["anyo"].toString(),
+                              () => mostrarDialogoTexto("anyo", _anyoController, soloNumeros: true),
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.local_gas_station,
+                              "Combustible",
+                              vehiculo!["combustible"],
+                              () => mostrarDropdown("combustible", vehiculo!["combustible"], [
+                                "Diesel",
+                                "Gasoil",
+                                "Eléctrico",
+                                "Híbrido",
+                              ]),
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.info_outline,
+                              "Estado",
+                              vehiculo!["estado"],
+                              () =>
+                                  mostrarDropdown("estado", vehiculo!["estado"], ["Disponible", "Alquilado", "Taller"]),
+                            ),
+                            const Divider(),
+                            // Fila del color
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.palette, color: Color(vehiculo!["color"]), size: 20),
+                                  const SizedBox(width: 10), // Espacio entre icono y texto
+                                  const Expanded(
+                                    child: Text("Color", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                  ),
+                                  SizedBox(
+                                    width: 30,
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      icon: const Icon(Icons.edit, size: 16),
+                                      onPressed: mostrarSelectorColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 10),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -206,7 +251,6 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
 
             SizedBox(
               height: 130,
-
               child: listaReparaciones == null || listaReparaciones!.isEmpty
                   ? const Center(child: Text("No hay reparaciones"))
                   : ListView.builder(
@@ -245,21 +289,32 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   }
 
   Widget filaEditable(IconData icono, String titulo, String valor, VoidCallback onEdit) {
-    return Row(
-      children: [
-        Icon(icono),
-        const SizedBox(width: 15),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(titulo),
-              Text(valor, style: const TextStyle(fontWeight: FontWeight.bold)),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icono, size: 20), // Icono un poco más grande
+          const SizedBox(width: 10), // Más espacio entre icono y texto
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(titulo, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                Text(
+                  valor,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), // Texto más grande
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-        ),
-        IconButton(icon: const Icon(Icons.edit), onPressed: onEdit),
-      ],
+          SizedBox(
+            width: 30,
+            child: IconButton(padding: EdgeInsets.zero, icon: const Icon(Icons.edit, size: 16), onPressed: onEdit),
+          ),
+        ],
+      ),
     );
   }
 
@@ -356,6 +411,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
       Colors.pink,
       Colors.black,
       Colors.grey,
+      Colors.purple,
     ];
 
     showDialog(
@@ -365,13 +421,13 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
         content: Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: colores.map((c) {
+          children: colores.map((colorActual) {
             return GestureDetector(
               onTap: () async {
-                await actualizarVehiculo("color", c.value);
+                await actualizarVehiculo("color", colorActual.value);
                 Navigator.pop(context);
               },
-              child: CircleAvatar(backgroundColor: c),
+              child: CircleAvatar(backgroundColor: colorActual),
             );
           }).toList(),
         ),
