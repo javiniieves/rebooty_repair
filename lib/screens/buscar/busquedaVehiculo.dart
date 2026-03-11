@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../database.dart';
@@ -100,7 +102,7 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                     itemBuilder: (context, index) {
                       Map<String, dynamic>? vehiculo = vehiculosFiltrados[index];
                       return ListTile(
-                        leading: const Icon(Icons.directions_car_filled),
+                        leading: Image(image: FileImage(File(vehiculo["ruta_foto"]))),
                         title: Text(vehiculo['matricula'] ?? 'Sin matricula'),
                         subtitle: Text(vehiculo['estado'] ?? 'Sin estado'),
                         onTap: () async {
