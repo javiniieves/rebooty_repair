@@ -12,6 +12,7 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
   Map<String, dynamic> vehiculoReparado = {};
   Map<String, dynamic> reparacion = {};
   late int idReparacion;
+  late bool confirmar;
 
   final _descripcionController = TextEditingController();
   final _costeController = TextEditingController();
@@ -184,8 +185,10 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
-                await actualizarCampo(campoACambiar, controller.text);
+                confirmar = await confirmacion();
+                if (!confirmar) return Navigator.pop(context);
 
+                await actualizarCampo(campoACambiar, controller.text);
                 controller.clear();
                 Navigator.pop(context);
               },
@@ -218,5 +221,29 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
     final db = await DatabaseHelper.proyectodb();
     await db.update("reparaciones", {campo: valor}, where: "id = ?", whereArgs: [idReparacion]);
     await cargarDatosReparacion();
+  }
+
+  Future<bool> confirmacion() async {
+    confirmar =
+        await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text("Confirmar cambio"),
+              content: const Text("¿Seguro que quieres actualizar el precio?"),
+              actions: [
+                TextButton(
+                  child: const Text("Cancelar"),
+                  onPressed: () {Navigator.pop(context, false);},
+                ),
+                ElevatedButton(
+                  child: const Text("Confirmar"),
+                  onPressed: () {Navigator.pop(context, true);},
+                ),
+              ],
+            );
+          },
+        ) ?? false;
+    return confirmar;
   }
 }

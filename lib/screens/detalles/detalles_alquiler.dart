@@ -19,6 +19,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   List<Map<String, dynamic>> fotos = [];
   List<Map<String, dynamic>> multas = [];
 
+  late bool confirmar;
+
   TextEditingController _fechaInicioControler = TextEditingController();
   TextEditingController _fechaLimiteControler = TextEditingController();
   TextEditingController _fechaDevoControler = TextEditingController();
@@ -505,12 +507,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     );
     if (fechaElegida != null) {
       // Guardamos la fecha y la formateamos para el texto (Año-Mes-Día)
-      String fechaFormateada =
-          "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+      String fechaFormateada = "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 
       final baseDatos = await DatabaseHelper.proyectodb();
-
-      // cambiamos la fecha (inicio o fin) del alquiler del que estamos mostrando los detalles
       await baseDatos.update(
         "alquileres",
         {nombreCampo: fechaFormateada, "estado": "Terminado"},
@@ -562,8 +561,10 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                   child: const Text("Guardar cambios"),
 
                   onPressed: () async {
-                    final db = await DatabaseHelper.proyectodb();
+                    confirmar = await confirmacion();
+                    if (!confirmar) return Navigator.pop(context);
 
+                    final db = await DatabaseHelper.proyectodb();
                     await db.update(
                       "alquileres",
                       {"precio": double.parse(nuevoPrecio.text)},
@@ -614,9 +615,10 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
             // al pulsar en uno de los desplegables del menú, actualizamos la variable con
             // el estado actual del coche para que sea ahora el valor del desplegable pulsado
             onChanged: (nuevoEstado) async {
-              final baseDatos = await DatabaseHelper.proyectodb();
+              confirmar = await confirmacion();
+              if (!confirmar) return Navigator.pop(context);
 
-              // cambiamos el estado del alquiler del que estamos mostrando los detalles
+              final baseDatos = await DatabaseHelper.proyectodb();
               await baseDatos.update(
                 "alquileres",
                 {"estado": nuevoEstado},
@@ -648,5 +650,29 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
       cargarFotos(alquiler["id"]);
     }
+  }
+
+  Future<bool> confirmacion() async {
+    confirmar =
+        await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text("Confirmar cambio"),
+              content: const Text("¿Seguro que quieres actualizar estos datos?"),
+              actions: [
+                TextButton(
+                  child: const Text("Cancelar"),
+                  onPressed: () {Navigator.pop(context, false);},
+                ),
+                ElevatedButton(
+                  child: const Text("Confirmar"),
+                  onPressed: () {Navigator.pop(context, true);},
+                ),
+              ],
+            );
+          },
+        ) ?? false;
+    return confirmar;
   }
 }
