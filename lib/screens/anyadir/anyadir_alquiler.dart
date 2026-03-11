@@ -14,8 +14,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   String? _idClienteSeleccionado;
   String? _idVehiculoSeleccionado;
 
-  List<String> listaIdsClientes = [];
-  List<String> listaIdsVehiculos = [];
+  List<Map<String, dynamic>> listaClientes = [];
+  List<Map<String, dynamic>> listaVehiculos = [];
 
   final _precioController = TextEditingController();
 
@@ -27,25 +27,20 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   String estadoActual = "Pendiente";
 
   Future<void> cargarIdsClientes() async {
-    final baseDatos = await DatabaseHelper.proyectodb();
+    final db = await DatabaseHelper.proyectodb();
 
-    final List<Map<String, dynamic>> clientes = await baseDatos.query("clientes");
+    final clientes = await db.query("clientes");
 
-    // convertimos cada cliente a un String con su dni
-    // una vez todos convertidos, actualizamos la lista con los id de los clientes
     setState(() {
-      listaIdsClientes = clientes.map((clienteActual) => clienteActual["id"].toString()).toList();
+      listaClientes = clientes;
     });
   }
 
   Future<void> cargarIdsVehiculos() async {
-    // vehículos disponibles
-    final List<Map<String, dynamic>> vehiculos = await DatabaseHelper.obtenerVehiculosDisponibles();
+    final vehiculos = await DatabaseHelper.obtenerVehiculosDisponibles();
 
-    // convertimos cada cliente a un String con su dni
-    // una vez todos convertidos, actualizamos la lista con los id de los clientes
     setState(() {
-      listaIdsVehiculos = vehiculos.map((vehiculoActual) => vehiculoActual["id"].toString()).toList();
+      listaVehiculos = vehiculos;
     });
   }
 
@@ -75,13 +70,18 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
               DropdownButtonFormField(
                 value: _idClienteSeleccionado,
                 decoration: InputDecoration(
-                  labelText: "Id del cliente",
+                  labelText: "DNI del cliente",
                   prefixIcon: const Icon(Icons.person_search),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 dropdownColor: Theme.of(context).colorScheme.primary,
-                items: listaIdsClientes.map((idActual) {
-                  return DropdownMenuItem(value: idActual, child: Text(idActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)));
+                items: listaClientes.map((cliente) {
+                  return DropdownMenuItem(
+                    value: cliente["id"].toString(), // lo que se guarda
+                    child: Text( "${cliente["documento_oficial"]} - ${cliente["nombre"]}",// lo que se muestra
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                    ),
+                  );
                 }).toList(),
                 onChanged: (nuevoId) {
                   setState(() {
@@ -98,13 +98,18 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
               DropdownButtonFormField(
                 value: _idVehiculoSeleccionado,
                 decoration: InputDecoration(
-                  labelText: "Id del vehículo",
+                  labelText: "Matrícula del vehículo",
                   prefixIcon: const Icon(Icons.car_rental),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 dropdownColor: Theme.of(context).colorScheme.primary,
-                items: listaIdsVehiculos.map((idActual) {
-                  return DropdownMenuItem(value: idActual, child: Text(idActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)));
+                items: listaVehiculos.map((vehiculo) {
+                  return DropdownMenuItem(
+                    value: vehiculo["id"].toString(), // lo que se guarda
+                    child: Text("${vehiculo["matricula"]} - ${vehiculo["marca"]}, ${vehiculo["modelo"]}", // lo que se muestra
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                    ),
+                  );
                 }).toList(),
                 onChanged: (nuevoId) {
                   setState(() {
@@ -212,7 +217,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 items: ["Pendiente", "En proceso", "Terminado"].map((estadoActual) {
                   return DropdownMenuItem(
                     value: estadoActual,
-                    child: Text(estadoActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary),),
+                    child: Text(estadoActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
                   );
                 }).toList(),
                 // convertimos a lista porque items nos pide la lista con los valores del DropdownButtonFormField
@@ -259,21 +264,18 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       _precioController.clear();
 
                       // Aviso de éxito
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(const SnackBar(content: Text("Alquiler guardado correctamente")));
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text("Alquiler guardado correctamente")));
 
-                        // Volvemos atrás después de guardar
-                        Navigator.pop(context);
+                      // Volvemos atrás después de guardar
+                      Navigator.pop(context);
                     }
                   },
                   icon: const Icon(Icons.save),
                   label: const Text("GUARDAR ALQUILER"),
                   style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               ),
@@ -304,7 +306,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     if (fechaElegida != null) {
       setState(() {
         // Guardamos la fecha y la formateamos para el texto (Año-Mes-Día)
-        String fechaFormateada = "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+        String fechaFormateada =
+            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 
         if (esInicio) {
           fechaInicio = fechaElegida;
