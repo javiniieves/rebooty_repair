@@ -318,6 +318,13 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                   }
                   return null;
                 }
+                if (campoACambiar == "telefono") {
+                  if (value != null && value.isNotEmpty) {
+                    if (!RegExp(r'^\d+$').hasMatch(value)) {
+                      return "Solo números";
+                    }
+                  }
+                }
                 // Para el resto de campos no permitimos vacío
                 if (value == null || value.trim().isEmpty) {
                   return "Este campo no puede estar vacío";
