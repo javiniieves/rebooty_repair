@@ -22,6 +22,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   TextEditingController _fechaInicioControler = TextEditingController();
   TextEditingController _fechaLimiteControler = TextEditingController();
   TextEditingController _fechaDevoControler = TextEditingController();
+  TextEditingController _precioController = TextEditingController();
   final TextEditingController _clienteNombreController = TextEditingController();
   final TextEditingController _cocheMatriculaController = TextEditingController();
   String _estadoActual = "";
@@ -36,6 +37,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
       _fechaInicioControler = TextEditingController(text: alquiler['fecha_inicio']);
       _fechaLimiteControler = TextEditingController(text: alquiler['fecha_fin']);
       _fechaDevoControler = TextEditingController(text: alquiler['fecha_devolucion'] ?? "");
+      _precioController = TextEditingController(text: alquiler['precio'].toString());
       _estadoActual = alquiler['estado'];
     });
 
@@ -164,6 +166,18 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                         const Divider(height: 40),
                         Row(
                           children: [
+                            Expanded(child: _infoRow(Icons.euro, "Precio", _precioController)),
+                            IconButton(
+                              onPressed: () {
+                                _ventanaCambioPrecio();
+                              },
+                              icon: const Icon(Icons.edit),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 40),
+                        Row(
+                          children: [
                             Expanded(child: _infoRow(Icons.event_available, "Fecha entrega", _fechaDevoControler)),
                             IconButton(
                               onPressed: () {
@@ -177,7 +191,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                         // estado de la devolución
                         Row(
                           children: [
-                            Expanded(child: _infoRowEstado(Icons.info_outline, "Estado de la devolucion", _estadoActual)),
+                            Expanded(
+                              child: _infoRowEstado(Icons.info_outline, "Estado de la devolucion", _estadoActual),
+                            ),
                             IconButton(
                               onPressed: () {
                                 showDialog(
@@ -345,7 +361,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                           onTap: () async {
                             // Navegamos a la pantalla de añadir multa pasando el id del alquiler
                             await Navigator.pushNamed(context, "añadir_multa", arguments: alquiler["id"]);
-                            cargarMultas(alquiler["id"]); // Recargamos las multas al volver por si se ha añdadido nuevas
+                            cargarMultas(
+                              alquiler["id"],
+                            ); // Recargamos las multas al volver por si se ha añdadido nuevas
                           },
                           child: Container(
                             width: 200,
@@ -383,25 +401,34 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 5))],
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: multaActual["pagada"] == 1 ? Colors.green : Colors.red,
-                                  size: 40
+                                Icons.warning_amber_rounded,
+                                color: multaActual["pagada"] == 1 ? Colors.green : Colors.red,
+                                size: 40,
                               ),
                               const SizedBox(height: 10),
                               Text(
-                                  multaActual["descripcion"],
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontWeight: FontWeight.bold)
+                                multaActual["descripcion"],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 5),
-                              Text("${multaActual["precio"]} €", style: const TextStyle(fontSize: 18, color: Colors.deepPurple)),
+                              Text(
+                                "${multaActual["precio"]} €",
+                                style: const TextStyle(fontSize: 18, color: Colors.deepPurple),
+                              ),
                             ],
                           ),
                         ),
@@ -502,6 +529,59 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
       // Actualizamos los datos tras el cambio
       cargarAlquiler(alquiler["id"]);
     }
+  }
+
+  Future<void> _ventanaCambioPrecio() async {
+    TextEditingController nuevoPrecio = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+
+          title: const Text("Actualizar precio"),
+
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: nuevoPrecio,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Nuevo precio",
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  child: const Text("Guardar cambios"),
+
+                  onPressed: () async {
+                    final db = await DatabaseHelper.proyectodb();
+
+                    await db.update(
+                      "alquileres",
+                      {"precio": double.parse(nuevoPrecio.text)},
+                      where: "id = ?",
+                      whereArgs: [alquiler["id"]],
+                    );
+
+                    Navigator.pop(context);
+
+                    cargarAlquiler(alquiler["id"]);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _ventanaCambioEstado(String campoACambiar, String estadoActual) {
