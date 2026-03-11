@@ -19,6 +19,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   final _observacionesController = TextEditingController();
   final _itvController = TextEditingController();
   final _combustibleController = TextEditingController();
+  final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZQ]{3}$');
 
   Map<String, dynamic>? vehiculo;
   List<Map<String, dynamic>>? listaReparaciones;
@@ -364,6 +365,9 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                   }
                   if (soloNumeros && !RegExp(r'^\d+$').hasMatch(value)) {
                     return "Solo números";
+                  }
+                  if(esMatricula && !regex.hasMatch(value.toUpperCase())){
+                    return "4 números y 3 consonantes";
                   }
                   // validacion de lineas de combustible
                   if (esCombustible) {
