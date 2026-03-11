@@ -659,7 +659,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
           builder: (context) {
             return AlertDialog(
               title: const Text("Confirmar cambio"),
-              content: const Text("¿Seguro que quieres actualizar estos datos?"),
+              content: const Text("¿Seguro que quieres actualizar los datos?"),
               actions: [
                 TextButton(
                   child: const Text("Cancelar"),

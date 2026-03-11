@@ -371,7 +371,7 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
           builder: (context) {
             return AlertDialog(
               title: const Text("Confirmar cambio"),
-              content: const Text("¿Seguro que quieres actualizar el precio?"),
+              content: const Text("¿Seguro que quieres actualizar los datos?"),
               actions: [
                 TextButton(
                   child: const Text("Cancelar"),
