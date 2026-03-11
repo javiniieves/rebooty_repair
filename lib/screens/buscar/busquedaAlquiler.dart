@@ -11,17 +11,51 @@ class PantallaBusquedaAlquiler extends StatefulWidget {
 
 class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
   late TextEditingController _idController;
+  DateTime? fechaInicio;
+  DateTime? fechaFin;
 
   Future<List<Map<String, dynamic>>> cargarAlquileres() async {
-    final baseDatos = await DatabaseHelper.proyectodb();
-
-    final alquileres = await baseDatos.rawQuery('''
+    final db = await DatabaseHelper.proyectodb();
+    String query = '''
     SELECT alquileres.*, vehiculos.matricula
     FROM alquileres
     INNER JOIN vehiculos
     ON alquileres.id_coche = vehiculos.id
-    ''');
-    return alquileres;
+    ''';
+
+    List<dynamic> args = [];
+
+    if (fechaInicio != null && fechaFin != null) {
+      query += " WHERE fecha_inicio BETWEEN ? AND ?";
+      args.add(fechaInicio!.toIso8601String().split('T')[0]);
+      args.add(fechaFin!.toIso8601String().split('T')[0]);
+    }
+    return await db.rawQuery(query, args);
+  }
+
+  Future<void> seleccionarFecha(bool esInicio) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked == null) return;
+
+    setState(() {
+      if (esInicio) {
+        fechaInicio = picked;
+      } else {
+        fechaFin = picked;
+      }
+    });
+  }
+
+  String formatearFecha(DateTime? fecha) {
+    if (fecha == null) return "Seleccionar fecha";
+
+    return fecha.toIso8601String().split('T')[0];
   }
 
   @override
@@ -72,6 +106,26 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                     setState(() {});
                   },
                   child: const Text('Buscar'),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 30),
+
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => seleccionarFecha(true),
+                    child: Text(fechaInicio == null ? "Fecha inicio" : formatearFecha(fechaInicio)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => seleccionarFecha(false),
+                    child: Text(fechaFin == null ? "Fecha fin" : formatearFecha(fechaFin)),
+                  ),
                 ),
               ],
             ),
