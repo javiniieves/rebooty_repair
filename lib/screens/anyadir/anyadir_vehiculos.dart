@@ -23,6 +23,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
   late TextEditingController _observacionesController;
   late TextEditingController _fechaController;
 
+  // nuevos controladores
+  late TextEditingController _itvController;
+  late TextEditingController _combustibleCantidadController;
+
   // estado por defecto al añadir un coche
   String estadoActual = "Disponible";
 
@@ -44,6 +48,9 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     _anyoController = TextEditingController();
     _observacionesController = TextEditingController();
     _fechaController = TextEditingController();
+    // inicializamos los nuevos
+    _itvController = TextEditingController();
+    _combustibleCantidadController = TextEditingController();
 
     _formKey = GlobalKey<FormState>();
   }
@@ -57,6 +64,9 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     _anyoController.dispose();
     _observacionesController.dispose();
     _fechaController.dispose();
+    // liberamos los nuevos
+    _itvController.dispose();
+    _combustibleCantidadController.dispose();
 
     super.dispose();
   }
@@ -84,75 +94,75 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
               children: [
                 // Para añadir una foto del coche
                 rutaFoto == null
-                // si aún no ha elegido foto, le damos la opción
+                    // si aún no ha elegido foto, le damos la opción
                     ? GestureDetector(
-                  onTap: () => _ventanaAnyadirFoto(),
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    margin: EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_photo_alternate_outlined, size: 50),
-                        SizedBox(height: 10),
-                        Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
-                  // si hay foto elegida la mostramos
-                )
-                    : GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: Text("¿Eliminar imagen?"),
-                          content: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        onTap: () => _ventanaAnyadirFoto(),
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          margin: EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    rutaFoto = null;
-                                  });
-                                  Navigator.pop(context);
-                                },
-                                child: Text("Eliminar"),
-                              ),
-
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Text("Cancelar"),
-                              ),
+                              Icon(Icons.add_photo_alternate_outlined, size: 50),
+                              SizedBox(height: 10),
+                              Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
                             ],
                           ),
-                        );
-                      },
-                    );
-                  },
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    margin: EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: Offset(0, 10)),
-                      ],
-                      image: DecorationImage(image: FileImage(File(rutaFoto!)), fit: BoxFit.cover),
-                    ),
-                  ),
-                ),
+                        ),
+                        // si hay foto elegida la mostramos
+                      )
+                    : GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text("¿Eliminar imagen?"),
+                                content: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          rutaFoto = null;
+                                        });
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text("Eliminar"),
+                                    ),
+
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text("Cancelar"),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          margin: EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: Offset(0, 10)),
+                            ],
+                            image: DecorationImage(image: FileImage(File(rutaFoto!)), fit: BoxFit.cover),
+                          ),
+                        ),
+                      ),
 
                 // Matricula y Marca
                 Row(
@@ -172,9 +182,9 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           if (value == null || value.isEmpty) {
                             return "Escribe la matrícula";
                           }
-                          final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZ]{3}$');
+                          final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZQ]{3}$');
                           if (!regex.hasMatch(value.toUpperCase())) {
-                            return "4 num y 3 voc"; // Texto más corto para que quepa bien
+                            return "4 números y 3 consonantes";
                           }
                           return null;
                         },
@@ -239,8 +249,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                         items: ["Diesel", "Gasoil", "Eléctrico", "Híbrido"].map((combustibleActual) {
                           return DropdownMenuItem(
                             value: combustibleActual,
-                            child: Text(combustibleActual,
-                                style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12)),
+                            child: Text(
+                              combustibleActual,
+                              style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+                            ),
                           );
                         }).toList(),
                         onChanged: (combustibleElegido) {
@@ -272,10 +284,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                         // Validación del año
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return "Escribe año";
+                            return "Escribe el año";
                           }
                           if (!isNumeric(value)) {
-                            return "Solo números";
+                            return "Solo se pueden números";
                           }
                           return null;
                         },
@@ -295,10 +307,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                         // Validación del año
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return "Escribe km";
+                            return "Escribe los kilómetros del coche";
                           }
                           if (!isNumeric(value)) {
-                            return "Solo números";
+                            return "Solo se pueden números";
                           }
                           return null;
                         },
@@ -319,13 +331,13 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                         style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
                         readOnly: true,
                         decoration: InputDecoration(
-                          labelText: "Seguro",
+                          labelText: "Fecha finalización del seguro",
                           prefixIcon: const Icon(Icons.calendar_today),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        onTap: () => seleccionarFecha(),
+                        onTap: () => seleccionarFecha(_fechaController),
                         // Validación de fecha obligatoria
-                        validator: (value) => (value == null || value.isEmpty) ? "Falta fecha" : null,
+                        validator: (value) => (value == null || value.isEmpty) ? "Introduzca la fecha de finalización del seguro" : null,
                       ),
                     ),
                     const SizedBox(width: 15),
@@ -356,6 +368,63 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
                 SizedBox(height: 20),
 
+                // ITV y Cantidad Combustible
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _itvController,
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: "Próxima ITV",
+                          prefixIcon: const Icon(Icons.fact_check_outlined),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onTap: () => seleccionarFecha(_itvController),
+                        // Validación de fecha
+                        validator: (value) => (value == null || value.isEmpty) ? "Falta la ITV" : null,
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: TextFormField(
+                        keyboardType: TextInputType.number,
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        controller: _combustibleCantidadController,
+                        decoration: InputDecoration(
+                          labelText: "Lineas de combustible",
+                          prefixIcon: Icon(Icons.oil_barrel_outlined),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Introduzca las líneas de combustible";
+                          }
+                          if (!isNumeric(value)) {
+                            return "Solo se permiten números";
+                          }
+
+                          int? valueInt = int.tryParse(value);
+
+                          if (valueInt! < 0) {
+                            return 'No puede tener líneas negativas';
+                          }
+
+                          if (valueInt > 10) {
+                            return 'El máximo son 12 lineas';
+                          }
+
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 20),
+
                 // Color y Observaciones
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,8 +443,16 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                         onTap: () {
                           // colores a elegir
                           List<Color> coloresDisponibles = [
-                            Colors.white, Colors.red, Colors.blue, Colors.green, Colors.orange,
-                            Colors.yellow, Colors.pink, Colors.black, Colors.grey, Colors.purple,
+                            Colors.white,
+                            Colors.red,
+                            Colors.blue,
+                            Colors.green,
+                            Colors.orange,
+                            Colors.yellow,
+                            Colors.pink,
+                            Colors.black,
+                            Colors.grey,
+                            Colors.purple,
                           ];
                           showDialog(
                             context: context,
@@ -433,7 +510,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     onPressed: () async {
                       // Validamos el formulario antes de guardar
                       if (_formKey.currentState!.validate()) {
-
                         if (rutaFoto == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -441,7 +517,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                               backgroundColor: Colors.red,
                             ),
                           );
-                          return; // detenemos la ejecucion
+                          return;
                         }
 
                         // guardamos la base de datos
@@ -459,6 +535,8 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           "combustible": combustible,
                           "observaciones": _observacionesController.text,
                           "fecha_vencimiento_seguro": _fechaController.text,
+                          "fecha_proxima_itv": _itvController.text,
+                          "cantidad_combustible": int.parse(_combustibleCantidadController.text),
                           "ruta_foto": rutaFoto,
                         });
 
@@ -468,6 +546,8 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                         _observacionesController.clear();
                         _kilometrajeController.clear();
                         _anyoController.clear();
+                        _itvController.clear();
+                        _combustibleCantidadController.clear();
 
                         ScaffoldMessenger.of(
                           context,
@@ -491,8 +571,8 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     );
   }
 
-  /// metodo para elegir una fecha
-  Future<void> seleccionarFecha() async {
+  /// metodo para elegir una fecha (ahora recibe un controlador para ser reutilizado)
+  Future<void> seleccionarFecha(TextEditingController controller) async {
     DateTime fechaHoy = DateTime.now();
 
     // dejamos que el usuario elija la fecha y la guardamos esa fecha
@@ -509,7 +589,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
       setState(() {
         String fechaFormateada =
             "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
-        _fechaController.text = fechaFormateada;
+        controller.text = fechaFormateada;
       });
     }
   }

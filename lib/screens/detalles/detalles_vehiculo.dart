@@ -17,6 +17,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   final _kilometrajeController = TextEditingController();
   final _anyoController = TextEditingController();
   final _observacionesController = TextEditingController();
+  final _itvController = TextEditingController();
+  final _combustibleController = TextEditingController();
 
   Map<String, dynamic>? vehiculo;
   List<Map<String, dynamic>>? listaReparaciones;
@@ -84,7 +86,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
             // Mostramos la imagen del coche si existe
             if (vehiculo!["ruta_foto"] != null)
               GestureDetector(
-                onTap: cambiarFoto, // Al pulsar, permite editar
+                onTap: cambiarFoto, // Al pulsar, dejamos editar imaegn
                 child: Container(
                   width: 200,
                   height: 200,
@@ -104,7 +106,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // BLOQUE IZQUIERDO (CON SU PROPIA CARD)
+                  // BLOQUE IZQUIERDO
                   Expanded(
                     child: Card(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -135,9 +137,16 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                             const Divider(),
                             filaEditable(
                               Icons.security,
-                              "Seguro",
+                              "Fecha de caducidad del seguro",
                               vehiculo!["fecha_vencimiento_seguro"],
-                              seleccionarFecha,
+                              () => seleccionarFecha("fecha_vencimiento_seguro"),
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.fact_check_outlined,
+                              "Próxima ITV",
+                              vehiculo!["fecha_proxima_itv"] ?? "Sin fecha",
+                              () => seleccionarFecha("fecha_proxima_itv"),
                             ),
                             const Divider(),
                             filaEditable(
@@ -152,8 +161,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                     ),
                   ),
 
-                  const SizedBox(width: 5), // Separación entre las dos Cards
-                  // BLOQUE DERECHO (CON SU PROPIA CARD)
+                  const SizedBox(width: 5),
+                  // BLOQUE DERECHO
                   Expanded(
                     child: Card(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -175,33 +184,41 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                               () => mostrarDialogoTexto("anyo", _anyoController, soloNumeros: true),
                             ),
                             const Divider(),
+
+                            filaEditable(
+                              Icons.oil_barrel_outlined,
+                              "Líneas de Combustible",
+                              "${vehiculo!["cantidad_combustible"]} líneas",
+                              () => mostrarDialogoTexto(
+                                "cantidad_combustible",
+                                _combustibleController,
+                                soloNumeros: true,
+                                esCombustible: true,
+                              ),
+                            ),
+                            const Divider(),
                             filaEditable(
                               Icons.local_gas_station,
                               "Combustible",
                               vehiculo!["combustible"],
-                              () => mostrarDropdown("combustible", vehiculo!["combustible"], [
-                                "Diesel",
-                                "Gasoil",
-                                "Eléctrico",
-                                "Híbrido",
-                              ]),
+                              () => mostrarDropdown("combustible", vehiculo!["combustible"],
+                                  ["Diesel", "Gasoil", "Eléctrico", "Híbrido",]),
                             ),
                             const Divider(),
                             filaEditable(
                               Icons.info_outline,
                               "Estado",
                               vehiculo!["estado"],
-                              () =>
-                                  mostrarDropdown("estado", vehiculo!["estado"], ["Disponible", "Alquilado", "Taller"]),
+                              () => mostrarDropdown("estado", vehiculo!["estado"], ["Disponible", "Alquilado", "Taller"]),
                             ),
                             const Divider(),
-                            // Fila del color
+
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Row(
                                 children: [
                                   Icon(Icons.palette, color: Color(vehiculo!["color"]), size: 20),
-                                  const SizedBox(width: 10), // Espacio entre icono y texto
+                                  const SizedBox(width: 10),
                                   const Expanded(
                                     child: Text("Color", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                   ),
@@ -225,7 +242,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
               ),
             ),
 
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -293,8 +310,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icono, size: 20), // Icono un poco más grande
-          const SizedBox(width: 10), // Más espacio entre icono y texto
+          Icon(icono, size: 20),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -323,6 +340,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     TextEditingController controller, {
     bool soloNumeros = false,
     bool esMatricula = false,
+    bool esCombustible = false,
   }) {
     final formKey = GlobalKey<FormState>();
 
@@ -346,6 +364,13 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                   if (soloNumeros && !RegExp(r'^\d+$').hasMatch(value)) {
                     return "Solo números";
                   }
+                  // validacion de lineas de combustible
+                  if (esCombustible) {
+                    int? valor = int.tryParse(value);
+                    if (valor == null || valor < 0 || valor > 12) {
+                      return "De 0 a 12 líneas";
+                    }
+                  }
                   return null;
                 },
               ),
@@ -353,7 +378,9 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
               ElevatedButton(
                 onPressed: () async {
                   if (formKey.currentState!.validate()) {
-                    await actualizarVehiculo(campo, controller.text);
+                    // si son numeros lo guardamos como entero
+                    dynamic valorAGuardar = soloNumeros ? int.parse(controller.text) : controller.text;
+                    await actualizarVehiculo(campo, valorAGuardar);
                     controller.clear();
                     Navigator.pop(context);
                   }
@@ -384,7 +411,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     );
   }
 
-  Future<void> seleccionarFecha() async {
+  Future<void> seleccionarFecha(String campo) async {
     final fecha = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -397,7 +424,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     String fechaFormateada =
         "${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}";
 
-    await actualizarVehiculo("fecha_vencimiento_seguro", fechaFormateada);
+    await actualizarVehiculo(campo, fechaFormateada);
   }
 
   void mostrarSelectorColor() {

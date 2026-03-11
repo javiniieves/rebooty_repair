@@ -19,7 +19,8 @@ class DatabaseHelper {
         // tabla vehículos
         await db.execute(
           "CREATE TABLE vehiculos (id INTEGER PRIMARY KEY, matricula TEXT, marca TEXT, modelo TEXT, estado TEXT, "
-          "color INTEGER, kilometraje REAL, anyo INTEGER, combustible TEXT, observaciones TEXT, fecha_vencimiento_seguro TEXT, ruta_foto TEXT)",
+          "color INTEGER, kilometraje REAL, anyo INTEGER, combustible TEXT, observaciones TEXT, fecha_vencimiento_seguro TEXT, "
+              "ruta_foto TEXT, cantidad_combustible INTEGER, fecha_proxima_itv TEXT)",
         );
 
         // tabla reparaciones (se relacione con coche)
