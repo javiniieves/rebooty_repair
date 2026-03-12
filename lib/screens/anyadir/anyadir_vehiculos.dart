@@ -413,7 +413,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                             return 'No puede tener líneas negativas';
                           }
 
-                          if (valueInt > 10) {
+                          if (valueInt > 12) {
                             return 'El máximo son 12 lineas';
                           }
 

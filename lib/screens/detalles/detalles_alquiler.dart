@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:rebooty_repair/database.dart';
 import 'package:image_picker/image_picker.dart';
@@ -34,18 +33,20 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     // guardamos el alquiler con el id recibido
     final alquileresConIdRecibido = await DatabaseHelper.obtenerAlquilerPorId(idAlquiler);
 
-    alquiler = alquileresConIdRecibido.first;
+    if (alquileresConIdRecibido.isNotEmpty) {
+      alquiler = alquileresConIdRecibido.first;
 
-    setState(() {
-      _fechaInicioControler = TextEditingController(text: alquiler['fecha_inicio']);
-      _fechaLimiteControler = TextEditingController(text: alquiler['fecha_fin']);
-      _fechaDevoControler = TextEditingController(text: alquiler['fecha_devolucion'] ?? "");
-      _precioController = TextEditingController(text: alquiler['precio'].toString());
-      _observacionesController = TextEditingController(text: alquiler['observaciones']);
-      _estadoActual = alquiler['estado'];
-    });
+      setState(() {
+        _fechaInicioControler = TextEditingController(text: alquiler['fecha_inicio']);
+        _fechaLimiteControler = TextEditingController(text: alquiler['fecha_fin']);
+        _fechaDevoControler = TextEditingController(text: alquiler['fecha_devolucion'] ?? "");
+        _precioController = TextEditingController(text: alquiler['precio'].toString());
+        _observacionesController = TextEditingController(text: alquiler['observaciones']);
+        _estadoActual = alquiler['estado'];
+      });
 
-    await cargarCocheYCliente(alquiler['id_coche'], alquiler['id_cliente']);
+      await cargarCocheYCliente(alquiler['id_coche'], alquiler['id_cliente']);
+    }
   }
 
   Future<void> cargarCocheYCliente(int idCoche, int idCliente) async {
@@ -64,7 +65,6 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   // metodo para rellenar la variable fotos con los datos de la base de datos asociados al alquiler con el id recibido
   Future<void> cargarFotos(int idAlquiler) async {
     final fotosDelAlquiler = await DatabaseHelper.obtenerFotosPorIdAlquiler(idAlquiler);
-
     setState(() {
       fotos = fotosDelAlquiler;
     });
@@ -73,7 +73,6 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   // metodo para rellenar la variable multas con los datos de la base de datos asociados al alquiler con el id recibido
   Future<void> cargarMultas(int idAlquiler) async {
     final multasDelAlquiler = await DatabaseHelper.obtenerMultasPorIdAlquiler(idAlquiler);
-
     setState(() {
       multas = multasDelAlquiler;
     });
@@ -89,17 +88,131 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     cargarMultas(idAlquiler);
   }
 
+  // Metodo para finalizar el alquiler
+  Future<void> _finalizarAlquiler() async {
+    TextEditingController kilometrosController = TextEditingController(text: coche['kilometraje'].toString());
+    TextEditingController cantidadCombustibleController = TextEditingController(
+      text: coche['cantidad_combustible'].toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Text("Finalizar Alquiler", style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Actualiza los datos del vehículo al recibirlo:", style: TextStyle(color: Colors.white70)),
+              const SizedBox(height: 15),
+              TextField(
+                controller: kilometrosController,
+                keyboardType: TextInputType.number,
+                // Texto que escribe el usuario en blanco
+                style: const TextStyle(color: Colors.white),
+                cursorColor: Colors.white,
+                decoration: InputDecoration(
+                  labelText: "Kilómetros actuales",
+                  // Texto de la etiqueta en blanco
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.white30),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 15),
+              TextField(
+                controller: cantidadCombustibleController,
+                keyboardType: TextInputType.number,
+                // Texto que escribe el usuario en blanco
+                style: const TextStyle(color: Colors.white),
+                cursorColor: Colors.white,
+                decoration: InputDecoration(
+                  labelText: "Nivel de combustible",
+                  // Texto de la etiqueta en blanco
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.white30),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("CANCELAR", style: TextStyle(color: Colors.white60)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              onPressed: () async {
+                // Validaciones de números y valores negativos
+                double? kms = double.tryParse(kilometrosController.text);
+                int? combustible = int.tryParse(cantidadCombustibleController.text);
+
+                if (kms == null || combustible == null) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text("Error: Debes introducir números válidos.")));
+                  return;
+                }
+
+                if (kms < 0 || combustible < 0) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text("Error: Los valores no pueden ser menores a 0.")));
+                  return;
+                }
+
+                DateTime hoy = DateTime.now();
+                String fechaHoy =
+                    "${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}";
+
+                final db = await DatabaseHelper.proyectodb();
+
+                // Marcar alquiler como terminado
+                await db.update(
+                  "alquileres",
+                  {"estado": "Terminado", "fecha_devolucion": fechaHoy},
+                  where: "id = ?",
+                  whereArgs: [alquiler["id"]],
+                );
+
+                // Liberar coche y actualizar sus datos
+                await db.update(
+                  "vehiculos",
+                  {"estado": "Disponible", "kilometraje": kms, "cantidad_combustible": combustible},
+                  where: "id = ?",
+                  whereArgs: [alquiler["id_coche"]],
+                );
+
+                Navigator.pop(context);
+                cargarAlquiler(alquiler["id"]);
+
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text("Alquiler finalizado y vehículo actualizado")));
+              },
+              child: const Text("CONFIRMAR", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         elevation: 2,
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: const Icon(Icons.arrow_back),
-        ),
+        leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back)),
         title: const Text("Detalles del Alquiler"),
         centerTitle: true,
       ),
@@ -107,7 +220,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               // Card con información de los campos del alquiler
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 180),
@@ -119,14 +232,12 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
                     child: Column(
                       children: [
-                        // fecha inicio
                         Row(
                           children: [
                             Expanded(child: _infoRow(Icons.person, "Cliente", _clienteNombreController)),
                             IconButton(
-                              onPressed: () async {
-                                await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente["id"]);
-                              },
+                              onPressed: () async =>
+                                  await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente["id"]),
                               icon: const Icon(Icons.arrow_forward_ios),
                             ),
                           ],
@@ -136,9 +247,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                           children: [
                             Expanded(child: _infoRow(Icons.directions_car, "Coche", _cocheMatriculaController)),
                             IconButton(
-                              onPressed: () async {
-                                await Navigator.pushNamed(context, "detalles_vehiculo", arguments: coche["id"]);
-                              },
+                              onPressed: () async =>
+                                  await Navigator.pushNamed(context, "detalles_vehiculo", arguments: coche["id"]),
                               icon: const Icon(Icons.arrow_forward_ios),
                             ),
                           ],
@@ -148,9 +258,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                           children: [
                             Expanded(child: _infoRow(Icons.calendar_today, "Fecha de inicio", _fechaInicioControler)),
                             IconButton(
-                              onPressed: () {
-                                _ventanaCambioFecha("fecha_inicio", _fechaInicioControler);
-                              },
+                              onPressed: () => _ventanaCambioFecha("fecha_inicio", _fechaInicioControler),
                               icon: const Icon(Icons.edit),
                             ),
                           ],
@@ -160,9 +268,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                           children: [
                             Expanded(child: _infoRow(Icons.event_busy, "Fecha limite", _fechaLimiteControler)),
                             IconButton(
-                              onPressed: () {
-                                _ventanaCambioFecha("fecha_fin", _fechaLimiteControler);
-                              },
+                              onPressed: () => _ventanaCambioFecha("fecha_fin", _fechaLimiteControler),
                               icon: const Icon(Icons.edit),
                             ),
                           ],
@@ -171,28 +277,15 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                         Row(
                           children: [
                             Expanded(child: _infoRow(Icons.euro, "Precio", _precioController)),
-                            IconButton(
-                              onPressed: () {
-                                _ventanaCambioPrecio();
-                              },
-                              icon: const Icon(Icons.edit),
-                            ),
+                            IconButton(onPressed: () => _ventanaCambioPrecio(), icon: const Icon(Icons.edit)),
                           ],
                         ),
                         const Divider(height: 40),
                         Row(
                           children: [
                             Expanded(child: _infoRow(Icons.search, "Observaciones", _observacionesController)),
-                            IconButton(
-                              onPressed: () {
-                                _ventanaCambioObservaciones();
-                              },
-                              icon: const Icon(Icons.edit),
-                            ),
-                            IconButton(
-                              onPressed: mostrarObservaciones,
-                              icon: const Icon(Icons.visibility),
-                            ),
+                            IconButton(onPressed: () => _ventanaCambioObservaciones(), icon: const Icon(Icons.edit)),
+                            IconButton(onPressed: mostrarObservaciones, icon: const Icon(Icons.visibility)),
                           ],
                         ),
                         const Divider(height: 40),
@@ -200,15 +293,12 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                           children: [
                             Expanded(child: _infoRow(Icons.event_available, "Fecha entrega", _fechaDevoControler)),
                             IconButton(
-                              onPressed: () {
-                                _ventanaCambioFecha("fecha_devolucion", _fechaDevoControler);
-                              },
+                              onPressed: () => _ventanaCambioFecha("fecha_devolucion", _fechaDevoControler),
                               icon: const Icon(Icons.edit),
                             ),
                           ],
                         ),
                         const Divider(height: 40),
-                        // estado de la devolución
                         Row(
                           children: [
                             Expanded(
@@ -233,6 +323,34 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
               const SizedBox(height: 50),
 
+              // Botón Finalizar Alquiler (Solo si no está terminado)
+              if (_estadoActual != "Terminado")
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 180.0),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          ),
+                          onPressed: _finalizarAlquiler,
+                          icon: const Icon(Icons.check_circle_outline),
+                          label: const Text(
+                            "FINALIZAR ALQUILER Y LIBERAR COCHE",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 50),
+                    ],
+                  ),
+                ),
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 180.0),
                 child: Row(
@@ -253,10 +371,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                   height: 250,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    // longitud lista de fotos más 1 para que el último elemento sea el botón de añadir
                     itemCount: fotos.length + 1,
                     itemBuilder: (context, index) {
-                      // Si es el último índice, mostramos el botón de añadir
                       if (index == fotos.length) {
                         return GestureDetector(
                           onTap: () => _ventanaAnyadirFoto(),
@@ -280,9 +396,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                           ),
                         );
                       }
-                      // Imagen actual de la lista de fotos
                       return GestureDetector(
-                        // al pulsar mostramos la imagen en grande y la opción de borrar
                         onTap: () {
                           showDialog(
                             context: context,
@@ -293,7 +407,6 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    // envolvemos la imagen en ClipRRect para redondear sus bordes
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(15),
                                       child: Image(
@@ -302,20 +415,16 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                         fit: BoxFit.contain,
                                       ),
                                     ),
-
                                     const SizedBox(height: 25),
-
-                                    // boton borrar foto
                                     ElevatedButton.icon(
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.redAccent,
-                                        foregroundColor: Theme.of(context).colorScheme.primary,
+                                        foregroundColor: Colors.white,
                                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       ),
                                       onPressed: () async {
                                         final baseDatos = await DatabaseHelper.proyectodb();
-                                        // borramos la foto con el id de la foto actual
                                         await baseDatos.delete(
                                           "fotos",
                                           where: "id = ?",
@@ -324,8 +433,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                         cargarFotos(alquiler["id"]);
                                         Navigator.pop(context);
                                       },
-                                      icon: Icon(Icons.delete_forever),
-                                      label: Text("Eliminar Imagen", style: TextStyle(fontSize: 16)),
+                                      icon: const Icon(Icons.delete_forever),
+                                      label: const Text("Eliminar Imagen", style: TextStyle(fontSize: 16)),
                                     ),
                                   ],
                                 ),
@@ -333,14 +442,17 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                             },
                           );
                         },
-
                         child: Container(
                           width: 200,
-                          margin: EdgeInsets.only(right: 20, bottom: 10),
+                          margin: const EdgeInsets.only(right: 20, bottom: 10),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: Offset(0, 10)),
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 10),
+                              ),
                             ],
                             image: DecorationImage(image: FileImage(File(fotos[index]["ruta"])), fit: BoxFit.cover),
                           ),
@@ -350,7 +462,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 60),
+              const SizedBox(height: 60),
 
               // Título sección Multas
               Padding(
@@ -375,15 +487,11 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                     scrollDirection: Axis.horizontal,
                     itemCount: multas.length + 1,
                     itemBuilder: (context, index) {
-                      // Botón para añadir nueva multa
                       if (index == multas.length) {
                         return GestureDetector(
                           onTap: () async {
-                            // Navegamos a la pantalla de añadir multa pasando el id del alquiler
                             await Navigator.pushNamed(context, "añadir_multa", arguments: alquiler["id"]);
-                            cargarMultas(
-                              alquiler["id"],
-                            ); // Recargamos las multas al volver por si se ha añdadido nuevas
+                            cargarMultas(alquiler["id"]);
                           },
                           child: Container(
                             width: 200,
@@ -406,13 +514,11 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                         );
                       }
 
-                      // Información de la multa actual
                       final multaActual = multas[index];
                       return GestureDetector(
                         onTap: () async {
-                          // Navegamos a detalles de la multa
                           await Navigator.pushNamed(context, "detalles_multa", arguments: multaActual["id"]);
-                          cargarMultas(alquiler["id"]); // Recargamos al volver por si se han modificado sus datos
+                          cargarMultas(alquiler["id"]);
                         },
                         child: Container(
                           width: 200,
@@ -445,10 +551,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 5),
-                              Text(
-                                "${multaActual["precio"]} €",
-                                style: const TextStyle(fontSize: 18, color: Colors.deepPurple),
-                              ),
+                              Text("${multaActual["precio"]} €", style: const TextStyle(fontSize: 18)),
                             ],
                           ),
                         ),
@@ -510,56 +613,37 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
   Future<void> _ventanaCambioFecha(String nombreCampo, TextEditingController controllerFecha) async {
     DateTime fechaHoy = DateTime.now();
-
-    // dejamos que el usuario elija la fecha y la guardamos esa fecha
     final DateTime? fechaElegida = await showDatePicker(
       context: context,
-      // el día en el que se abrirá el calendario
-      // si no ha escogido fecha de inicio es el dia de hoy
-      // si ya la ha elegido (es porque va a rellenar la fecha de fin)
-      // por lo que mostramos es calendario a partir de la fecha de inicio
       initialDate: fechaHoy,
       firstDate: DateTime(2024),
-      // limite es dentro de 5 años
       lastDate: fechaHoy.add(const Duration(days: 365 * 5)),
     );
+
     if (fechaElegida != null) {
-      // Guardamos la fecha y la formateamos para el texto (Año-Mes-Día)
       String fechaFormateada =
           "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 
       final baseDatos = await DatabaseHelper.proyectodb();
       await baseDatos.update(
         "alquileres",
-        {nombreCampo: fechaFormateada, "estado": "Terminado"},
+        {nombreCampo: fechaFormateada},
         where: "id = ?",
         whereArgs: [alquiler["id"]],
       );
 
-      await baseDatos.update("vehiculos", {"estado": "Disponible"}, where: "id = ?", whereArgs: [alquiler["id_coche"]]);
-
-      setState(() {
-        _estadoActual = "Terminado";
-      });
-
-      cargarAlquiler(alquiler["id"]);
-
-      // Actualizamos los datos tras el cambio
       cargarAlquiler(alquiler["id"]);
     }
   }
 
   Future<void> _ventanaCambioPrecio() async {
-    TextEditingController nuevoPrecio = TextEditingController();
-
+    TextEditingController nuevoPrecio = TextEditingController(text: _precioController.text);
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-
           title: const Text("Actualizar precio"),
-
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -571,29 +655,23 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-
               const SizedBox(height: 20),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   child: const Text("Guardar cambios"),
-
                   onPressed: () async {
-                    confirmar = await confirmacion();
-                    if (!confirmar) return Navigator.pop(context);
-
-                    final db = await DatabaseHelper.proyectodb();
-                    await db.update(
-                      "alquileres",
-                      {"precio": double.parse(nuevoPrecio.text)},
-                      where: "id = ?",
-                      whereArgs: [alquiler["id"]],
-                    );
-
-                    Navigator.pop(context);
-
-                    cargarAlquiler(alquiler["id"]);
+                    if (await confirmacion()) {
+                      final db = await DatabaseHelper.proyectodb();
+                      await db.update(
+                        "alquileres",
+                        {"precio": double.tryParse(nuevoPrecio.text) ?? 0.0},
+                        where: "id = ?",
+                        whereArgs: [alquiler["id"]],
+                      );
+                      Navigator.pop(context);
+                      cargarAlquiler(alquiler["id"]);
+                    }
                   },
                 ),
               ),
@@ -614,42 +692,29 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
           const Text("Introduce el nuevo valor para el campo:"),
           const SizedBox(height: 15),
           DropdownButtonFormField(
-            // el valor será la variable que indica el estado actual del coche
-            value: estadoActual,
-
+            value: ["Pendiente", "En proceso", "Terminado"].contains(estadoActual) ? estadoActual : null,
             decoration: InputDecoration(
               labelText: "Estado",
               prefixIcon: const Icon(Icons.info_outline),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
-
-            // el desplegable tiene 3 estado a elegir
-            // cada uno de esos estados lo mapeamos para crearlo como DropdownMenuItem
-            // su valor y es el mismo que su texto (ej: "Pendiente", "Terminado"...)
-            items: ["Pendiente", "En proceso", "Terminado"].map((estadoActual) {
-              return DropdownMenuItem(value: estadoActual, child: Text(estadoActual));
-            }).toList(),
-            // convertimos a lista porque items nos pide la lista con los valores del DropdownButtonFormField
-
-            // al pulsar en uno de los desplegables del menú, actualizamos la variable con
-            // el estado actual del coche para que sea ahora el valor del desplegable pulsado
+            items: [
+              "Pendiente",
+              "En proceso",
+              "Terminado",
+            ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
             onChanged: (nuevoEstado) async {
-              confirmar = await confirmacion();
-              if (!confirmar) return Navigator.pop(context);
-
-              final baseDatos = await DatabaseHelper.proyectodb();
-              await baseDatos.update(
-                "alquileres",
-                {"estado": nuevoEstado},
-                where: "id = ?",
-                whereArgs: [alquiler["id"]],
-              );
-
-              setState(() {
-                estadoActual = nuevoEstado!;
+              if (await confirmacion()) {
+                final baseDatos = await DatabaseHelper.proyectodb();
+                await baseDatos.update(
+                  "alquileres",
+                  {"estado": nuevoEstado},
+                  where: "id = ?",
+                  whereArgs: [alquiler["id"]],
+                );
                 Navigator.pop(context);
                 cargarAlquiler(alquiler["id"]);
-              });
+              }
             },
           ),
         ],
@@ -659,70 +724,50 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
   Future<void> _ventanaAnyadirFoto() async {
     final ImagePicker imagePicker = ImagePicker();
-
     final XFile? imagen = await imagePicker.pickImage(source: ImageSource.gallery);
-
     if (imagen != null) {
       final baseDatos = await DatabaseHelper.proyectodb();
-
       await baseDatos.insert("fotos", {"id_alquiler": alquiler["id"], "ruta": imagen.path});
-
       cargarFotos(alquiler["id"]);
     }
   }
 
   Future<void> _ventanaCambioObservaciones() async {
-    TextEditingController nuevasObservaciones =
-    TextEditingController(text: _observacionesController.text);
-
+    TextEditingController nuevasObservaciones = TextEditingController(text: _observacionesController.text);
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text("Editar observaciones"),
-
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
               TextField(
                 controller: nuevasObservaciones,
                 maxLines: 4,
                 decoration: InputDecoration(
                   labelText: "Observaciones",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-
               const SizedBox(height: 20),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   child: const Text("Guardar cambios"),
-
                   onPressed: () async {
-                    bool confirmar = await confirmacion();
-                    if (!confirmar) return Navigator.pop(context);
-
-                    final db = await DatabaseHelper.proyectodb();
-
-                    await db.update(
-                      "alquileres",
-                      {"observaciones": nuevasObservaciones.text},
-                      where: "id = ?",
-                      whereArgs: [alquiler["id"]],
-                    );
-
-                    Navigator.pop(context);
-
-                    cargarAlquiler(alquiler["id"]);
+                    if (await confirmacion()) {
+                      final db = await DatabaseHelper.proyectodb();
+                      await db.update(
+                        "alquileres",
+                        {"observaciones": nuevasObservaciones.text},
+                        where: "id = ?",
+                        whereArgs: [alquiler["id"]],
+                      );
+                      Navigator.pop(context);
+                      cargarAlquiler(alquiler["id"]);
+                    }
                   },
                 ),
               ),
@@ -738,58 +783,34 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Text("Observaciones"),
-
           content: SingleChildScrollView(
             child: Text(
-              _observacionesController.text.isEmpty
-                  ? "No hay observaciones"
-                  : _observacionesController.text,
+              _observacionesController.text.isEmpty ? "No hay observaciones" : _observacionesController.text,
               style: const TextStyle(fontSize: 18),
             ),
           ),
-
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cerrar"),
-            )
-          ],
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cerrar"))],
         );
       },
     );
   }
 
   Future<bool> confirmacion() async {
-    confirmar =
-        await showDialog(
+    return await showDialog(
           context: context,
           builder: (context) {
             return AlertDialog(
               title: const Text("Confirmar cambio"),
               content: const Text("¿Seguro que quieres actualizar los datos?"),
               actions: [
-                TextButton(
-                  child: const Text("Cancelar"),
-                  onPressed: () {
-                    Navigator.pop(context, false);
-                  },
-                ),
-                ElevatedButton(
-                  child: const Text("Confirmar"),
-                  onPressed: () {
-                    Navigator.pop(context, true);
-                  },
-                ),
+                TextButton(child: const Text("Cancelar"), onPressed: () => Navigator.pop(context, false)),
+                ElevatedButton(child: const Text("Confirmar"), onPressed: () => Navigator.pop(context, true)),
               ],
             );
           },
         ) ??
         false;
-    return confirmar;
   }
 }
