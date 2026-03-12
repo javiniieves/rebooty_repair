@@ -322,7 +322,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                 Text(titulo, style: const TextStyle(fontSize: 10, color: Colors.grey)),
                 Text(
                   valor,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), // Texto más grande
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
