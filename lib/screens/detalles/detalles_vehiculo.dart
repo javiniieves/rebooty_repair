@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:rebooty_repair/database.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -439,39 +440,37 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   }
 
   void mostrarSelectorColor() {
-    List<Color> colores = [
-      Colors.white,
-      Colors.red,
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.yellow,
-      Colors.pink,
-      Colors.black,
-      Colors.grey,
-      Colors.purple,
-    ];
+    Color pickerColor = Color(0xff443a49);
+    Color currentColor = Color(0xff443a49);
+
+    void changeColor(Color color) {
+      setState(() => pickerColor = color);
+    }
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Selecciona un color"),
-        content: Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: colores.map((colorActual) {
-            return GestureDetector(
-              onTap: () async {
-                confirmar = await confirmacion();
-                if (!confirmar) return Navigator.pop(context);
-
-                await actualizarVehiculo("color", colorActual.value);
-                Navigator.pop(context);
-              },
-              child: CircleAvatar(backgroundColor: colorActual),
-            );
-          }).toList(),
+        content: SingleChildScrollView(
+          child: ColorPicker(
+            pickerColor: pickerColor,
+            onColorChanged: changeColor,
+          ),
         ),
+        actions: [
+          ElevatedButton(
+            child: const Text('seleccionar'),
+            onPressed: () async {
+
+              confirmar = await confirmacion();
+              if (!confirmar) return Navigator.pop(context);
+
+              setState(() => currentColor = pickerColor);
+              await actualizarVehiculo("color", currentColor.value);
+              Navigator.pop(context);
+            },
+          ),
+        ],
       ),
     );
   }
