@@ -23,6 +23,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   DateTime? fechaFin;
   final _fechaInicioController = TextEditingController();
   final _fechaFinController = TextEditingController();
+  late TextEditingController _observacionesController;
 
   String estadoActual = "Pendiente";
 
@@ -49,6 +50,13 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     super.initState();
     cargarIdsClientes();
     cargarIdsVehiculos();
+    _observacionesController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _observacionesController.dispose();
+    super.dispose();
   }
 
   @override
@@ -78,7 +86,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 items: listaClientes.map((cliente) {
                   return DropdownMenuItem(
                     value: cliente["id"].toString(), // lo que se guarda
-                    child: Text( "${cliente["documento_oficial"]} - ${cliente["nombre"]}",// lo que se muestra
+                    child: Text(
+                      "${cliente["documento_oficial"]} - ${cliente["nombre"]}", // lo que se muestra
                       style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                     ),
                   );
@@ -106,7 +115,9 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 items: listaVehiculos.map((vehiculo) {
                   return DropdownMenuItem(
                     value: vehiculo["id"].toString(), // lo que se guarda
-                    child: Text("${vehiculo["matricula"]} - ${vehiculo["marca"]} - ${vehiculo["modelo"]} - ${vehiculo["anyo"]}", // lo que se muestra
+                    child: Text(
+                      "${vehiculo["matricula"]} - ${vehiculo["marca"]} - ${vehiculo["modelo"]} - ${vehiculo["anyo"]}",
+                      // lo que se muestra
                       style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                     ),
                   );
@@ -231,6 +242,18 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 },
               ),
 
+              const SizedBox(height: 40),
+
+              TextFormField(
+                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                controller: _observacionesController,
+                decoration: InputDecoration(
+                  labelText: "Notas",
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+
               const SizedBox(height: 50),
 
               // botón de añadir alquiler
@@ -251,6 +274,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         "fecha_inicio": _fechaInicioController.text,
                         "fecha_fin": _fechaFinController.text,
                         "estado": estadoActual,
+                        "observaciones" : _observacionesController.text
                       });
 
                       // cambiar estado del coche a alquilado

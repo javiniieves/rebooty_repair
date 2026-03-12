@@ -25,6 +25,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   TextEditingController _fechaLimiteControler = TextEditingController();
   TextEditingController _fechaDevoControler = TextEditingController();
   TextEditingController _precioController = TextEditingController();
+  TextEditingController _observacionesController = TextEditingController();
   final TextEditingController _clienteNombreController = TextEditingController();
   final TextEditingController _cocheMatriculaController = TextEditingController();
   String _estadoActual = "";
@@ -40,6 +41,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
       _fechaLimiteControler = TextEditingController(text: alquiler['fecha_fin']);
       _fechaDevoControler = TextEditingController(text: alquiler['fecha_devolucion'] ?? "");
       _precioController = TextEditingController(text: alquiler['precio'].toString());
+      _observacionesController = TextEditingController(text: alquiler['observaciones']);
       _estadoActual = alquiler['estado'];
     });
 
@@ -174,6 +176,22 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                 _ventanaCambioPrecio();
                               },
                               icon: const Icon(Icons.edit),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 40),
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.search, "Observaciones", _observacionesController)),
+                            IconButton(
+                              onPressed: () {
+                                _ventanaCambioObservaciones();
+                              },
+                              icon: const Icon(Icons.edit),
+                            ),
+                            IconButton(
+                              onPressed: mostrarObservaciones,
+                              icon: const Icon(Icons.visibility),
                             ),
                           ],
                         ),
@@ -650,6 +668,99 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
       cargarFotos(alquiler["id"]);
     }
+  }
+
+  Future<void> _ventanaCambioObservaciones() async {
+    TextEditingController nuevasObservaciones =
+    TextEditingController(text: _observacionesController.text);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+
+          title: const Text("Editar observaciones"),
+
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+
+              TextField(
+                controller: nuevasObservaciones,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: "Observaciones",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  child: const Text("Guardar cambios"),
+
+                  onPressed: () async {
+                    bool confirmar = await confirmacion();
+                    if (!confirmar) return Navigator.pop(context);
+
+                    final db = await DatabaseHelper.proyectodb();
+
+                    await db.update(
+                      "alquileres",
+                      {"observaciones": nuevasObservaciones.text},
+                      where: "id = ?",
+                      whereArgs: [alquiler["id"]],
+                    );
+
+                    Navigator.pop(context);
+
+                    cargarAlquiler(alquiler["id"]);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void mostrarObservaciones() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+
+          title: const Text("Observaciones"),
+
+          content: SingleChildScrollView(
+            child: Text(
+              _observacionesController.text.isEmpty
+                  ? "No hay observaciones"
+                  : _observacionesController.text,
+              style: const TextStyle(fontSize: 18),
+            ),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cerrar"),
+            )
+          ],
+        );
+      },
+    );
   }
 
   Future<bool> confirmacion() async {
