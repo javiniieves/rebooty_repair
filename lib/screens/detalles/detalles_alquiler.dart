@@ -525,7 +525,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     );
     if (fechaElegida != null) {
       // Guardamos la fecha y la formateamos para el texto (Año-Mes-Día)
-      String fechaFormateada = "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+      String fechaFormateada =
+          "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 
       final baseDatos = await DatabaseHelper.proyectodb();
       await baseDatos.update(
@@ -774,16 +775,21 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
               actions: [
                 TextButton(
                   child: const Text("Cancelar"),
-                  onPressed: () {Navigator.pop(context, false);},
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  },
                 ),
                 ElevatedButton(
                   child: const Text("Confirmar"),
-                  onPressed: () {Navigator.pop(context, true);},
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
                 ),
               ],
             );
           },
-        ) ?? false;
+        ) ??
+        false;
     return confirmar;
   }
 }

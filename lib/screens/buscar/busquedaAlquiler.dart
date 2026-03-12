@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../database.dart';
@@ -17,11 +19,12 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
   Future<List<Map<String, dynamic>>> cargarAlquileres() async {
     final db = await DatabaseHelper.proyectodb();
     String query = '''
-    SELECT alquileres.*, vehiculos.matricula
+    SELECT alquileres.*, 
+    vehiculos.matricula, vehiculos.marca, vehiculos.modelo,
+    clientes.nombre, clientes.documento_oficial
     FROM alquileres
-    INNER JOIN vehiculos
-    ON alquileres.id_coche = vehiculos.id
-    ''';
+    INNER JOIN vehiculos ON alquileres.id_coche = vehiculos.id
+    INNER JOIN clientes ON alquileres.id_cliente = clientes.id ''';
 
     List<dynamic> args = [];
 
@@ -151,59 +154,204 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                     return id.startsWith(filtro);
                   }).toList();
 
-                  return ListView.separated(
-                    separatorBuilder: (context, index) => Divider(),
-                    itemCount: alquileresFiltrados.length,
-                    itemBuilder: (context, index) {
-                      Map<String, dynamic>? alquiler = alquileresFiltrados[index];
-                      return ListTile(
-                        leading: const Icon(Icons.directions_car_filled),
-                        title: Text(alquiler['matricula'] ?? 'Sin coche'),
-                        subtitle: Text(alquiler['estado'] ?? 'Sin estado'),
-                        onTap: () async {
-                          await Navigator.pushNamed(context, "detalles_alquiler", arguments: alquiler?["id"]);
-                          setState(() {});
-                        },
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () async {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text("¿Estás seguro de que quieres borrar este campo de la base de datos?"),
+                  return Row(
+                    children: [
+                      // a la izquierda la lista con todos los alquileres encontrado
+                      Expanded(
+                        flex: 2,
+                        child: ListView.separated(
+                          separatorBuilder: (context, index) => Divider(),
+                          itemCount: alquileresFiltrados.length,
+                          itemBuilder: (context, index) {
+                            Map<String, dynamic>? alquiler = alquileresFiltrados[index];
 
-                                  content: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      ElevatedButton.icon(
-                                        onPressed: () async {
-                                          await DatabaseHelper.borrarAlquiler(alquiler?["id"]);
-                                          setState(() {
-                                            alquiler = null;
-                                          });
-
-                                          Navigator.pop(context);
-                                        },
-                                        label: Row(children: [Icon(Icons.check), Text("Confirmar")]),
-                                      ),
-
-                                      ElevatedButton.icon(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                        label: Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
-                                      ),
-                                    ],
-                                  ),
-                                );
+                            return ListTile(
+                              // en leading no podemos usar la imagen del coche directamente
+                              // tenemos que usar future ya que necesiamos usar un metodo que llama a la base de datos
+                              leading: FutureBuilder<String>(
+                                future: obtenerImagenVehiculo(alquiler["id_coche"]),
+                                builder: (context, snapshotImagenCocheActual) {
+                                  // por si hay errores
+                                  if (snapshotImagenCocheActual.connectionState == ConnectionState.waiting) {
+                                    return const CircularProgressIndicator();
+                                  }
+                                  if (snapshotImagenCocheActual.hasError || !snapshotImagenCocheActual.hasData) {
+                                    return const Icon(Icons.directions_car);
+                                  }
+                                  // si no hay problemas mostramos la imagen del vehículo
+                                  return Image(image: FileImage(File(snapshotImagenCocheActual.data!)));
+                                },
+                              ),
+                              title: Text(alquiler['matricula'] ?? 'Sin coche'),
+                              subtitle: Text(alquiler['estado'] ?? 'Sin estado'),
+                              onTap: () async {
+                                await Navigator.pushNamed(context, "detalles_alquiler", arguments: alquiler?["id"]);
+                                setState(() {});
                               },
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () async {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: Text(
+                                          "¿Estás seguro de que quieres borrar este alquiler de la base de datos?",
+                                        ),
+
+                                        content: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            ElevatedButton.icon(
+                                              onPressed: () async {
+                                                await DatabaseHelper.borrarAlquiler(alquiler?["id"]);
+                                                setState(() {
+                                                  alquiler = null;
+                                                });
+
+                                                Navigator.pop(context);
+                                              },
+                                              label: Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                                            ),
+
+                                            ElevatedButton.icon(
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                              },
+                                              label: Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
                             );
                           },
                         ),
-                      );
-                    },
+                      ),
+
+                      SizedBox(width: 10),
+
+                      // a la derecha los avisos de los alquileres
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Text("Alquileres a recibir mañana"),
+
+                            SizedBox(height: 4),
+
+                            Expanded(
+                              child: FutureBuilder<List<Map<String, dynamic>>>(
+                                future: alquileresARecibirPronto(),
+                                builder: (context, snapshotAlquileresARecibirPronto) {
+                                  if (!snapshotAlquileresARecibirPronto.hasData) {
+                                    return const Center(child: CircularProgressIndicator());
+                                  }
+
+                                  final listaAlquileresARecibirPronto = snapshotAlquileresARecibirPronto.data!;
+
+                                  return ListView.builder(
+                                    itemCount: listaAlquileresARecibirPronto.length,
+                                    itemBuilder: (context, index) {
+                                      Map<String, dynamic> alquilerActual = listaAlquileresARecibirPronto[index];
+
+                                      return Card(
+                                        elevation: 4,
+                                        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 5),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            Navigator.pushNamed(
+                                              context,
+                                              "detalles_alquiler",
+                                              arguments: alquilerActual["id"],
+                                            );
+                                          },
+                                          child: Container(
+                                            padding: EdgeInsets.all(15),
+                                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(15)),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Stack(
+                                                  alignment: Alignment.center,
+                                                  children: [
+                                                    Align(
+                                                      alignment: Alignment.center,
+                                                      child: Text(
+                                                        alquilerActual['matricula'] ?? '---',
+                                                        style: TextStyle(
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 16,
+                                                          letterSpacing: 1.5,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Align(
+                                                      alignment: Alignment.centerRight,
+                                                      child: Container(
+                                                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.orange.withOpacity(0.2),
+                                                          borderRadius: BorderRadius.circular(8),
+                                                        ),
+                                                        child: Text(
+                                                          "MAÑANA",
+                                                          style: TextStyle(
+                                                            color: Colors.orange,
+                                                            fontWeight: FontWeight.bold,
+                                                            fontSize: 10,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Divider(height: 20),
+                                                // Información del coche
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons.directions_car_filled, size: 18, color: Colors.grey),
+                                                    SizedBox(width: 8),
+                                                    Text(
+                                                      "${alquilerActual['marca']} ${alquilerActual['modelo']}",
+                                                      style: TextStyle(fontSize: 13, color: Colors.white),
+                                                    ),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 8),
+                                                // Información del cliente
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons.person, size: 18, color: Colors.grey),
+                                                    SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        "${alquilerActual['nombre']} (${alquilerActual['documento_oficial']})",
+                                                        style: TextStyle(fontSize: 12, color: Colors.white),
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
@@ -212,5 +360,36 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
         ),
       ),
     );
+  }
+
+  // metodo encargado de mediante un id de un vehiculo sacar su imagen de la base de datos
+  Future<String> obtenerImagenVehiculo(int idVehiculo) async {
+    List<Map<String, dynamic>> cochesConIdIndicado = await DatabaseHelper.obtenerVehiculoPorId(idVehiculo);
+
+    Map<String, dynamic> cocheConIdEspecificado = cochesConIdIndicado.first;
+
+    return cocheConIdEspecificado["ruta_foto"];
+  }
+
+  Future<List<Map<String, dynamic>>> alquileresARecibirPronto() async {
+    // Cargamos todos los alquileres
+    List<Map<String, dynamic>> todosLosAlquileres = await cargarAlquileres();
+
+    // Obtenemos la fecha de hoy sin horas para comparar solo días
+    DateTime fechaHoy = DateTime.now();
+    DateTime fechaManyana = DateTime(fechaHoy.year, fechaHoy.month, fechaHoy.day + 1);
+
+    // Filtramos la lista de alquileres para dejar solo los de que tienen que devolver mañana
+    List<Map<String, dynamic>> alquileresFiltrados = todosLosAlquileres.where((alquiler) {
+      // Convertimos el String "YYYY-MM-DD" de la base de datos a DateTime
+      DateTime fechaFin = DateTime.parse(alquiler["fecha_fin"]);
+
+      // Comparamos si es el mismo año, mes y día que mañana
+      return fechaFin.year == fechaManyana.year &&
+          fechaFin.month == fechaManyana.month &&
+          fechaFin.day == fechaManyana.day;
+    }).toList();
+
+    return alquileresFiltrados;
   }
 }
