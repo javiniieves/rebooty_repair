@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:rebooty_repair/database.dart';
 import 'package:validators/validators.dart';
@@ -30,7 +31,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
   // estado por defecto al añadir un coche
   String estadoActual = "Disponible";
 
-  int colorDelVehiculo = Colors.white.value;
+  Color colorDelVehiculo = Colors.white;
 
   String combustible = "Gasoil";
 
@@ -437,51 +438,11 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           labelText: "Color",
                           prefixIcon: const Icon(Icons.palette),
                           filled: true,
-                          fillColor: Color(colorDelVehiculo),
+                          fillColor: colorDelVehiculo,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onTap: () {
-                          // colores a elegir
-                          List<Color> coloresDisponibles = [
-                            Colors.white,
-                            Colors.red,
-                            Colors.blue,
-                            Colors.green,
-                            Colors.orange,
-                            Colors.yellow,
-                            Colors.pink,
-                            Colors.black,
-                            Colors.grey,
-                            Colors.purple,
-                          ];
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: Text("Elige un color"),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Wrap(
-                                      spacing: 10,
-                                      runSpacing: 10,
-                                      children: coloresDisponibles.map((colorActual) {
-                                        return GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              colorDelVehiculo = colorActual.value;
-                                              Navigator.pop(context);
-                                            });
-                                          },
-                                          child: CircleAvatar(backgroundColor: colorActual, radius: 15),
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
+                          mostrarSelectorColor();
                         },
                       ),
                     ),
@@ -567,6 +528,37 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void mostrarSelectorColor() {
+    Color pickerColor = Color(0xff443a49);
+    Color currentColor = Color(0xff443a49);
+
+    void changeColor(Color color) {
+      setState(() => pickerColor = color);
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Selecciona un color"),
+        content: SingleChildScrollView(
+          child: ColorPicker(
+            pickerColor: pickerColor,
+            onColorChanged: changeColor,
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            child: const Text('seleccionar'),
+            onPressed: () async {
+              setState(() => colorDelVehiculo = pickerColor);
+              Navigator.pop(context);
+            },
+          ),
+        ],
       ),
     );
   }
