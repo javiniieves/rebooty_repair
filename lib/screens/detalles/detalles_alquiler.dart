@@ -683,6 +683,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   }
 
   Widget _ventanaCambioEstado(String campoACambiar, String estadoActual) {
+    String? estadoSeleccionado = ["Pendiente", "En proceso", "Terminado"].contains(estadoActual) ? estadoActual : null;
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: Text("Actualizar $campoACambiar"),
@@ -691,20 +693,22 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
         children: [
           const Text("Introduce el nuevo valor para el campo:"),
           const SizedBox(height: 15),
-          DropdownButtonFormField(
-            value: ["Pendiente", "En proceso", "Terminado"].contains(estadoActual) ? estadoActual : null,
-            decoration: InputDecoration(
-              labelText: "Estado",
-              prefixIcon: const Icon(Icons.info_outline),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            items: [
-              "Pendiente",
-              "En proceso",
-              "Terminado",
-            ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-            onChanged: (nuevoEstado) async {
-              if (await confirmacion()) {
+          DropdownMenuFormField<String>(
+            width: double.infinity,
+            initialSelection: estadoSeleccionado,
+            leadingIcon: const Icon(Icons.info_outline),
+            label: const Text("Estado"),
+            dropdownMenuEntries: ["Pendiente", "En proceso", "Terminado"]
+                .map(
+                  (estado) => DropdownMenuEntry(
+                    value: estado,
+                    label: estado,
+                    labelWidget: Text(estado, style: const TextStyle(color: Color(0xFFC8A97E))),
+                  ),
+                )
+                .toList(),
+            onSelected: (nuevoEstado) async {
+              if (nuevoEstado != null && await confirmacion()) {
                 final baseDatos = await DatabaseHelper.proyectodb();
                 await baseDatos.update(
                   "alquileres",

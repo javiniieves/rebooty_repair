@@ -141,9 +141,21 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                         const Divider(),
                         _filaEditable(Icons.phone, "Telefono", cliente!['telefono'], _telefonoControler, "telefono"),
                         const Divider(),
-                        _filaEditable(Icons.location_on, "Direccion", cliente!['direccion'], _direccionControler, "direccion",),
+                        _filaEditable(
+                          Icons.location_on,
+                          "Direccion",
+                          cliente!['direccion'],
+                          _direccionControler,
+                          "direccion",
+                        ),
                         const Divider(),
-                        _filaEditable(Icons.email, "Email", cliente!['email'] ?? "Sin correo", _correoControler, "email",),
+                        _filaEditable(
+                          Icons.email,
+                          "Email",
+                          cliente!['email'] ?? "Sin correo",
+                          _correoControler,
+                          "email",
+                        ),
                       ],
                     ),
                   ),
@@ -194,20 +206,20 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // elegir tipo de documento
-          DropdownButtonFormField<String>(
-            value: _tipoDocumento,
-            decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
-            items: ["DNI", "NIE", "Pasaporte"]
-                .map(
-                  (tipoDocumentoActual) =>
-                      DropdownMenuItem(value: tipoDocumentoActual, child: Text(tipoDocumentoActual)),
-                )
-                .toList(),
-
-            onChanged: (nuevoTipoDocumento) {
+          DropdownMenu<String>(
+            width: double.infinity,
+            initialSelection: _tipoDocumento,
+            dropdownMenuEntries: ["DNI", "NIE", "Pasaporte"].map((tipo) {
+              return DropdownMenuEntry(
+                value: tipo,
+                label: tipo,
+                labelWidget: Text(tipo, style: const TextStyle(color: Color(0xFFC8A97E))),
+              );
+            }).toList(),
+            onSelected: (nuevoTipoDocumento) {
               setState(() {
                 _tipoDocumento = nuevoTipoDocumento!;
-                _documentoController.clear(); // al cambiar el tipo de docuemnto borramos lo escrito
+                _documentoController.clear();
               });
             },
           ),
@@ -342,7 +354,6 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                 ),
 
                 onPressed: () async {
-
                   confirmar = await confirmacion();
                   if (!confirmar) return Navigator.pop(context);
 
@@ -365,7 +376,7 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
   }
 
   Future<bool> confirmacion() async {
-     confirmar =
+    confirmar =
         await showDialog(
           context: context,
           builder: (context) {
@@ -375,16 +386,21 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
               actions: [
                 TextButton(
                   child: const Text("Cancelar"),
-                  onPressed: () {Navigator.pop(context, false);},
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  },
                 ),
                 ElevatedButton(
                   child: const Text("Confirmar"),
-                  onPressed: () {Navigator.pop(context, true);},
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
                 ),
               ],
             );
           },
-        ) ?? false;
+        ) ??
+        false;
     return confirmar;
   }
 }
