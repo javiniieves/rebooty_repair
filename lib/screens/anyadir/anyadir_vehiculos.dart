@@ -490,7 +490,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           "marca": _marcaController.text,
                           "modelo": _modeloController.text,
                           "estado": estadoActual,
-                          "color": colorDelVehiculo,
+                          "color": colorDelVehiculo.value,
                           "kilometraje": _kilometrajeController.text,
                           "anyo": _anyoController.text,
                           "combustible": combustible,
