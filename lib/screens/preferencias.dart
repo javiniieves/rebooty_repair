@@ -12,140 +12,55 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text("Configuración y Base de Datos"), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(30.0),
         child: Center(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ElevatedButton.icon(
+              // Botón de Exportar
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                ),
                 onPressed: () async {
                   await DatabaseHelper.exportarBD();
 
+                  // Feedback de éxito
                   ScaffoldMessenger.of(
                     context,
-                  ).showSnackBar(SnackBar(content: Text("Base de datos exportada con éxito")));
+                  ).showSnackBar(const SnackBar(content: Text("Base de datos exportada con éxito")));
                 },
-                label: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.cloud, size: 30),
+                    Icon(Icons.cloud, size: 35),
                     SizedBox(width: 20),
-                    Text("Exportar base de datos", style: TextStyle(fontSize: 30)),
+                    Text("Exportar base de datos", style: TextStyle(fontSize: 24)),
                   ],
                 ),
               ),
 
-              SizedBox(height: 40),
+              const SizedBox(height: 50),
 
-              ElevatedButton.icon(
-                onPressed: () async {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        backgroundColor: Colors.black,
-                        title: Text(
-                          "¿Estás seguro de que quiere borrar TODOS los registros de la base de datos?",
-                          style: TextStyle(color: Colors.white),
-                        ),
-
-                        content: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      backgroundColor: Colors.red,
-
-                                      title: Text(
-                                        "Está apunto de ELIMINAR para SIEMPRE la base de datos ¿Está seguro de que quiere eliminarla?)",
-                                        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                                      ),
-
-                                      content: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          ElevatedButton.icon(
-                                            onPressed: () async {
-                                              await DatabaseHelper.limpiarRegistrosBaseDatos();
-
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Text("Registros de la base de datos borrados con éxito"),
-                                                ),
-                                              );
-
-                                              Navigator.pop(context);
-                                            },
-                                            label: Row(
-                                              children: [
-                                                Icon(Icons.delete_forever, color: Colors.white),
-                                                Text(
-                                                  "Si, eliminar para siempre",
-                                                  style: TextStyle(color: Colors.white),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-
-                                          SizedBox(width: 40,),
-
-                                          ElevatedButton.icon(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                            label: Row(
-                                              children: [
-                                                Icon(Icons.back_hand, color: Colors.white),
-                                                Text("No borrar y volver atrás", style: TextStyle(color: Colors.white)),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                              label: Row(
-                                children: [
-                                  Icon(Icons.check, color: Colors.red),
-                                  Text("Confirmar", style: TextStyle(color: Colors.red)),
-                                ],
-                              ),
-                            ),
-
-                            SizedBox(width: 50),
-
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              label: Row(
-                                children: [
-                                  Icon(Icons.cancel_outlined, color: Colors.white),
-                                  Text("Cancelar", style: TextStyle(color: Colors.white)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-                label: Row(
+              // Botón de Borrado
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red.shade50,
+                  foregroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                  side: const BorderSide(color: Colors.red, width: 2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                ),
+                onPressed: () => _mostrarDialogoConfirmacion(context),
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.delete, size: 30),
+                    Icon(Icons.delete, size: 35),
                     SizedBox(width: 20),
-                    Text("Borrar todos los registro de la base de datos", style: TextStyle(fontSize: 30)),
+                    Text("Borrar todos los registros", style: TextStyle(fontSize: 24)),
                   ],
                 ),
               ),
@@ -153,6 +68,72 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
           ),
         ),
       ),
+    );
+  }
+
+  void _mostrarDialogoConfirmacion(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.black,
+          title: const Text(
+            "¿Estás seguro de que quiere borrar TODOS los registros de la base de datos?",
+            style: TextStyle(color: Colors.white),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            TextButton.icon(
+              onPressed: () => _mostrarDialogoFinal(context),
+              icon: const Icon(Icons.check, color: Colors.red),
+              label: const Text("Confirmar", style: TextStyle(color: Colors.red)),
+            ),
+            TextButton.icon(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.cancel_outlined, color: Colors.white),
+              label: const Text("Cancelar", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _mostrarDialogoFinal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.red,
+          title: const Text(
+            "Está apunto de ELIMINAR para SIEMPRE la base de datos ¿Está seguro de que quiere eliminarla?",
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+              onPressed: () async {
+                await DatabaseHelper.limpiarRegistrosBaseDatos();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text("Registros borrados con éxito")));
+                  Navigator.pop(context); // Cierra este diálogo
+                  Navigator.pop(context); // Cierra el anterior
+                }
+              },
+              icon: const Icon(Icons.delete_forever, color: Colors.white),
+              label: const Text("Si, eliminar para siempre", style: TextStyle(color: Colors.white)),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.back_hand),
+              label: const Text("No borrar y volver atrás"),
+            ),
+          ],
+        );
+      },
     );
   }
 }
