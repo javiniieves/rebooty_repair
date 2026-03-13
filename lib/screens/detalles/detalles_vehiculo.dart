@@ -287,7 +287,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const Icon(Icons.history),
-                                Text("${r["fecha_inicio"]} / ${r["fecha_fin"]}"),
+                                Text("${r["fecha_inicio"]} / ${r["fecha_fin"]}", style: TextStyle(fontSize: 12),),
                                 TextButton(
                                   onPressed: () {
                                     Navigator.pushNamed(context, "detalles_reparacion", arguments: r["id"]);
