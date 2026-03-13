@@ -26,6 +26,7 @@ class AppTheme {
 
     textTheme: const TextTheme(
       bodyMedium: TextStyle(fontSize: 16, color: Color(0xFFC8A97E)),
+      bodyLarge: TextStyle(fontSize: 16, color: Color(0xFFC8A97E)),
       titleLarge: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFC8A97E)),
     ),
 
@@ -45,19 +46,13 @@ class AppTheme {
     ),
 
     dialogTheme: DialogThemeData(
-      backgroundColor: const Color(0xFF2F3136), // fondo madera
+      backgroundColor: const Color(0xFF2F3136),
+      // fondo madera
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20), // bordes redondeados
       ),
-      titleTextStyle: const TextStyle(
-        color: Color(0xFFC8A97E),
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
-      contentTextStyle: const TextStyle(
-        color: Color(0xFFC8A97E),
-        fontSize: 16,
-      ),
+      titleTextStyle: const TextStyle(color: Color(0xFFC8A97E), fontSize: 20, fontWeight: FontWeight.bold),
+      contentTextStyle: const TextStyle(color: Color(0xFFC8A97E), fontSize: 16),
       elevation: 8, // sombra del dialog
     ),
 
@@ -77,6 +72,12 @@ class AppTheme {
     ),
 
     dropdownMenuTheme: const DropdownMenuThemeData(
+      textStyle: TextStyle(color: Color(0xFFC8A97E)),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Color(0xFF2F3136),
+        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+      ),
       menuStyle: MenuStyle(
         backgroundColor: WidgetStatePropertyAll(
           Color(0xFF2F3136), // fondo del menú
@@ -92,7 +93,6 @@ class AppTheme {
       textColor: Color(0xFFC8A97E), // color de texto
       iconColor: Color(0xFF3A7D44), // color de íconos
       selectedColor: Color(0xFF3A7D44), // color al seleccionar
-      //contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     ),
 
     inputDecorationTheme: InputDecorationTheme(

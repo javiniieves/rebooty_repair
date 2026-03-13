@@ -86,23 +86,22 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                 const SizedBox(height: 30),
 
                 // Selector del tipo de documento
-                DropdownButtonFormField<String>(
-                  value: _tipoDocumentoSeleccionado,
-                  decoration: InputDecoration(
-                    labelText: "Tipo de documento",
-                    prefixIcon: const Icon(Icons.description),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  items: ["DNI", "NIE", "Pasaporte"].map((String tipo) {
-                    return DropdownMenuItem(
+                DropdownMenuFormField<String>(
+                  width: double.infinity,
+                  initialSelection: _tipoDocumentoSeleccionado,
+                  leadingIcon: const Icon(Icons.description),
+                  label: const Text("Tipo de documento"),
+                  dropdownMenuEntries: ["DNI", "NIE", "Pasaporte"].map((tipo) {
+                    return DropdownMenuEntry(
                       value: tipo,
-                      child: Text(tipo),
+                      label: tipo,
+                      labelWidget: Text(tipo, style: const TextStyle(color: Color(0xFFC8A97E))),
                     );
                   }).toList(),
-                  onChanged: (nuevoValor) {
+                  onSelected: (nuevoValor) {
                     setState(() {
                       _tipoDocumentoSeleccionado = nuevoValor!;
-                      _dniController.clear(); // Limpiamos al cambiar de tipo de documento
+                      _dniController.clear();
                     });
                   },
                 ),
