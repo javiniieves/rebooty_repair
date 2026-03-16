@@ -24,7 +24,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
   late TextEditingController _observacionesController;
   late TextEditingController _fechaController;
 
-  // nuevos controladores
   late TextEditingController _itvController;
   late TextEditingController _combustibleCantidadController;
 
@@ -39,6 +38,8 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
   String? rutaFoto;
 
+  bool necesitaLimpieza = false;
+
   @override
   void initState() {
     super.initState();
@@ -49,7 +50,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     _anyoController = TextEditingController();
     _observacionesController = TextEditingController();
     _fechaController = TextEditingController();
-    // inicializamos los nuevos
     _itvController = TextEditingController();
     _combustibleCantidadController = TextEditingController();
 
@@ -65,7 +65,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     _anyoController.dispose();
     _observacionesController.dispose();
     _fechaController.dispose();
-    // liberamos los nuevos
     _itvController.dispose();
     _combustibleCantidadController.dispose();
 
@@ -338,7 +337,8 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                         ),
                         onTap: () => seleccionarFecha(_fechaController),
                         // Validación de fecha obligatoria
-                        validator: (value) => (value == null || value.isEmpty) ? "Introduzca la fecha de finalización del seguro" : null,
+                        validator: (value) =>
+                            (value == null || value.isEmpty) ? "Introduzca la fecha de finalización del seguro" : null,
                       ),
                     ),
                     const SizedBox(width: 15),
@@ -461,6 +461,19 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   ],
                 ),
 
+                const SizedBox(height: 20),
+
+                SwitchListTile(
+                  title: const Text("¿Necesita limpieza?"),
+                  secondary: const Icon(Icons.cleaning_services_outlined),
+                  value: necesitaLimpieza,
+                  onChanged: (bool nuevoValor) {
+                    setState(() {
+                      necesitaLimpieza = nuevoValor;
+                    });
+                  },
+                ),
+
                 const SizedBox(height: 50),
 
                 // botón de añadir coche
@@ -499,6 +512,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           "fecha_proxima_itv": _itvController.text,
                           "cantidad_combustible": int.parse(_combustibleCantidadController.text),
                           "ruta_foto": rutaFoto,
+                          "necesita_limpieza": necesitaLimpieza ? 1 : 0
                         });
 
                         _matriculaController.clear();
@@ -545,10 +559,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
       builder: (context) => AlertDialog(
         title: const Text("Selecciona un color"),
         content: SingleChildScrollView(
-          child: ColorPicker(
-            pickerColor: pickerColor,
-            onColorChanged: changeColor,
-          ),
+          child: ColorPicker(pickerColor: pickerColor, onColorChanged: changeColor),
         ),
         actions: [
           ElevatedButton(

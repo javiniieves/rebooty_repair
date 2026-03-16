@@ -72,6 +72,29 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     }
   }
 
+  // Función para cambiar el estado de limpieza
+  Future<void> cambiarLimpieza(bool nuevoValorCheck) async {
+    // Actualizamos el estado local primero para que la animación sea fluida
+    setState(() {
+      // Importante: Creamos copia para que el estado se refresque bien
+      vehiculo = Map<String, dynamic>.from(vehiculo!);
+      vehiculo!["necesita_limpieza"] = nuevoValorCheck ? 1 : 0;
+    });
+
+    // Guardamos en la base de datos
+    try {
+      final db = await DatabaseHelper.proyectodb();
+      await db.update(
+        "vehiculos",
+        {"necesita_limpieza": nuevoValorCheck ? 1 : 0},
+        where: "id = ?",
+        whereArgs: [idVehiculo],
+      );
+    } catch (e) {
+      debugPrint("Error al guardar limpieza: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (vehiculo == null) {
@@ -106,139 +129,182 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
                 children: [
-                  // BLOQUE IZQUIERDO
-                  Expanded(
-                    child: Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                        child: Column(
-                          children: [
-                            filaEditable(
-                              Icons.badge,
-                              "Matrícula",
-                              vehiculo!["matricula"],
-                              () => mostrarDialogoTexto("matricula", _matriculaController, esMatricula: true),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // BLOQUE IZQUIERDO
+                      Expanded(
+                        child: Card(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                            child: Column(
+                              children: [
+                                filaEditable(
+                                  Icons.badge,
+                                  "Matrícula",
+                                  vehiculo!["matricula"],
+                                  () => mostrarDialogoTexto("matricula", _matriculaController, esMatricula: true),
+                                ),
+                                const Divider(),
+                                filaEditable(
+                                  Icons.model_training,
+                                  "Modelo",
+                                  vehiculo!["modelo"],
+                                  () => mostrarDialogoTexto("modelo", _modeloController),
+                                ),
+                                const Divider(),
+                                filaEditable(
+                                  Icons.speed,
+                                  "Kilometraje",
+                                  "${vehiculo!["kilometraje"]} km",
+                                  () => mostrarDialogoTexto("kilometraje", _kilometrajeController, soloNumeros: true),
+                                ),
+                                const Divider(),
+                                filaEditable(
+                                  Icons.security,
+                                  "Fecha de caducidad del seguro",
+                                  vehiculo!["fecha_vencimiento_seguro"],
+                                  () => seleccionarFecha("fecha_vencimiento_seguro"),
+                                ),
+                                const Divider(),
+                                filaEditable(
+                                  Icons.fact_check_outlined,
+                                  "Próxima ITV",
+                                  vehiculo!["fecha_proxima_itv"] ?? "Sin fecha",
+                                  () => seleccionarFecha("fecha_proxima_itv"),
+                                ),
+                                const Divider(),
+                                filaEditable(
+                                  Icons.note,
+                                  "Notas",
+                                  vehiculo!["observaciones"] ?? "Sin notas",
+                                  () => mostrarDialogoTexto("observaciones", _observacionesController),
+                                ),
+                              ],
                             ),
-                            const Divider(),
-                            filaEditable(
-                              Icons.model_training,
-                              "Modelo",
-                              vehiculo!["modelo"],
-                              () => mostrarDialogoTexto("modelo", _modeloController),
-                            ),
-                            const Divider(),
-                            filaEditable(
-                              Icons.speed,
-                              "Kilometraje",
-                              "${vehiculo!["kilometraje"]} km",
-                              () => mostrarDialogoTexto("kilometraje", _kilometrajeController, soloNumeros: true),
-                            ),
-                            const Divider(),
-                            filaEditable(
-                              Icons.security,
-                              "Fecha de caducidad del seguro",
-                              vehiculo!["fecha_vencimiento_seguro"],
-                              () => seleccionarFecha("fecha_vencimiento_seguro"),
-                            ),
-                            const Divider(),
-                            filaEditable(
-                              Icons.fact_check_outlined,
-                              "Próxima ITV",
-                              vehiculo!["fecha_proxima_itv"] ?? "Sin fecha",
-                              () => seleccionarFecha("fecha_proxima_itv"),
-                            ),
-                            const Divider(),
-                            filaEditable(
-                              Icons.note,
-                              "Notas",
-                              vehiculo!["observaciones"] ?? "Sin notas",
-                              () => mostrarDialogoTexto("observaciones", _observacionesController),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+
+                      const SizedBox(width: 5),
+                      // BLOQUE DERECHO
+                      Expanded(
+                        child: Card(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                            child: Column(
+                              children: [
+                                filaEditable(
+                                  Icons.branding_watermark,
+                                  "Marca",
+                                  vehiculo!["marca"],
+                                  () => mostrarDialogoTexto("marca", _marcaController),
+                                ),
+                                const Divider(),
+                                filaEditable(
+                                  Icons.calendar_month,
+                                  "Año",
+                                  vehiculo!["anyo"].toString(),
+                                  () => mostrarDialogoTexto("anyo", _anyoController, soloNumeros: true),
+                                ),
+                                const Divider(),
+
+                                filaEditable(
+                                  Icons.oil_barrel_outlined,
+                                  "Líneas de Combustible",
+                                  "${vehiculo!["cantidad_combustible"]} líneas",
+                                  () => mostrarDialogoTexto(
+                                    "cantidad_combustible",
+                                    _combustibleController,
+                                    soloNumeros: true,
+                                    esCombustible: true,
+                                  ),
+                                ),
+                                const Divider(),
+                                filaEditable(
+                                  Icons.local_gas_station,
+                                  "Combustible",
+                                  vehiculo!["combustible"],
+                                  () => mostrarDropdown("combustible", vehiculo!["combustible"], [
+                                    "Diesel",
+                                    "Gasoil",
+                                    "Eléctrico",
+                                    "Híbrido",
+                                  ]),
+                                ),
+                                const Divider(),
+                                filaEditable(
+                                  Icons.info_outline,
+                                  "Estado",
+                                  vehiculo!["estado"],
+                                  () => mostrarDropdown("estado", vehiculo!["estado"], [
+                                    "Disponible",
+                                    "Alquilado",
+                                    "Taller",
+                                  ]),
+                                ),
+                                const Divider(),
+
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.palette, color: Color(vehiculo!["color"]), size: 20),
+                                      const SizedBox(width: 10),
+                                      const Expanded(
+                                        child: Text(
+                                          "Color",
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 30,
+                                        child: IconButton(
+                                          padding: EdgeInsets.zero,
+                                          icon: const Icon(Icons.edit, size: 16),
+                                          onPressed: mostrarSelectorColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
-                  const SizedBox(width: 5),
-                  // BLOQUE DERECHO
-                  Expanded(
-                    child: Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                        child: Column(
-                          children: [
-                            filaEditable(
-                              Icons.branding_watermark,
-                              "Marca",
-                              vehiculo!["marca"],
-                              () => mostrarDialogoTexto("marca", _marcaController),
-                            ),
-                            const Divider(),
-                            filaEditable(
-                              Icons.calendar_month,
-                              "Año",
-                              vehiculo!["anyo"].toString(),
-                              () => mostrarDialogoTexto("anyo", _anyoController, soloNumeros: true),
-                            ),
-                            const Divider(),
-
-                            filaEditable(
-                              Icons.oil_barrel_outlined,
-                              "Líneas de Combustible",
-                              "${vehiculo!["cantidad_combustible"]} líneas",
-                              () => mostrarDialogoTexto(
-                                "cantidad_combustible",
-                                _combustibleController,
-                                soloNumeros: true,
-                                esCombustible: true,
-                              ),
-                            ),
-                            const Divider(),
-                            filaEditable(
-                              Icons.local_gas_station,
-                              "Combustible",
-                              vehiculo!["combustible"],
-                              () => mostrarDropdown("combustible", vehiculo!["combustible"],
-                                  ["Diesel", "Gasoil", "Eléctrico", "Híbrido",]),
-                            ),
-                            const Divider(),
-                            filaEditable(
-                              Icons.info_outline,
-                              "Estado",
-                              vehiculo!["estado"],
-                              () => mostrarDropdown("estado", vehiculo!["estado"], ["Disponible", "Alquilado", "Taller"]),
-                            ),
-                            const Divider(),
-
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.palette, color: Color(vehiculo!["color"]), size: 20),
-                                  const SizedBox(width: 10),
-                                  const Expanded(
-                                    child: Text("Color", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                  ),
-                                  SizedBox(
-                                    width: 30,
-                                    child: IconButton(
-                                      padding: EdgeInsets.zero,
-                                      icon: const Icon(Icons.edit, size: 16),
-                                      onPressed: mostrarSelectorColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                  // fila para elegir si hay que limpiar
+                  const SizedBox(height: 5),
+                  Card(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    color: Colors.white,
+                    child: SwitchListTile(
+                      title: const Text(
+                        "¿Limpieza necesaria?",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                       ),
+                      secondary: const Icon(Icons.cleaning_services_outlined),
+
+                      // Fondo blanco cuando está a la derecha (activado)
+                      activeTrackColor: Colors.white,
+                      // Fondo gris clarito cuando está a la izquierda (desactivado)
+                      inactiveTrackColor: Colors.grey[300],
+
+                      activeColor: Colors.black,
+                      // El círculo se pone azul cuando el fondo es blanco
+
+                      // Fondo gris clarito cuando está a la izquierda (desactivado)
+                      value: vehiculo!["necesita_limpieza"] == 1,
+                      onChanged: (bool nuevoValor) {
+                        cambiarLimpieza(nuevoValor);
+                      },
                     ),
                   ),
                 ],
@@ -287,7 +353,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const Icon(Icons.history),
-                                Text("${r["fecha_inicio"]} / ${r["fecha_fin"]}", style: TextStyle(fontSize: 12),),
+                                Text("${r["fecha_inicio"]} / ${r["fecha_fin"]}", style: TextStyle(fontSize: 12)),
                                 TextButton(
                                   onPressed: () {
                                     Navigator.pushNamed(context, "detalles_reparacion", arguments: r["id"]);
@@ -367,7 +433,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                   if (soloNumeros && !RegExp(r'^\d+$').hasMatch(value)) {
                     return "Solo números";
                   }
-                  if(esMatricula && !regex.hasMatch(value.toUpperCase())){
+                  if (esMatricula && !regex.hasMatch(value.toUpperCase())) {
                     return "4 números y 3 consonantes";
                   }
                   // validacion de lineas de combustible
@@ -452,16 +518,12 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
       builder: (context) => AlertDialog(
         title: const Text("Selecciona un color"),
         content: SingleChildScrollView(
-          child: ColorPicker(
-            pickerColor: pickerColor,
-            onColorChanged: changeColor,
-          ),
+          child: ColorPicker(pickerColor: pickerColor, onColorChanged: changeColor),
         ),
         actions: [
           ElevatedButton(
             child: const Text('seleccionar'),
             onPressed: () async {
-
               confirmar = await confirmacion();
               if (!confirmar) return Navigator.pop(context);
 
@@ -486,16 +548,21 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
               actions: [
                 TextButton(
                   child: const Text("Cancelar"),
-                  onPressed: () {Navigator.pop(context, false);},
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  },
                 ),
                 ElevatedButton(
                   child: const Text("Confirmar"),
-                  onPressed: () {Navigator.pop(context, true);},
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
                 ),
               ],
             );
           },
-        ) ?? false;
+        ) ??
+        false;
     return confirmar;
   }
 }
