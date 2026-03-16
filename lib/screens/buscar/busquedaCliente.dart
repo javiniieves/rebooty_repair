@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../database.dart';
@@ -103,7 +105,10 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                     itemBuilder: (context, index) {
                       final cliente = clientesFiltrados[index];
                       return ListTile(
-                        leading: const Icon(Icons.person),
+                        // a la izquierda mostramos la foto del cleinte o un icono si no ha elegido
+                        leading: cliente["ruta_foto"] == null
+                            ? Icon(Icons.person)
+                            : Image(image: FileImage(File(cliente["ruta_foto"]))),
                         title: Text(cliente['nombre'] ?? 'Sin nombre'),
                         subtitle: Text("${cliente['tipo_documento']}: ${cliente['documento_oficial']}"),
                         onTap: () async {
@@ -117,7 +122,9 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                               context: context,
                               builder: (context) {
                                 return AlertDialog(
-                                  title: const Text("¿Estás seguro de que quieres borrar este campo de la base de datos?"),
+                                  title: const Text(
+                                    "¿Estás seguro de que quieres borrar este campo de la base de datos?",
+                                  ),
 
                                   content: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,

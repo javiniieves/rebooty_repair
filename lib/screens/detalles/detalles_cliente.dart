@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../database.dart';
 
 class DetallesClienteScreen extends StatefulWidget {
@@ -44,11 +46,21 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
     });
   }
 
-  Future<void> actualizarCliente(int idCliente, Map<String, dynamic> valores) async {
+  Future<void> actualizarCliente(String campo, dynamic valor) async {
     final db = await DatabaseHelper.proyectodb();
 
-    await db.update("clientes", valores, where: "id = ?", whereArgs: [idCliente]);
+    await db.update("clientes", {campo: valor}, where: "id = ?", whereArgs: [idCliente]);
     cargarDatosCliente(idCliente);
+  }
+
+  // Función para cambiar la foto del cliente
+  Future<void> cambiarFoto() async {
+    final picker = ImagePicker();
+    final XFile? imagen = await picker.pickImage(source: ImageSource.gallery);
+
+    if (imagen != null) {
+      await actualizarCliente("ruta_foto", imagen.path);
+    }
   }
 
   @override
@@ -59,139 +71,200 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
+        title: const Text("Detalles del Cliente"),
+        centerTitle: true,
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
           },
           icon: const Icon(Icons.arrow_back),
         ),
-        title: const Text("Detalles del Cliente"),
-        centerTitle: true,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 30),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
 
-              // Avatar
-              CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-                radius: 35,
-                child: Text(
-                  cliente!['nombre'].substring(0, 1).toUpperCase(),
-                  style: const TextStyle(fontSize: 35, fontWeight: FontWeight.bold, color: Color(0xFF2F3136)),
+            // Mostramos la imagen del cliente arriba (estilo vehículo)
+            GestureDetector(
+              onTap: cambiarFoto, // Al pulsar, dejamos editar imagen
+              child: Container(
+                width: 180,
+                height: 180,
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 10)),
+                  ],
                 ),
-              ),
-
-              const SizedBox(height: 15),
-
-              // Nombre
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    cliente!['nombre'],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => _ventanaCambio(cliente!["id"], "nombre", _nombreControler),
-                      );
-                    },
-                    icon: Icon(Icons.edit),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 25),
-
-              // Card con información
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 180),
-                child: Card(
-                  elevation: 5,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        Row(
+                child: cliente!["ruta_foto"] != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.file(File(cliente!["ruta_foto"]), fit: BoxFit.cover),
+                      )
+                    : Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Expanded(
-                              child: _infoRow(
-                                Icons.badge,
-                                cliente!['tipo_documento'] ?? "Documento",
-                                cliente!['documento_oficial'],
-                              ),
+                            Text(
+                              cliente!['nombre'].substring(0, 1).toUpperCase(),
+                              style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold),
                             ),
-                            IconButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => _ventanaCambioDocumento(cliente!["id"]),
-                                );
-                              },
-                              icon: Icon(Icons.edit),
-                            ),
+                            const Text("Añadir Foto", style: TextStyle(fontSize: 12)),
                           ],
                         ),
-                        const Divider(),
-                        _filaEditable(Icons.phone, "Telefono", cliente!['telefono'], _telefonoControler, "telefono"),
-                        const Divider(),
-                        _filaEditable(
-                          Icons.location_on,
-                          "Direccion",
-                          cliente!['direccion'],
-                          _direccionControler,
-                          "direccion",
-                        ),
-                        const Divider(),
-                        _filaEditable(
-                          Icons.email,
-                          "Email",
-                          cliente!['email'] ?? "Sin correo",
-                          _correoControler,
-                          "email",
-                        ),
-                      ],
-                    ),
+                      ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // Bloque de información en una sola columna
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Card(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                child: Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Column(
+                    children: [
+                      filaEditable(
+                        Icons.person,
+                        "Nombre",
+                        cliente!["nombre"],
+                        () => mostrarDialogoTexto("nombre", _nombreControler),
+                      ),
+                      const Divider(),
+                      filaEditable(
+                        Icons.badge,
+                        cliente!['tipo_documento'] ?? "Documento",
+                        cliente!['documento_oficial'],
+                        () => showDialog(context: context, builder: (context) => _ventanaCambioDocumento(idCliente)),
+                      ),
+                      const Divider(),
+                      filaEditable(
+                        Icons.phone,
+                        "Teléfono",
+                        cliente!['telefono'],
+                        () => mostrarDialogoTexto("telefono", _telefonoControler, esTelefono: true),
+                      ),
+                      const Divider(),
+                      filaEditable(
+                        Icons.location_on,
+                        "Dirección",
+                        cliente!['direccion'],
+                        () => mostrarDialogoTexto("direccion", _direccionControler),
+                      ),
+                      const Divider(),
+                      filaEditable(
+                        Icons.email,
+                        "Email",
+                        cliente!['email'] ?? "Sin correo",
+                        () => mostrarDialogoTexto("email", _correoControler, esEmail: true),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Widget para las filas con el botón de editar (estilo vehículo)
+  Widget filaEditable(IconData icono, String titulo, String valor, VoidCallback onEdit) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icono, size: 24),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(titulo, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(
+                  valor,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          IconButton(icon: const Icon(Icons.edit, size: 20), onPressed: onEdit),
+        ],
+      ),
+    );
+  }
+
+  // Ventana genérica para editar campos
+  void mostrarDialogoTexto(
+    String campo,
+    TextEditingController controller, {
+    bool esTelefono = false,
+    bool esEmail = false,
+  }) {
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Actualizar $campo"),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              esTelefono
+                  ? IntlPhoneField(
+                      controller: controller,
+                      initialCountryCode: 'ES',
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        labelText: "Teléfono",
+                      ),
+                      onChanged: (phone) => telefonoCompleto = phone.completeNumber,
+                    )
+                  : TextFormField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        hintText: "Escribe aquí...",
+                      ),
+                      validator: (value) {
+                        if (esEmail && value != null && value.isNotEmpty) {
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) return "Email no válido";
+                        }
+                        if (!esEmail && (value == null || value.trim().isEmpty)) return "Campo obligatorio";
+                        return null;
+                      },
+                    ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  confirmar = await confirmacion();
+                  if (!confirmar) return Navigator.pop(context);
+
+                  if (formKey.currentState!.validate()) {
+                    String valorFinal = esTelefono ? telefonoCompleto : controller.text;
+                    await actualizarCliente(campo, valorFinal);
+                    controller.clear();
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text("Guardar"),
+              ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _filaEditable(IconData icono, String titulo, String valor, TextEditingController controller, String campo) {
-    return Row(
-      children: [
-        Expanded(child: _infoRow(icono, titulo, valor)),
-        IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: () {
-            showDialog(context: context, builder: (_) => _ventanaCambio(cliente!["id"], campo, controller));
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _infoRow(IconData icon, String titulo, String valor) {
-    return Row(
-      children: [
-        Icon(icon),
-        SizedBox(width: 15),
-        Expanded(child: Text("$titulo: $valor", style: TextStyle(fontSize: 17))),
-      ],
     );
   }
 
@@ -207,7 +280,6 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // elegir tipo de documento
           DropdownMenu<String>(
             width: double.infinity,
             initialSelection: _tipoDocumento,
@@ -235,49 +307,31 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
             ),
           ),
           const SizedBox(height: 25),
-
-          // botón para guardar los campos
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              // al pulsarlo validamos si está cumple el tipo de documento
-              // su patrón y si es así lo guardamos en la base de datos
               onPressed: () async {
                 String valor = _documentoController.text.toUpperCase();
-
-                // Comprobamos que no esté vacío
                 if (valor.isEmpty) {
                   mostrarMensaje("¡No puedes dejar el documento vacío!");
                   return;
                 }
-
-                // Comprobamos que cumple el patrón según el tipo de docuemnto elegido
-                if (_tipoDocumento == "DNI") {
-                  // 8 números y 1 letra
-                  if (!RegExp(r'^\d{8}[A-Z]$').hasMatch(valor)) {
-                    mostrarMensaje("Formato DNI incorrecto (Ej: 12345678Z)");
-                    return;
-                  }
-                } else if (_tipoDocumento == "NIE") {
-                  // Letra inicial (XYZ), 7 números y letra final
-                  if (!RegExp(r'^[XYZ]\d{7}[A-Z]$').hasMatch(valor)) {
-                    mostrarMensaje("Formato NIE incorrecto (Ej: X1234567L)");
-                    return;
-                  }
-                } else if (_tipoDocumento == "Pasaporte") {
-                  // Para pasaportes, al menos que tenga una longitud razonable (ej: 6-9 caracteres)
-                  if (valor.length < 6) {
-                    mostrarMensaje("El pasaporte debe tener al menos 6 caracteres");
-                    return;
-                  }
+                if (_tipoDocumento == "DNI" && !RegExp(r'^\d{8}[A-Z]$').hasMatch(valor)) {
+                  mostrarMensaje("Formato DNI incorrecto");
+                  return;
+                } else if (_tipoDocumento == "NIE" && !RegExp(r'^[XYZ]\d{7}[A-Z]$').hasMatch(valor)) {
+                  mostrarMensaje("Formato NIE incorrecto");
+                  return;
+                } else if (_tipoDocumento == "Pasaporte" && valor.length < 6) {
+                  mostrarMensaje("Pasaporte demasiado corto");
+                  return;
                 }
 
                 confirmar = await confirmacion();
                 if (!confirmar) return Navigator.pop(context);
 
-                // Si ha pasado los filtros, guardamos
-                final baseDatos = await DatabaseHelper.proyectodb();
-                await baseDatos.update(
+                final db = await DatabaseHelper.proyectodb();
+                await db.update(
                   "clientes",
                   {"tipo_documento": _tipoDocumento, "documento_oficial": valor},
                   where: "id = ?",
@@ -296,139 +350,18 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
     );
   }
 
-  Widget _ventanaCambio(int idCliente, String campoACambiar, TextEditingController controllerCampoACambiar) {
-    final formKey = GlobalKey<FormState>();
-
-    if (campoACambiar == "telefono") {
-      telefonoCompleto = cliente![campoACambiar] ?? "";
-    }
-
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      title: Text("Actualizar $campoACambiar"),
-
-      content: Form(
-        key: formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text("Introduce el nuevo valor para el campo:"),
-
-            const SizedBox(height: 15),
-
-            campoACambiar == "telefono"
-                ? IntlPhoneField(
-                    controller: controllerCampoACambiar,
-                    initialCountryCode: 'ES',
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      labelText: "Teléfono",
-                    ),
-                    validator: (phone) {
-                      if (campoACambiar == "telefono") {
-                        if (telefonoCompleto.isEmpty) {
-                          return "El teléfono es obligatorio";
-                        }
-                        if (telefonoCompleto.replaceAll(RegExp(r'\D'), '').length < 6) {
-                          return "Número inválido";
-                        }
-                      }
-                      return null;
-                    },
-                    onChanged: (phone) {
-                      telefonoCompleto = phone.completeNumber;
-                    },
-                  )
-                : TextFormField(
-                    controller: controllerCampoACambiar,
-                    style: const TextStyle(color: Color(0xFFC8A97E)),
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      hintText: "Escribe aquí...",
-                    ),
-
-                    validator: (value) {
-                      // Si es email permitimos vacío
-                      if (campoACambiar == "email") {
-                        if (value != null && value.isNotEmpty) {
-                          final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-                          if (!emailRegex.hasMatch(value)) {
-                            return "Email no válido";
-                          }
-                        }
-                        return null;
-                      }
-                      if (campoACambiar == "telefono") {
-                        if (value != null && value.isNotEmpty) {
-                          if (!RegExp(r'^\d+$').hasMatch(value)) {
-                            return "Solo números";
-                          }
-                        }
-                      }
-                      // Para el resto de campos no permitimos vacío
-                      if (value == null || value.trim().isEmpty) {
-                        return "Este campo no puede estar vacío";
-                      }
-                      return null;
-                    },
-                  ),
-            const SizedBox(height: 25),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-
-                onPressed: () async {
-                  confirmar = await confirmacion();
-                  if (!confirmar) return Navigator.pop(context);
-
-                  // Validar formulario
-                  if (!formKey.currentState!.validate()) {
-                    return;
-                  }
-                  await actualizarCliente(idCliente, {
-                    campoACambiar: campoACambiar == "telefono" ? telefonoCompleto : controllerCampoACambiar.text,
-                  });
-                  controllerCampoACambiar.clear();
-                  cargarDatosCliente(idCliente);
-                  Navigator.pop(context);
-                },
-                child: const Text("GUARDAR CAMBIOS"),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<bool> confirmacion() async {
     confirmar =
         await showDialog(
           context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text("Confirmar cambio"),
-              content: const Text("¿Seguro que quieres actualizar los datos?"),
-              actions: [
-                TextButton(
-                  child: const Text("Cancelar"),
-                  onPressed: () {
-                    Navigator.pop(context, false);
-                  },
-                ),
-                ElevatedButton(
-                  child: const Text("Confirmar"),
-                  onPressed: () {
-                    Navigator.pop(context, true);
-                  },
-                ),
-              ],
-            );
-          },
+          builder: (context) => AlertDialog(
+            title: const Text("Confirmar cambio"),
+            content: const Text("¿Seguro que quieres actualizar los datos?"),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancelar")),
+              ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text("Confirmar")),
+            ],
+          ),
         ) ??
         false;
     return confirmar;
