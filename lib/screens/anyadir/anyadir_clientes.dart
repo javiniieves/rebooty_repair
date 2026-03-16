@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../database.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 class PantallaAnyadirClientes extends StatefulWidget {
   const PantallaAnyadirClientes({super.key});
@@ -19,6 +20,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
   late TextEditingController _emailController;
 
   String _tipoDocumentoSeleccionado = "DNI";
+  String telefonoCompleto = "";
 
   @override
   void initState() {
@@ -148,22 +150,22 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                 const SizedBox(height: 30),
 
                 // introducir teléfono
-                TextFormField(
-                  style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                IntlPhoneField(
                   controller: _telefonoController,
-                  keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: "Teléfono",
-                    prefixIcon: const Icon(Icons.phone),
+                    labelText: 'Teléfono',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  // Validación de teléfono
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
+                  initialCountryCode: 'ES',
+                  onChanged: (phone) {
+                    telefonoCompleto = phone.completeNumber;
+                  },
+                  validator: (phone) {
+                    if (phone == null || phone.number.isEmpty) {
                       return "El teléfono es obligatorio";
                     }
-                    if (value.length < 9) {
-                      return "Introduce un número válido";
+                    if (phone.number.length < 6) {
+                      return "Número inválido";
                     }
                     return null;
                   },
@@ -230,7 +232,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                           "nombre": _nombreController.text,
                           "tipo_documento": _tipoDocumentoSeleccionado,
                           "documento_oficial": _dniController.text.toUpperCase(),
-                          "telefono": _telefonoController.text,
+                          "telefono": telefonoCompleto,
                           "direccion": _direccionController.text,
                           "email": _emailController.text.isEmpty ? null : _emailController.text,
                         });
