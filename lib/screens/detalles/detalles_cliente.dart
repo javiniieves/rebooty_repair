@@ -299,6 +299,10 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
   Widget _ventanaCambio(int idCliente, String campoACambiar, TextEditingController controllerCampoACambiar) {
     final formKey = GlobalKey<FormState>();
 
+    if (campoACambiar == "telefono") {
+      telefonoCompleto = cliente![campoACambiar] ?? "";
+    }
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       title: Text("Actualizar $campoACambiar"),
@@ -321,11 +325,13 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                       labelText: "Teléfono",
                     ),
                     validator: (phone) {
-                      if (phone == null || phone.number.isEmpty) {
-                        return "El teléfono es obligatorio";
-                      }
-                      if (phone.number.length < 6) {
-                        return "Número inválido";
+                      if (campoACambiar == "telefono") {
+                        if (telefonoCompleto.isEmpty) {
+                          return "El teléfono es obligatorio";
+                        }
+                        if (telefonoCompleto.replaceAll(RegExp(r'\D'), '').length < 6) {
+                          return "Número inválido";
+                        }
                       }
                       return null;
                     },
@@ -383,7 +389,9 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                   if (!formKey.currentState!.validate()) {
                     return;
                   }
-                  await actualizarCliente(idCliente, {campoACambiar: controllerCampoACambiar.text});
+                  await actualizarCliente(idCliente, {
+                    campoACambiar: campoACambiar == "telefono" ? telefonoCompleto : controllerCampoACambiar.text,
+                  });
                   controllerCampoACambiar.clear();
                   cargarDatosCliente(idCliente);
                   Navigator.pop(context);
