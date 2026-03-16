@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 import '../../database.dart';
 
 class DetallesClienteScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
 
   // Variable para controlar el tipo de documento en la edición
   String _tipoDocumento = "DNI";
+  String telefonoCompleto = "";
 
   late int idCliente;
   late bool confirmar;
@@ -310,40 +312,60 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
 
             const SizedBox(height: 15),
 
-            TextFormField(
-              controller: controllerCampoACambiar,
-              style: const TextStyle(color: Color(0xFFC8A97E)),
+            campoACambiar == "telefono"
+                ? IntlPhoneField(
+                    controller: controllerCampoACambiar,
+                    initialCountryCode: 'ES',
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      labelText: "Teléfono",
+                    ),
+                    validator: (phone) {
+                      if (phone == null || phone.number.isEmpty) {
+                        return "El teléfono es obligatorio";
+                      }
+                      if (phone.number.length < 6) {
+                        return "Número inválido";
+                      }
+                      return null;
+                    },
+                    onChanged: (phone) {
+                      telefonoCompleto = phone.completeNumber;
+                    },
+                  )
+                : TextFormField(
+                    controller: controllerCampoACambiar,
+                    style: const TextStyle(color: Color(0xFFC8A97E)),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      hintText: "Escribe aquí...",
+                    ),
 
-              decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                hintText: "Escribe aquí...",
-              ),
-
-              validator: (value) {
-                // Si es email permitimos vacío
-                if (campoACambiar == "email") {
-                  if (value != null && value.isNotEmpty) {
-                    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-                    if (!emailRegex.hasMatch(value)) {
-                      return "Email no válido";
-                    }
-                  }
-                  return null;
-                }
-                if (campoACambiar == "telefono") {
-                  if (value != null && value.isNotEmpty) {
-                    if (!RegExp(r'^\d+$').hasMatch(value)) {
-                      return "Solo números";
-                    }
-                  }
-                }
-                // Para el resto de campos no permitimos vacío
-                if (value == null || value.trim().isEmpty) {
-                  return "Este campo no puede estar vacío";
-                }
-                return null;
-              },
-            ),
+                    validator: (value) {
+                      // Si es email permitimos vacío
+                      if (campoACambiar == "email") {
+                        if (value != null && value.isNotEmpty) {
+                          final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                          if (!emailRegex.hasMatch(value)) {
+                            return "Email no válido";
+                          }
+                        }
+                        return null;
+                      }
+                      if (campoACambiar == "telefono") {
+                        if (value != null && value.isNotEmpty) {
+                          if (!RegExp(r'^\d+$').hasMatch(value)) {
+                            return "Solo números";
+                          }
+                        }
+                      }
+                      // Para el resto de campos no permitimos vacío
+                      if (value == null || value.trim().isEmpty) {
+                        return "Este campo no puede estar vacío";
+                      }
+                      return null;
+                    },
+                  ),
             const SizedBox(height: 25),
             SizedBox(
               width: double.infinity,
