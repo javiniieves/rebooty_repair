@@ -26,12 +26,13 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 ),
                 onPressed: () async {
-                  await DatabaseHelper.exportarBD();
+                  bool exportado = await DatabaseHelper.exportarBD();
 
-                  // Feedback de éxito
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text("Base de datos exportada con éxito")));
+                  if (exportado) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(const SnackBar(content: Text("Base de datos exportada con éxito")));
+                  }
                 },
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
