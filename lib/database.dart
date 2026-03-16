@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -20,7 +21,7 @@ class DatabaseHelper {
         await db.execute(
           "CREATE TABLE vehiculos (id INTEGER PRIMARY KEY, matricula TEXT, marca TEXT, modelo TEXT, estado TEXT, "
           "color INTEGER, kilometraje REAL, anyo INTEGER, combustible TEXT, observaciones TEXT, fecha_vencimiento_seguro TEXT, "
-              "ruta_foto TEXT, cantidad_combustible INTEGER, fecha_proxima_itv TEXT)",
+          "ruta_foto TEXT, cantidad_combustible INTEGER, fecha_proxima_itv TEXT)",
         );
 
         // tabla reparaciones (se relacione con coche)
@@ -36,7 +37,7 @@ class DatabaseHelper {
         // Tabla de los Alquileres (La que une coche y cliente)
         await db.execute(
           "CREATE TABLE alquileres (id INTEGER PRIMARY KEY, id_coche INTEGER, id_cliente INTEGER, fecha_inicio TEXT, fecha_fin TEXT, "
-              "fecha_devolucion TEXT, precio REAL, estado TEXT, observaciones TEXT)",
+          "fecha_devolucion TEXT, precio REAL, estado TEXT, observaciones TEXT)",
         );
 
         // tabla fotos (se relaciona con alquileres)
@@ -51,7 +52,7 @@ class DatabaseHelper {
     );
   }
 
-  static Future<void> exportarBD() async {
+  static Future<bool> exportarBD() async {
     try {
       String pathBaseDatos = await getDatabasesPath();
       String rutaBaseDatos = join(pathBaseDatos, "alquileres.db");
@@ -59,7 +60,7 @@ class DatabaseHelper {
 
       if (!await archivo.exists()) {
         print("No se encuentra el archivo .db");
-        return;
+        return false;
       }
 
       if (Platform.isWindows) {
@@ -69,16 +70,21 @@ class DatabaseHelper {
           fileName: 'alquileres.db',
         );
 
-        if (rutaDestino != null) {
-          await archivo.copy(rutaDestino);
-          print("Copiado a: $rutaDestino");
+        if (rutaDestino == null) {
+          return false; // usuario canceló
         }
+
+        await archivo.copy(rutaDestino);
+        print("Copiado a: $rutaDestino");
+        return true;
       } else {
         // si el movil usamos el menú de compartir (WhatsApp, Drive, etc)
         await Share.shareXFiles([XFile(rutaBaseDatos)], text: "Copia de seguridad");
+        return true;
       }
     } catch (e) {
       print("Error al exportar: $e");
+      return false;
     }
   }
 
