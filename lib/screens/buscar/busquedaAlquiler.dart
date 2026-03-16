@@ -1,7 +1,5 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-
 import '../../database.dart';
 
 class PantallaBusquedaAlquiler extends StatefulWidget {
@@ -147,11 +145,11 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                     return const Center(child: Text("No hay registros"));
                   }
 
-                  // Filtrado por DNI según lo escrito en el TextField
+                  // Filtrado por Matrícula según lo escrito en el TextField (corregido)
                   final filtro = _idController.text.toLowerCase();
                   final alquileresFiltrados = snapshot.data!.where((alquiler) {
-                    final id = alquiler['id']?.toString().toLowerCase() ?? '';
-                    return id.startsWith(filtro);
+                    final mat = alquiler['matricula']?.toString().toLowerCase() ?? '';
+                    return mat.contains(filtro);
                   }).toList();
 
                   return Row(
@@ -160,10 +158,10 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                       Expanded(
                         flex: 2,
                         child: ListView.separated(
-                          separatorBuilder: (context, index) => Divider(),
+                          separatorBuilder: (context, index) => const Divider(),
                           itemCount: alquileresFiltrados.length,
                           itemBuilder: (context, index) {
-                            Map<String, dynamic>? alquiler = alquileresFiltrados[index];
+                            Map<String, dynamic> alquiler = alquileresFiltrados[index];
 
                             return ListTile(
                               // en leading no podemos usar la imagen del coche directamente
@@ -179,23 +177,57 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                                     return const Icon(Icons.directions_car);
                                   }
                                   // si no hay problemas mostramos la imagen del vehículo
-                                  return Image(image: FileImage(File(snapshotImagenCocheActual.data!)));
+                                  return Image(
+                                    image: FileImage(File(snapshotImagenCocheActual.data!)),
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                  );
                                 },
                               ),
-                              title: Text(alquiler['matricula'] ?? 'Sin coche'),
+                              // Matrícula y Fechas en el centro como Fila
+                              title: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      alquiler['matricula'] ?? 'Sin coche',
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Center(
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Align(
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              "${alquiler['fecha_inicio']} / ${alquiler['fecha_fin']}",
+                                              style: const TextStyle(fontSize: 16),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                               subtitle: Text(alquiler['estado'] ?? 'Sin estado'),
                               onTap: () async {
-                                await Navigator.pushNamed(context, "detalles_alquiler", arguments: alquiler?["id"]);
+                                await Navigator.pushNamed(context, "detalles_alquiler", arguments: alquiler["id"]);
                                 setState(() {});
                               },
                               trailing: IconButton(
-                                icon: const Icon(Icons.delete),
+                                icon: const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () async {
                                   showDialog(
                                     context: context,
                                     builder: (context) {
                                       return AlertDialog(
-                                        title: Text(
+                                        title: const Text(
                                           "¿Estás seguro de que quieres borrar este alquiler de la base de datos?",
                                         ),
 
@@ -205,21 +237,20 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                                           children: [
                                             ElevatedButton.icon(
                                               onPressed: () async {
-                                                await DatabaseHelper.borrarAlquiler(alquiler?["id"]);
-                                                setState(() {
-                                                  alquiler = null;
-                                                });
-
+                                                await DatabaseHelper.borrarAlquiler(alquiler["id"]);
+                                                setState(() {});
                                                 Navigator.pop(context);
                                               },
-                                              label: Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                                              label: const Row(children: [Icon(Icons.check), Text("Confirmar")]),
                                             ),
 
                                             ElevatedButton.icon(
                                               onPressed: () {
                                                 Navigator.pop(context);
                                               },
-                                              label: Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                                              label: const Row(
+                                                children: [Icon(Icons.cancel_outlined), Text("Cancelar")],
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -233,15 +264,15 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                         ),
                       ),
 
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
 
                       // a la derecha los avisos de los alquileres
                       Expanded(
                         child: Column(
                           children: [
-                            Text("Alquileres a recibir mañana"),
+                            const Text("Alquileres a recibir mañana"),
 
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
 
                             Expanded(
                               child: FutureBuilder<List<Map<String, dynamic>>>(
@@ -271,7 +302,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                                             );
                                           },
                                           child: Container(
-                                            padding: EdgeInsets.all(15),
+                                            padding: const EdgeInsets.all(15),
                                             decoration: BoxDecoration(borderRadius: BorderRadius.circular(15)),
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,7 +314,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                                                       alignment: Alignment.center,
                                                       child: Text(
                                                         alquilerActual['matricula'] ?? '---',
-                                                        style: TextStyle(
+                                                        style: const TextStyle(
                                                           fontWeight: FontWeight.bold,
                                                           fontSize: 16,
                                                           letterSpacing: 1.5,
@@ -294,12 +325,12 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                                                     Align(
                                                       alignment: Alignment.centerRight,
                                                       child: Container(
-                                                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                                         decoration: BoxDecoration(
                                                           color: Colors.orange.withOpacity(0.2),
                                                           borderRadius: BorderRadius.circular(8),
                                                         ),
-                                                        child: Text(
+                                                        child: const Text(
                                                           "MAÑANA",
                                                           style: TextStyle(
                                                             color: Colors.orange,
@@ -311,28 +342,32 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                                                     ),
                                                   ],
                                                 ),
-                                                Divider(height: 20),
+                                                const Divider(height: 20),
                                                 // Información del coche
                                                 Row(
                                                   children: [
-                                                    Icon(Icons.directions_car_filled, size: 18, color: Colors.grey),
-                                                    SizedBox(width: 8),
+                                                    const Icon(
+                                                      Icons.directions_car_filled,
+                                                      size: 18,
+                                                      color: Colors.grey,
+                                                    ),
+                                                    const SizedBox(width: 8),
                                                     Text(
                                                       "${alquilerActual['marca']} ${alquilerActual['modelo']}",
-                                                      style: TextStyle(fontSize: 13, color: Colors.white),
+                                                      style: const TextStyle(fontSize: 13, color: Colors.white),
                                                     ),
                                                   ],
                                                 ),
-                                                SizedBox(height: 8),
+                                                const SizedBox(height: 8),
                                                 // Información del cliente
                                                 Row(
                                                   children: [
-                                                    Icon(Icons.person, size: 18, color: Colors.grey),
-                                                    SizedBox(width: 8),
+                                                    const Icon(Icons.person, size: 18, color: Colors.grey),
+                                                    const SizedBox(width: 8),
                                                     Expanded(
                                                       child: Text(
                                                         "${alquilerActual['nombre']} (${alquilerActual['documento_oficial']})",
-                                                        style: TextStyle(fontSize: 12, color: Colors.white),
+                                                        style: const TextStyle(fontSize: 12, color: Colors.white),
                                                         overflow: TextOverflow.ellipsis,
                                                       ),
                                                     ),
