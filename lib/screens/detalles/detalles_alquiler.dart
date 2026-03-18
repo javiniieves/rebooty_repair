@@ -24,10 +24,12 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   TextEditingController _fechaLimiteControler = TextEditingController();
   TextEditingController _fechaDevoControler = TextEditingController();
   TextEditingController _precioController = TextEditingController();
+  TextEditingController _fianzaController = TextEditingController(); // Nuevo
   TextEditingController _observacionesController = TextEditingController();
   final TextEditingController _clienteNombreController = TextEditingController();
   final TextEditingController _cocheMatriculaController = TextEditingController();
   String _estadoActual = "";
+  String _formaPagoActual = ""; // Nuevo
 
   Future<void> cargarAlquiler(int idAlquiler) async {
     // guardamos el alquiler con el id recibido
@@ -41,8 +43,10 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
         _fechaLimiteControler = TextEditingController(text: alquiler['fecha_fin']);
         _fechaDevoControler = TextEditingController(text: alquiler['fecha_devolucion'] ?? "");
         _precioController = TextEditingController(text: alquiler['precio'].toString());
+        _fianzaController = TextEditingController(text: alquiler['fianza'].toString()); // Cargar fianza
         _observacionesController = TextEditingController(text: alquiler['observaciones']);
         _estadoActual = alquiler['estado'];
+        _formaPagoActual = alquiler['forma_pago'] ?? "Efectivo"; // Cargar forma pago
       });
 
       await cargarCocheYCliente(alquiler['id_coche'], alquiler['id_cliente']);
@@ -278,6 +282,22 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                           children: [
                             Expanded(child: _infoRow(Icons.euro, "Precio", _precioController)),
                             IconButton(onPressed: () => _ventanaCambioPrecio(), icon: const Icon(Icons.edit)),
+                          ],
+                        ),
+                        const Divider(height: 40),
+                        // MOSTRAR FIANZA
+                        Row(
+                          children: [
+                            Expanded(child: _infoRow(Icons.security_rounded, "Fianza", _fianzaController)),
+                            IconButton(onPressed: () => _ventanaCambioFianza(), icon: const Icon(Icons.edit)),
+                          ],
+                        ),
+                        const Divider(height: 40),
+                        // MOSTRAR FORMA DE PAGO
+                        Row(
+                          children: [
+                            Expanded(child: _infoRowEstado(Icons.payment_rounded, "Forma de Pago", _formaPagoActual)),
+                            IconButton(onPressed: () => _ventanaCambioFormaPago(), icon: const Icon(Icons.edit)),
                           ],
                         ),
                         const Divider(height: 40),
@@ -682,6 +702,136 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     );
   }
 
+  // VENTANA PARA CAMBIAR FIANZA
+  Future<void> _ventanaCambioFianza() async {
+    TextEditingController nuevaFianza = TextEditingController(text: _fianzaController.text);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Text("Actualizar fianza"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: nuevaFianza,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Nueva fianza",
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  child: const Text("Guardar cambios"),
+                  onPressed: () async {
+                    if (await confirmacion()) {
+                      final db = await DatabaseHelper.proyectodb();
+                      await db.update(
+                        "alquileres",
+                        {"fianza": double.tryParse(nuevaFianza.text) ?? 0.0},
+                        where: "id = ?",
+                        whereArgs: [alquiler["id"]],
+                      );
+                      Navigator.pop(context);
+                      cargarAlquiler(alquiler["id"]);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // VENTANA PARA CAMBIAR FORMA DE PAGO
+  Future<void> _ventanaCambioFormaPago() async {
+    String? temporalForma = ["Efectivo", "Tarjeta", "Transferencia"].contains(_formaPagoActual)
+        ? _formaPagoActual
+        : "Efectivo";
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Text("Actualizar forma de pago"),
+        content: DropdownButtonFormField<String>(
+          value: temporalForma,
+          decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))),
+          items: ["Efectivo", "Tarjeta", "Transferencia"].map((forma) {
+            return DropdownMenuItem(value: forma, child: Text(forma));
+          }).toList(),
+          onChanged: (val) => temporalForma = val,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCELAR")),
+          ElevatedButton(
+            onPressed: () async {
+              if (await confirmacion()) {
+                final db = await DatabaseHelper.proyectodb();
+                await db.update(
+                  "alquileres",
+                  {"forma_pago": temporalForma},
+                  where: "id = ?",
+                  whereArgs: [alquiler["id"]],
+                );
+                Navigator.pop(context);
+                cargarAlquiler(alquiler["id"]);
+              }
+            },
+            child: const Text("GUARDAR"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _ventanaCambioObservaciones() async {
+    TextEditingController nuevasObs = TextEditingController(text: _observacionesController.text);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Editar Observaciones"),
+          content: TextField(
+            controller: nuevasObs,
+            maxLines: 5,
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () async {
+                final db = await DatabaseHelper.proyectodb();
+                await db.update(
+                  "alquileres",
+                  {"observaciones": nuevasObs.text},
+                  where: "id = ?",
+                  whereArgs: [alquiler["id"]],
+                );
+                Navigator.pop(context);
+                cargarAlquiler(alquiler["id"]);
+              },
+              child: const Text("Guardar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void mostrarObservaciones() {
+    showDialog(
+      context: context,
+      builder: (context) =>
+          AlertDialog(title: const Text("Observaciones"), content: Text(_observacionesController.text)),
+    );
+  }
+
   Widget _ventanaCambioEstado(String campoACambiar, String estadoActual) {
     String? estadoSeleccionado = ["Pendiente", "En proceso", "Terminado"].contains(estadoActual) ? estadoActual : null;
 
@@ -693,21 +843,18 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
         children: [
           const Text("Introduce el nuevo valor para el campo:"),
           const SizedBox(height: 15),
-          DropdownMenuFormField<String>(
-            width: double.infinity,
-            initialSelection: estadoSeleccionado,
-            leadingIcon: const Icon(Icons.info_outline),
-            label: const Text("Estado"),
-            dropdownMenuEntries: ["Pendiente", "En proceso", "Terminado"]
-                .map(
-                  (estado) => DropdownMenuEntry(
-                    value: estado,
-                    label: estado,
-                    labelWidget: Text(estado, style: const TextStyle(color: Color(0xFFC8A97E))),
-                  ),
-                )
-                .toList(),
-            onSelected: (nuevoEstado) async {
+          DropdownButtonFormField<String>(
+            value: estadoSeleccionado,
+            decoration: InputDecoration(
+              labelText: "Estado",
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            items: [
+              "Pendiente",
+              "En proceso",
+              "Terminado",
+            ].map((estado) => DropdownMenuItem(value: estado, child: Text(estado))).toList(),
+            onChanged: (nuevoEstado) async {
               if (nuevoEstado != null && await confirmacion()) {
                 final baseDatos = await DatabaseHelper.proyectodb();
                 await baseDatos.update(
@@ -726,6 +873,27 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     );
   }
 
+  Future<bool> confirmacion() async {
+    bool result = false;
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("¿Confirmar cambio?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("No")),
+          TextButton(
+            onPressed: () {
+              result = true;
+              Navigator.pop(context);
+            },
+            child: const Text("Sí"),
+          ),
+        ],
+      ),
+    );
+    return result;
+  }
+
   Future<void> _ventanaAnyadirFoto() async {
     final ImagePicker imagePicker = ImagePicker();
     final XFile? imagen = await imagePicker.pickImage(source: ImageSource.gallery);
@@ -734,87 +902,5 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
       await baseDatos.insert("fotos", {"id_alquiler": alquiler["id"], "ruta": imagen.path});
       cargarFotos(alquiler["id"]);
     }
-  }
-
-  Future<void> _ventanaCambioObservaciones() async {
-    TextEditingController nuevasObservaciones = TextEditingController(text: _observacionesController.text);
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: const Text("Editar observaciones"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nuevasObservaciones,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  labelText: "Observaciones",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  child: const Text("Guardar cambios"),
-                  onPressed: () async {
-                    if (await confirmacion()) {
-                      final db = await DatabaseHelper.proyectodb();
-                      await db.update(
-                        "alquileres",
-                        {"observaciones": nuevasObservaciones.text},
-                        where: "id = ?",
-                        whereArgs: [alquiler["id"]],
-                      );
-                      Navigator.pop(context);
-                      cargarAlquiler(alquiler["id"]);
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void mostrarObservaciones() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: const Text("Observaciones"),
-          content: SingleChildScrollView(
-            child: Text(
-              _observacionesController.text.isEmpty ? "No hay observaciones" : _observacionesController.text,
-              style: const TextStyle(fontSize: 18),
-            ),
-          ),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cerrar"))],
-        );
-      },
-    );
-  }
-
-  Future<bool> confirmacion() async {
-    return await showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text("Confirmar cambio"),
-              content: const Text("¿Seguro que quieres actualizar los datos?"),
-              actions: [
-                TextButton(child: const Text("Cancelar"), onPressed: () => Navigator.pop(context, false)),
-                ElevatedButton(child: const Text("Confirmar"), onPressed: () => Navigator.pop(context, true)),
-              ],
-            );
-          },
-        ) ??
-        false;
   }
 }

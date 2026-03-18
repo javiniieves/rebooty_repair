@@ -23,6 +23,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   List<String> fotosTemporales = [];
 
   final _precioController = TextEditingController();
+  final _fianzaController = TextEditingController();
   final _fechaInicioController = TextEditingController();
   final _fechaFinController = TextEditingController();
   late TextEditingController _observacionesController;
@@ -30,6 +31,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   DateTime? fechaInicio;
   DateTime? fechaFin;
   String estadoActual = "Pendiente";
+  String formaPagoActual = "Efectivo";
 
   Future<void> cargarIdsClientes() async {
     final db = await DatabaseHelper.proyectodb();
@@ -62,6 +64,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   void dispose() {
     _observacionesController.dispose();
     _precioController.dispose();
+    _fianzaController.dispose();
     _fechaInicioController.dispose();
     _fechaFinController.dispose();
     super.dispose();
@@ -84,143 +87,217 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
             children: [
               const SizedBox(height: 20),
 
-              // menú con los ids de los cliente disponibles
-              DropdownButtonFormField(
-                value: _idClienteSeleccionado,
-                decoration: InputDecoration(
-                  labelText: "DNI del cliente",
-                  prefixIcon: const Icon(Icons.person_search),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                dropdownColor: Theme.of(context).colorScheme.primary,
-                items: listaClientes.map((cliente) {
-                  return DropdownMenuItem(
-                    value: cliente["id"].toString(),
-                    child: Text(
-                      "${cliente["documento_oficial"]} - ${cliente["nombre"]}",
-                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+              // DNI Cliente y Matrícula
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField(
+                      value: _idClienteSeleccionado,
+                      decoration: InputDecoration(
+                        labelText: "DNI del cliente",
+                        prefixIcon: const Icon(Icons.person_search),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      dropdownColor: Theme.of(context).colorScheme.primary,
+                      items: listaClientes.map((cliente) {
+                        return DropdownMenuItem(
+                          value: cliente["id"].toString(),
+                          child: Text(
+                            "${cliente["documento_oficial"]} - ${cliente["nombre"]}",
+                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 10),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (nuevoId) {
+                        setState(() {
+                          _idClienteSeleccionado = nuevoId;
+                        });
+                      },
+                      validator: (value) => value == null ? "Selecciona cliente" : null,
                     ),
-                  );
-                }).toList(),
-                onChanged: (nuevoId) {
-                  setState(() {
-                    _idClienteSeleccionado = nuevoId;
-                  });
-                },
-                validator: (value) => value == null ? "Selecciona un cliente" : null,
-              ),
-
-              const SizedBox(height: 25),
-
-              // menú con los vehículos (ahora salen todos, no solo los "Disponibles")
-              DropdownButtonFormField(
-                value: _idVehiculoSeleccionado,
-                decoration: InputDecoration(
-                  labelText: "Matrícula",
-                  prefixIcon: const Icon(Icons.car_rental),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                dropdownColor: Theme.of(context).colorScheme.primary,
-                items: listaVehiculos.map((vehiculo) {
-                  return DropdownMenuItem(
-                    value: vehiculo["id"].toString(),
-                    child: Text(
-                      "${vehiculo["matricula"]} - ${vehiculo["marca"]}",
-                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: DropdownButtonFormField(
+                      value: _idVehiculoSeleccionado,
+                      decoration: InputDecoration(
+                        labelText: "Matrícula",
+                        prefixIcon: const Icon(Icons.car_rental),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      dropdownColor: Theme.of(context).colorScheme.primary,
+                      items: listaVehiculos.map((vehiculo) {
+                        return DropdownMenuItem(
+                          value: vehiculo["id"].toString(),
+                          child: Text(
+                            "${vehiculo["matricula"]} - ${vehiculo["marca"]}",
+                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 10),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (nuevoId) {
+                        setState(() {
+                          _idVehiculoSeleccionado = nuevoId;
+                        });
+                      },
+                      validator: (value) => value == null ? "Selecciona vehículo" : null,
                     ),
-                  );
-                }).toList(),
-                onChanged: (nuevoId) {
-                  setState(() {
-                    _idVehiculoSeleccionado = nuevoId;
-                  });
-                },
-                validator: (value) => value == null ? "Selecciona un vehículo" : null,
+                  ),
+                ],
               ),
 
               const SizedBox(height: 25),
 
-              // elegir fecha inicio
-              TextFormField(
-                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                controller: _fechaInicioController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: "Fecha inicio",
-                  prefixIcon: const Icon(Icons.calendar_today),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onTap: () => seleccionarFecha(true),
-                validator: (value) => (value == null || value.isEmpty) ? "Selecciona inicio" : null,
+              // Fecha Inicio y Fecha Fin
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                      controller: _fechaInicioController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: "Fecha inicio",
+                        prefixIcon: const Icon(Icons.calendar_today),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onTap: () => seleccionarFecha(true),
+                      validator: (value) => (value == null || value.isEmpty) ? "Selecciona inicio" : null,
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: TextFormField(
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                      controller: _fechaFinController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: "Fecha fin",
+                        prefixIcon: const Icon(Icons.event_available),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onTap: () => seleccionarFecha(false),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return "Selecciona fin";
+                        if (fechaInicio != null && fechaFin != null) {
+                          if (fechaFin!.isBefore(fechaInicio!)) {
+                            return "Error en fechas";
+                          }
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 25),
 
-              // elegir fecha fin
-              TextFormField(
-                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                controller: _fechaFinController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: "Fecha fin",
-                  prefixIcon: const Icon(Icons.event_available),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onTap: () => seleccionarFecha(false),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return "Selecciona fin";
-                  if (fechaInicio != null && fechaFin != null) {
-                    if (fechaFin!.isBefore(fechaInicio!)) {
-                      return "Error en fechas";
-                    }
-                  }
-                  return null;
-                },
+              // Precio y Fianza
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                      controller: _precioController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: "Precio",
+                        prefixIcon: const Icon(Icons.price_check_rounded),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return "Introduce precio";
+                        final numero = double.tryParse(value);
+                        if (numero == null) return "No válido";
+                        if (numero < 0) return "Debe ser positivo";
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: TextFormField(
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                      controller: _fianzaController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: "Fianza",
+                        prefixIcon: const Icon(Icons.security_rounded),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return "Introduce fianza";
+                        final numero = double.tryParse(value);
+                        if (numero == null) return "No válida";
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 25),
 
-              // introducir precio
-              TextFormField(
-                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                controller: _precioController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: "Precio",
-                  prefixIcon: const Icon(Icons.price_check_rounded),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return "Introduce el precio";
-                  final numero = double.tryParse(value);
-                  if (numero == null) return "Precio no válido";
-                  if (numero < 0) return "Precio debe ser positivo";
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 25),
-
-              // elegir estado del alquiler
-              DropdownButtonFormField(
-                value: estadoActual,
-                decoration: InputDecoration(
-                  labelText: "Estado",
-                  prefixIcon: const Icon(Icons.info_outline),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                dropdownColor: Theme.of(context).colorScheme.primary,
-                items: ["Pendiente", "En proceso", "Terminado"].map((estado) {
-                  return DropdownMenuItem(
-                    value: estado,
-                    child: Text(estado, style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12)),
-                  );
-                }).toList(),
-                onChanged: (nuevoEstado) {
-                  setState(() {
-                    estadoActual = nuevoEstado!;
-                  });
-                },
+              // Forma de Pago y Estado
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField(
+                      value: formaPagoActual,
+                      decoration: InputDecoration(
+                        labelText: "Forma de pago",
+                        prefixIcon: const Icon(Icons.payment_rounded),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      dropdownColor: Theme.of(context).colorScheme.primary,
+                      items: ["Efectivo", "Tarjeta", "Transferencia"].map((forma) {
+                        return DropdownMenuItem(
+                          value: forma,
+                          child: Text(
+                            forma,
+                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (nuevaForma) {
+                        setState(() {
+                          formaPagoActual = nuevaForma!;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: DropdownButtonFormField(
+                      value: estadoActual,
+                      decoration: InputDecoration(
+                        labelText: "Estado",
+                        prefixIcon: const Icon(Icons.info_outline),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      dropdownColor: Theme.of(context).colorScheme.primary,
+                      items: ["Pendiente", "En proceso", "Terminado"].map((estado) {
+                        return DropdownMenuItem(
+                          value: estado,
+                          child: Text(
+                            estado,
+                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (nuevoEstado) {
+                        setState(() {
+                          estadoActual = nuevoEstado!;
+                        });
+                      },
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 25),
@@ -342,6 +419,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         "id_coche": _idVehiculoSeleccionado,
                         "id_cliente": _idClienteSeleccionado,
                         "precio": double.parse(_precioController.text),
+                        "fianza": double.parse(_fianzaController.text),
+                        "forma_pago": formaPagoActual,
                         "fecha_inicio": _fechaInicioController.text,
                         "fecha_fin": _fechaFinController.text,
                         "estado": estadoActual,
@@ -363,6 +442,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       );
 
                       _precioController.clear();
+                      _fianzaController.clear(); // Limpiar fianza
                       ScaffoldMessenger.of(
                         context,
                       ).showSnackBar(const SnackBar(content: Text("Alquiler guardado correctamente")));
