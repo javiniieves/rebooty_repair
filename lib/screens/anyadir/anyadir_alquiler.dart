@@ -230,9 +230,11 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) return "Introduce fianza";
-                        final numero = double.tryParse(value);
-                        if (numero == null) return "No válida";
+                        // MODIFICACIÓN: Ya no es obligatorio introducir fianza.
+                        if (value != null && value.isNotEmpty) {
+                          final numero = double.tryParse(value);
+                          if (numero == null) return "No válida";
+                        }
                         return null;
                       },
                     ),
@@ -419,7 +421,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         "id_coche": _idVehiculoSeleccionado,
                         "id_cliente": _idClienteSeleccionado,
                         "precio": double.parse(_precioController.text),
-                        "fianza": double.parse(_fianzaController.text),
+                        // MODIFICACIÓN: Si está vacío, se guarda como 0.0
+                        "fianza": double.tryParse(_fianzaController.text) ?? 0.0,
                         "forma_pago": formaPagoActual,
                         "fecha_inicio": _fechaInicioController.text,
                         "fecha_fin": _fechaFinController.text,

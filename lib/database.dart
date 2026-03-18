@@ -217,15 +217,40 @@ class DatabaseHelper {
   static Future<bool> cocheEstaDisponible(int idVehiculo, String inicio, String fin) async {
     final db = await proyectodb();
 
-    // Buscamos alquileres de ese coche que se solapen con las fechas pedidas
-    // Un solapamiento ocurre si: (InicioPedido <= FechaFinDB) Y (FinPedido >= FechaInicioDB)
+    // AND estado != 'Terminado' --> Así solo chocará con alquileres que estén 'Pendiente' o 'En proceso'
     final resultado = await db.query(
       "alquileres",
-      where: "id_coche = ? AND ? <= fecha_fin AND ? >= fecha_inicio",
-      whereArgs: [idVehiculo, inicio, fin],
+      where: "id_coche = ? AND estado != ? AND ? <= fecha_fin AND ? >= fecha_inicio",
+      whereArgs: [idVehiculo, "Terminado", inicio, fin],
     );
 
-    // Si la lista está vacía, el coche está libre
     return resultado.isEmpty;
+  }
+
+  static Future<Map<String, double>> obtenerContabilidadPorFechas(String inicio, String fin) async {
+    final db = await DatabaseHelper.proyectodb();
+
+    final List<Map<String, dynamic>> resultados = await db.rawQuery(
+      '''SELECT forma_pago, 
+         SUM(CASE 
+               WHEN estado = 'Terminado' THEN IFNULL(precio, 0) 
+               ELSE IFNULL(fianza, 0) 
+             END) as total 
+         FROM alquileres 
+         WHERE fecha_inicio <= ? AND fecha_fin >= ?
+         GROUP BY forma_pago''',
+      [fin, inicio],
+    );
+
+    Map<String, double> totales = {"Efectivo": 0.0, "Tarjeta": 0.0, "Transferencia": 0.0};
+
+    for (var row in resultados) {
+      String? fp = row['forma_pago'];
+      if (fp != null && totales.containsKey(fp)) {
+        totales[fp] = (row['total'] as num).toDouble();
+      }
+    }
+
+    return totales;
   }
 }
