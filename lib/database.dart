@@ -21,7 +21,7 @@ class DatabaseHelper {
         await db.execute(
           "CREATE TABLE vehiculos (id INTEGER PRIMARY KEY, matricula TEXT, marca TEXT, modelo TEXT, estado TEXT, "
           "color INTEGER, kilometraje REAL, anyo INTEGER, combustible TEXT, observaciones TEXT, fecha_vencimiento_seguro TEXT, "
-              "ruta_foto TEXT, cantidad_combustible INTEGER, fecha_proxima_itv TEXT, necesita_limpieza INTEGER)",
+          "ruta_foto TEXT, cantidad_combustible INTEGER, fecha_proxima_itv TEXT, necesita_limpieza INTEGER)",
         );
 
         // tabla reparaciones (se relacione con coche)
@@ -84,6 +84,39 @@ class DatabaseHelper {
       }
     } catch (e) {
       print("Error al exportar: $e");
+      return false;
+    }
+  }
+
+  static Future<bool> importarBD() async {
+    try {
+      // Seleccionar el archivo
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['db'], // Solo permite archivos con esta extensión
+      );
+
+      if (result == null || result.files.single.path == null) {
+        return false; // El usuario canceló
+      }
+
+      File archivoNuevo = File(result.files.single.path!);
+
+      // Obtener la ruta donde la app guarda su base de datos actual
+      String pathBaseDatos = await getDatabasesPath();
+      String rutaDestino = join(pathBaseDatos, "alquileres.db");
+
+      // Cerrar la base de datos actual antes de sobrescribir
+      final db = await proyectodb();
+      await db.close();
+
+      // Copiar el archivo seleccionado a la ruta interna
+      await archivoNuevo.copy(rutaDestino);
+
+      print("Base de datos importada desde: ${archivoNuevo.path}");
+      return true;
+    } catch (e) {
+      print("Error al importar: $e");
       return false;
     }
   }

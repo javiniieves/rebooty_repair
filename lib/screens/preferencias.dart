@@ -19,6 +19,44 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Botón de Importar
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade50,
+                  foregroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                  side: const BorderSide(color: Colors.blue, width: 2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                ),
+                onPressed: () async {
+                  bool importado = await DatabaseHelper.importarBD();
+                  if (importado) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Base de datos importada. Reinicia la app para ver los cambios."),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text("No se seleccionó ningún archivo o hubo un error")));
+                    }
+                  }
+                },
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.upload_file, size: 35),
+                    SizedBox(width: 20),
+                    Text("Importar base de datos", style: TextStyle(fontSize: 24)),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 50),
+
               // Botón de Exportar
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
