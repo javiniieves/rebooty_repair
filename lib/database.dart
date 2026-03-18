@@ -31,7 +31,7 @@ class DatabaseHelper {
 
         // Tabla de los Clientes (se relaciona con coche mediante la tabla Alquileres)
         await db.execute(
-          "CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT, tipo_documento TEXT, documento_oficial TEXT UNIQUE NOT NULL, telefono TEXT, direccion TEXT, email TEXT)",
+          "CREATE TABLE clientes (id INTEGER PRIMARY KEY, nombre TEXT, tipo_documento TEXT, documento_oficial TEXT UNIQUE NOT NULL, telefono TEXT, direccion TEXT, email TEXT, ruta_foto TEXT)",
         );
 
         // Tabla de los Alquileres (La que une coche y cliente)
@@ -211,5 +211,21 @@ class DatabaseHelper {
   static Future<void> borrarReparacion(int idReparacion) async {
     final db = await proyectodb();
     await db.delete("reparaciones", where: "id = ?", whereArgs: [idReparacion]);
+  }
+
+  // Metodo para comprobar si un coche está libre en unas fechas concretas
+  static Future<bool> cocheEstaDisponible(int idVehiculo, String inicio, String fin) async {
+    final db = await proyectodb();
+
+    // Buscamos alquileres de ese coche que se solapen con las fechas pedidas
+    // Un solapamiento ocurre si: (InicioPedido <= FechaFinDB) Y (FinPedido >= FechaInicioDB)
+    final resultado = await db.query(
+      "alquileres",
+      where: "id_coche = ? AND ? <= fecha_fin AND ? >= fecha_inicio",
+      whereArgs: [idVehiculo, inicio, fin],
+    );
+
+    // Si la lista está vacía, el coche está libre
+    return resultado.isEmpty;
   }
 }

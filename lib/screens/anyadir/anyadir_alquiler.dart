@@ -33,16 +33,17 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
   Future<void> cargarIdsClientes() async {
     final db = await DatabaseHelper.proyectodb();
-
     final clientes = await db.query("clientes");
-
     setState(() {
       listaClientes = clientes;
     });
   }
 
+  // CORRECCIÓN AQUÍ: Cargamos todos los vehículos para poder alquilarlos en distintos periodos
   Future<void> cargarIdsVehiculos() async {
-    final vehiculos = await DatabaseHelper.obtenerVehiculosDisponibles();
+    final db = await DatabaseHelper.proyectodb();
+    // Traemos los coches que no estén en el taller (o quita el WHERE si quieres verlos todos)
+    final vehiculos = await db.query("vehiculos", where: "estado != ?", whereArgs: ["Taller"]);
 
     setState(() {
       listaVehiculos = vehiculos;
@@ -83,175 +84,143 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
             children: [
               const SizedBox(height: 20),
 
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: // menú con los ids de los cliente disponibles
-                    DropdownButtonFormField(
-                      value: _idClienteSeleccionado,
-                      decoration: InputDecoration(
-                        labelText: "DNI del cliente",
-                        prefixIcon: const Icon(Icons.person_search),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      dropdownColor: Theme.of(context).colorScheme.primary,
-                      items: listaClientes.map((cliente) {
-                        return DropdownMenuItem(
-                          value: cliente["id"].toString(), // lo que se guarda
-                          child: Text(
-                            "${cliente["documento_oficial"]} - ${cliente["nombre"]}", // lo que se muestra
-                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (nuevoId) {
-                        setState(() {
-                          _idClienteSeleccionado = nuevoId;
-                        });
-                      },
-                      // Validación para asegurar que se elija un cliente
-                      validator: (value) => value == null ? "Selecciona un cliente" : null,
+              // menú con los ids de los cliente disponibles
+              DropdownButtonFormField(
+                value: _idClienteSeleccionado,
+                decoration: InputDecoration(
+                  labelText: "DNI del cliente",
+                  prefixIcon: const Icon(Icons.person_search),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                dropdownColor: Theme.of(context).colorScheme.primary,
+                items: listaClientes.map((cliente) {
+                  return DropdownMenuItem(
+                    value: cliente["id"].toString(),
+                    child: Text(
+                      "${cliente["documento_oficial"]} - ${cliente["nombre"]}",
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
                     ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: // menú con los ids de los vehiculos disponibles
-                    DropdownButtonFormField(
-                      value: _idVehiculoSeleccionado,
-                      decoration: InputDecoration(
-                        labelText: "Matrícula",
-                        prefixIcon: const Icon(Icons.car_rental),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      dropdownColor: Theme.of(context).colorScheme.primary,
-                      items: listaVehiculos.map((vehiculo) {
-                        return DropdownMenuItem(
-                          value: vehiculo["id"].toString(), // lo que se guarda
-                          child: Text(
-                            "${vehiculo["matricula"]} - ${vehiculo["marca"]}",
-                            // lo que se muestra
-                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (nuevoId) {
-                        setState(() {
-                          _idVehiculoSeleccionado = nuevoId;
-                        });
-                      },
-                      // Validación para asegurar que se elija un vehículo
-                      validator: (value) => value == null ? "Selecciona un vehículo" : null,
-                    ),
-                  ),
-                ],
+                  );
+                }).toList(),
+                onChanged: (nuevoId) {
+                  setState(() {
+                    _idClienteSeleccionado = nuevoId;
+                  });
+                },
+                validator: (value) => value == null ? "Selecciona un cliente" : null,
               ),
 
               const SizedBox(height: 25),
 
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: // elegir fecha inicio
-                    TextFormField(
-                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                      controller: _fechaInicioController,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                        labelText: "Fecha inicio",
-                        prefixIcon: const Icon(Icons.calendar_today),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onTap: () => seleccionarFecha(true),
-                      // Validación de fecha obligatoria
-                      validator: (value) => (value == null || value.isEmpty) ? "Selecciona inicio" : null,
+              // menú con los vehículos (ahora salen todos, no solo los "Disponibles")
+              DropdownButtonFormField(
+                value: _idVehiculoSeleccionado,
+                decoration: InputDecoration(
+                  labelText: "Matrícula",
+                  prefixIcon: const Icon(Icons.car_rental),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                dropdownColor: Theme.of(context).colorScheme.primary,
+                items: listaVehiculos.map((vehiculo) {
+                  return DropdownMenuItem(
+                    value: vehiculo["id"].toString(),
+                    child: Text(
+                      "${vehiculo["matricula"]} - ${vehiculo["marca"]}",
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
                     ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: // elegir fecha fin
-                    TextFormField(
-                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                      controller: _fechaFinController,
-                      readOnly: true,
-                      decoration: InputDecoration(
-                        labelText: "Fecha fin",
-                        prefixIcon: const Icon(Icons.event_available),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      onTap: () => seleccionarFecha(false),
-                      // Validación de fecha obligatoria y coherencia temporal
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return "Selecciona fin";
-                        if (fechaInicio != null && fechaFin != null) {
-                          if (fechaFin!.isBefore(fechaInicio!)) {
-                            return "Error en fechas";
-                          }
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
+                  );
+                }).toList(),
+                onChanged: (nuevoId) {
+                  setState(() {
+                    _idVehiculoSeleccionado = nuevoId;
+                  });
+                },
+                validator: (value) => value == null ? "Selecciona un vehículo" : null,
               ),
 
               const SizedBox(height: 25),
 
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: // introducir precio
-                    TextFormField(
-                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                      controller: _precioController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: "Precio",
-                        prefixIcon: const Icon(Icons.price_check_rounded),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Introduce el precio";
-                        }
-                        final numero = double.tryParse(value);
-                        if (numero == null) {
-                          return "Precio no válido";
-                        }
-                        if (numero < 0) {
-                          return "Nadie regala nada en esta vida (Precio debe ser positivo)";
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: // elegir estado del alquiler
-                    DropdownButtonFormField(
-                      value: estadoActual,
-                      decoration: InputDecoration(
-                        labelText: "Estado",
-                        prefixIcon: const Icon(Icons.info_outline),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      dropdownColor: Theme.of(context).colorScheme.primary,
-                      items: ["Pendiente", "En proceso", "Terminado"].map((estado) {
-                        return DropdownMenuItem(
-                          value: estado,
-                          child: Text(estado, style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12)),
-                        );
-                      }).toList(),
-                      onChanged: (nuevoEstado) {
-                        setState(() {
-                          estadoActual = nuevoEstado!;
-                        });
-                      },
-                    ),
-                  ),
-                ],
+              // elegir fecha inicio
+              TextFormField(
+                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                controller: _fechaInicioController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: "Fecha inicio",
+                  prefixIcon: const Icon(Icons.calendar_today),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onTap: () => seleccionarFecha(true),
+                validator: (value) => (value == null || value.isEmpty) ? "Selecciona inicio" : null,
+              ),
+
+              const SizedBox(height: 25),
+
+              // elegir fecha fin
+              TextFormField(
+                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                controller: _fechaFinController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: "Fecha fin",
+                  prefixIcon: const Icon(Icons.event_available),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onTap: () => seleccionarFecha(false),
+                validator: (value) {
+                  if (value == null || value.isEmpty) return "Selecciona fin";
+                  if (fechaInicio != null && fechaFin != null) {
+                    if (fechaFin!.isBefore(fechaInicio!)) {
+                      return "Error en fechas";
+                    }
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 25),
+
+              // introducir precio
+              TextFormField(
+                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                controller: _precioController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Precio",
+                  prefixIcon: const Icon(Icons.price_check_rounded),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) return "Introduce el precio";
+                  final numero = double.tryParse(value);
+                  if (numero == null) return "Precio no válido";
+                  if (numero < 0) return "Precio debe ser positivo";
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 25),
+
+              // elegir estado del alquiler
+              DropdownButtonFormField(
+                value: estadoActual,
+                decoration: InputDecoration(
+                  labelText: "Estado",
+                  prefixIcon: const Icon(Icons.info_outline),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                dropdownColor: Theme.of(context).colorScheme.primary,
+                items: ["Pendiente", "En proceso", "Terminado"].map((estado) {
+                  return DropdownMenuItem(
+                    value: estado,
+                    child: Text(estado, style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12)),
+                  );
+                }).toList(),
+                onChanged: (nuevoEstado) {
+                  setState(() {
+                    estadoActual = nuevoEstado!;
+                  });
+                },
               ),
 
               const SizedBox(height: 25),
@@ -285,7 +254,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   scrollDirection: Axis.horizontal,
                   itemCount: fotosTemporales.length + 1,
                   itemBuilder: (context, index) {
-                    // Si es el último índice, mostramos el botón de añadir
                     if (index == fotosTemporales.length) {
                       return GestureDetector(
                         onTap: () => _ventanaAnyadirFoto(),
@@ -309,7 +277,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         ),
                       );
                     }
-                    // Imagen actual de la lista de fotos temporales
                     return GestureDetector(
                       onTap: () {
                         setState(() {
@@ -352,10 +319,25 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 child: ElevatedButton.icon(
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      // guardamos la base de datos
+                      // NUEVO: Comprobar disponibilidad antes de guardar
+                      bool estaLibre = await DatabaseHelper.cocheEstaDisponible(
+                        int.parse(_idVehiculoSeleccionado!),
+                        _fechaInicioController.text,
+                        _fechaFinController.text,
+                      );
+
+                      if (!estaLibre) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Error: El coche ya está ocupado en esas fechas"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
                       final baseDatos = await DatabaseHelper.proyectodb();
 
-                      // insertamos en la tabal "clientes" los datos que hemos cogido
                       int idNuevoAlquiler = await baseDatos.insert("alquileres", {
                         "id_coche": _idVehiculoSeleccionado,
                         "id_cliente": _idClienteSeleccionado,
@@ -363,18 +345,16 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         "fecha_inicio": _fechaInicioController.text,
                         "fecha_fin": _fechaFinController.text,
                         "estado": estadoActual,
-                        "observaciones": _observacionesController.text
+                        "observaciones": _observacionesController.text,
                       });
 
-                      // insertamos las fotos asociadas al alquiler
                       for (String ruta in fotosTemporales) {
-                        await baseDatos.insert("fotos", {
-                          "id_alquiler": idNuevoAlquiler,
-                          "ruta": ruta,
-                        });
+                        await baseDatos.insert("fotos", {"id_alquiler": idNuevoAlquiler, "ruta": ruta});
                       }
 
-                      // cambiar estado del coche a alquilado
+                      // Solo cambiamos a "Alquilado" para que visualmente se sepa
+                      // que tiene algún alquiler, pero como ahora cargamos todos los vehículos,
+                      // esto no impedirá volver a seleccionarlo para otro periodo.
                       await baseDatos.update(
                         "vehiculos",
                         {"estado": "Alquilado"},
@@ -383,13 +363,9 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       );
 
                       _precioController.clear();
-
-                      // Aviso de éxito
                       ScaffoldMessenger.of(
                         context,
                       ).showSnackBar(const SnackBar(content: Text("Alquiler guardado correctamente")));
-
-                      // Volvemos atrás después de guardar
                       Navigator.pop(context);
                     }
                   },
@@ -409,9 +385,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
   Future<void> _ventanaAnyadirFoto() async {
     final ImagePicker imagePicker = ImagePicker();
-
     final XFile? imagen = await imagePicker.pickImage(source: ImageSource.gallery);
-
     if (imagen != null) {
       setState(() {
         fotosTemporales.add(imagen.path);
@@ -419,10 +393,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     }
   }
 
-  /// metodo para elegir una fecha
   Future<void> seleccionarFecha(bool esInicio) async {
     DateTime fechaHoy = DateTime.now();
-
     final DateTime? fechaElegida = await showDatePicker(
       context: context,
       initialDate: esInicio ? (fechaInicio ?? fechaHoy) : (fechaFin ?? fechaInicio ?? fechaHoy),
@@ -432,7 +404,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
     if (fechaElegida != null) {
       setState(() {
-        // Guardamos la fecha y la formateamos para el texto (Año-Mes-Día)
         String fechaFormateada =
             "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 

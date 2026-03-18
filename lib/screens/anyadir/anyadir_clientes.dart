@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../database.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:image_picker/image_picker.dart';
 
 class PantallaAnyadirClientes extends StatefulWidget {
   const PantallaAnyadirClientes({super.key});
@@ -21,6 +23,9 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
 
   String _tipoDocumentoSeleccionado = "DNI";
   String telefonoCompleto = "";
+
+  // Variable para la foto del cliente (opcional)
+  String? rutaFoto;
 
   @override
   void initState() {
@@ -44,6 +49,18 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
     super.dispose();
   }
 
+  // Metodo para elegir la foto (galería)
+  Future<void> _ventanaAnyadirFoto() async {
+    final ImagePicker imagePicker = ImagePicker();
+    final XFile? imagen = await imagePicker.pickImage(source: ImageSource.gallery);
+
+    if (imagen != null) {
+      setState(() {
+        rutaFoto = imagen.path;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,6 +82,36 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
             key: _formKey,
             child: Column(
               children: [
+                // Para añadir una foto del cliente (Opcional)
+                GestureDetector(
+                  onTap: () => _ventanaAnyadirFoto(),
+                  child: Container(
+                    width: 150,
+                    height: 150,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.grey.withOpacity(0.3), width: 2),
+                    ),
+                    // si no ha elegido, le permitimos hacerlo
+                    child: rutaFoto == null
+                        ? const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_a_photo_outlined, size: 40, color: Colors.black),
+                              SizedBox(height: 10),
+                              Text("Foto (Opcional)", style: TextStyle(fontSize: 12, color: Colors.black)),
+                            ],
+                          )
+                        // si ya la ha elegido, mostramos la foto
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Image.file(File(rutaFoto!), fit: BoxFit.cover),
+                          ),
+                  ),
+                ),
+
                 const SizedBox(height: 20),
 
                 // introducir nombre
@@ -235,6 +282,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                           "telefono": telefonoCompleto,
                           "direccion": _direccionController.text,
                           "email": _emailController.text.isEmpty ? null : _emailController.text,
+                          "ruta_foto": rutaFoto,
                         });
 
                         _nombreController.clear();
