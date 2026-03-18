@@ -92,56 +92,131 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: DropdownButtonFormField(
-                      value: _idClienteSeleccionado,
-                      decoration: InputDecoration(
-                        labelText: "DNI del cliente",
-                        prefixIcon: const Icon(Icons.person_search),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      dropdownColor: Theme.of(context).colorScheme.primary,
-                      items: listaClientes.map((cliente) {
-                        return DropdownMenuItem(
-                          value: cliente["id"].toString(),
-                          child: Text(
-                            "${cliente["documento_oficial"]} - ${cliente["nombre"]}",
-                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 10),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (nuevoId) {
-                        setState(() {
-                          _idClienteSeleccionado = nuevoId;
+                    child: Autocomplete<Map<String, dynamic>>(
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                        if (textEditingValue.text.isEmpty) {
+                          return listaClientes;
+                        }
+
+                        return listaClientes.where((cliente) {
+                          final documento = cliente["documento_oficial"].toLowerCase();
+                          return documento.contains(textEditingValue.text.toLowerCase());
                         });
                       },
-                      validator: (value) => value == null ? "Selecciona cliente" : null,
+                      displayStringForOption: (cliente) =>
+                      "${cliente["documento_oficial"]} - ${cliente["nombre"]}",
+                      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                        return TextFormField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          decoration: InputDecoration(
+                            labelText: "DNI del cliente",
+                            prefixIcon: Icon(Icons.person_search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        );
+                      },
+                      onSelected: (clienteSeleccionado) {
+                        setState(() {
+                          _idClienteSeleccionado = clienteSeleccionado["id"].toString();
+                        });
+                      },
+                      optionsViewBuilder: (context, onSelected, options) {
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            elevation: 4.0,
+                            child: SizedBox(
+                              height: 200,
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero,
+                                itemCount: options.length,
+                                itemBuilder: (context, index) {
+                                  final cliente = options.elementAt(index);
+                                  return GestureDetector(
+                                    onTap: () => onSelected(cliente),
+                                    child: Container(
+                                      color: Color(0xFF2F3136),  // color para filas impares
+                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      child: ListTile(
+                                        title: Text(cliente["documento_oficial"]),
+                                        subtitle: Text(cliente["nombre"]),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 15),
                   Expanded(
-                    child: DropdownButtonFormField(
-                      value: _idVehiculoSeleccionado,
-                      decoration: InputDecoration(
-                        labelText: "Matrícula",
-                        prefixIcon: const Icon(Icons.car_rental),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      dropdownColor: Theme.of(context).colorScheme.primary,
-                      items: listaVehiculos.map((vehiculo) {
-                        return DropdownMenuItem(
-                          value: vehiculo["id"].toString(),
-                          child: Text(
-                            "${vehiculo["matricula"]} - ${vehiculo["marca"]}",
-                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 10),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (nuevoId) {
-                        setState(() {
-                          _idVehiculoSeleccionado = nuevoId;
+                    child: Autocomplete<Map<String, dynamic>>(
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                        if (textEditingValue.text.isEmpty) {
+                          return listaVehiculos;
+                        }
+
+                        return listaVehiculos.where((vehiculo) {
+                          final matricula = vehiculo["matricula"].toLowerCase();
+                          return matricula.contains(textEditingValue.text.toLowerCase());
                         });
                       },
-                      validator: (value) => value == null ? "Selecciona vehículo" : null,
+                      displayStringForOption: (vehiculo) =>
+                      "${vehiculo["matricula"]} - ${vehiculo["modelo"]}",
+                      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+                        return TextFormField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          decoration: InputDecoration(
+                            labelText: "Matricula del vehiculo",
+                            prefixIcon: Icon(Icons.car_rental),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        );
+                      },
+                      onSelected: (vehiculoSeleccionado) {
+                        setState(() {
+                          _idVehiculoSeleccionado = vehiculoSeleccionado["id"].toString();
+                        });
+                      },
+
+                      optionsViewBuilder: (context, onSelected, options) {
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            elevation: 4.0,
+                            child: SizedBox(
+                              height: 200,
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero,
+                                itemCount: options.length,
+                                itemBuilder: (context, index) {
+                                  final vehiculo = options.elementAt(index);
+                                  return GestureDetector(
+                                    onTap: () => onSelected(vehiculo),
+                                    child: Container(
+                                      color: Color(0xFF2F3136),  // color para filas impares
+                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      child: ListTile(
+                                        title: Text(vehiculo["matricula"]),
+                                        subtitle: Text(vehiculo["modelo"]),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
