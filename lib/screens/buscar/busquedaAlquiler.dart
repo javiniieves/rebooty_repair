@@ -274,115 +274,18 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
 
                             const SizedBox(height: 4),
 
-                            Expanded(
-                              child: FutureBuilder<List<Map<String, dynamic>>>(
-                                future: alquileresARecibirPronto(),
-                                builder: (context, snapshotAlquileresARecibirPronto) {
-                                  if (!snapshotAlquileresARecibirPronto.hasData) {
-                                    return const Center(child: CircularProgressIndicator());
-                                  }
+                            listaAlquileresADevolver(false),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            const Text("Alquileres pendientes a recibir"),
 
-                                  final listaAlquileresARecibirPronto = snapshotAlquileresARecibirPronto.data!;
+                            const SizedBox(height: 4),
 
-                                  return ListView.builder(
-                                    itemCount: listaAlquileresARecibirPronto.length,
-                                    itemBuilder: (context, index) {
-                                      Map<String, dynamic> alquilerActual = listaAlquileresARecibirPronto[index];
-
-                                      return Card(
-                                        elevation: 4,
-                                        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 5),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            Navigator.pushNamed(
-                                              context,
-                                              "detalles_alquiler",
-                                              arguments: alquilerActual["id"],
-                                            );
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.all(15),
-                                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(15)),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Stack(
-                                                  alignment: Alignment.center,
-                                                  children: [
-                                                    Align(
-                                                      alignment: Alignment.center,
-                                                      child: Text(
-                                                        alquilerActual['matricula'] ?? '---',
-                                                        style: const TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 16,
-                                                          letterSpacing: 1.5,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    Align(
-                                                      alignment: Alignment.centerRight,
-                                                      child: Container(
-                                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                        decoration: BoxDecoration(
-                                                          color: Colors.orange.withOpacity(0.2),
-                                                          borderRadius: BorderRadius.circular(8),
-                                                        ),
-                                                        child: const Text(
-                                                          "MAÑANA",
-                                                          style: TextStyle(
-                                                            color: Colors.orange,
-                                                            fontWeight: FontWeight.bold,
-                                                            fontSize: 10,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const Divider(height: 20),
-                                                // Información del coche
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.directions_car_filled,
-                                                      size: 18,
-                                                      color: Colors.grey,
-                                                    ),
-                                                    const SizedBox(width: 8),
-                                                    Text(
-                                                      "${alquilerActual['marca']} ${alquilerActual['modelo']}",
-                                                      style: const TextStyle(fontSize: 13, color: Colors.white),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 8),
-                                                // Información del cliente
-                                                Row(
-                                                  children: [
-                                                    const Icon(Icons.person, size: 18, color: Colors.grey),
-                                                    const SizedBox(width: 8),
-                                                    Expanded(
-                                                      child: Text(
-                                                        "${alquilerActual['nombre']} (${alquilerActual['documento_oficial']})",
-                                                        style: const TextStyle(fontSize: 12, color: Colors.white),
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
+                            listaAlquileresADevolver(true),
                           ],
                         ),
                       ),
@@ -397,6 +300,120 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
     );
   }
 
+  Expanded listaAlquileresADevolver(bool pendiente) {
+    return Expanded(
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: alquileresARecibirPronto(pendiente),
+        builder: (context, snapshotAlquileresARecibirPronto) {
+          if (!snapshotAlquileresARecibirPronto.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final listaAlquileresARecibirPronto = snapshotAlquileresARecibirPronto.data!;
+
+          return ListView.builder(
+            itemCount: listaAlquileresARecibirPronto.length,
+            itemBuilder: (context, index) {
+              Map<String, dynamic> alquilerActual = listaAlquileresARecibirPronto[index];
+
+              return Card(
+                elevation: 4,
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, "detalles_alquiler", arguments: alquilerActual["id"]);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(15)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Align(
+                              alignment: Alignment.center,
+                              child: Text(
+                                alquilerActual['matricula'] ?? '---',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  letterSpacing: 1.5,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  pendiente ? "PENDIENTE" : "MAÑANA",
+                                  style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 10),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 20),
+                        // Información del coche
+                        Row(
+                          children: [
+                            const Icon(Icons.directions_car_filled, size: 18, color: Colors.grey),
+                            const SizedBox(width: 8),
+                            Text(
+                              "${alquilerActual['marca']} ${alquilerActual['modelo']}",
+                              style: const TextStyle(fontSize: 13, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Información del cliente
+                        Row(
+                          children: [
+                            const Icon(Icons.person, size: 18, color: Colors.grey),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "${alquilerActual['nombre']} (${alquilerActual['documento_oficial']})",
+                                style: const TextStyle(fontSize: 12, color: Colors.white),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Fecha de devolucion (${alquilerActual['fecha_fin']})",
+                                style: const TextStyle(fontSize: 12, color: Colors.white),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
   // metodo encargado de mediante un id de un vehiculo sacar su imagen de la base de datos
   Future<String> obtenerImagenVehiculo(int idVehiculo) async {
     List<Map<String, dynamic>> cochesConIdIndicado = await DatabaseHelper.obtenerVehiculoPorId(idVehiculo);
@@ -406,7 +423,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
     return cocheConIdEspecificado["ruta_foto"];
   }
 
-  Future<List<Map<String, dynamic>>> alquileresARecibirPronto() async {
+  Future<List<Map<String, dynamic>>> alquileresARecibirPronto(bool pendientes) async {
     // Cargamos todos los alquileres
     List<Map<String, dynamic>> todosLosAlquileres = await cargarAlquileres();
 
@@ -414,16 +431,27 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
     DateTime fechaHoy = DateTime.now();
     DateTime fechaManyana = DateTime(fechaHoy.year, fechaHoy.month, fechaHoy.day + 1);
 
-    // Filtramos la lista de alquileres para dejar solo los de que tienen que devolver mañana
-    List<Map<String, dynamic>> alquileresFiltrados = todosLosAlquileres.where((alquiler) {
-      // Convertimos el String "YYYY-MM-DD" de la base de datos a DateTime
-      DateTime fechaFin = DateTime.parse(alquiler["fecha_fin"]);
+    List<Map<String, dynamic>> alquileresFiltrados;
 
-      // Comparamos si es el mismo año, mes y día que mañana
-      return fechaFin.year == fechaManyana.year &&
-          fechaFin.month == fechaManyana.month &&
-          fechaFin.day == fechaManyana.day;
-    }).toList();
+    // Filtramos la lista de alquileres para dejar solo los de que tienen que devolver mañana
+    if (!pendientes) {
+      alquileresFiltrados = todosLosAlquileres.where((alquiler) {
+        // Convertimos el String "YYYY-MM-DD" de la base de datos a DateTime
+        DateTime fechaFin = DateTime.parse(alquiler["fecha_fin"]);
+
+        // Comparamos si es el mismo año, mes y día que mañana
+        return fechaFin.year == fechaManyana.year &&
+            fechaFin.month == fechaManyana.month &&
+            fechaFin.day == fechaManyana.day;
+      }).toList();
+    } else {
+      alquileresFiltrados = todosLosAlquileres.where((alquiler) {
+        DateTime fechaFin = DateTime.parse(alquiler["fecha_fin"]);
+        String estado = (alquiler["estado"] ?? "").toLowerCase();
+
+        return fechaFin.isBefore(fechaHoy) && estado != "terminado";
+      }).toList();
+    }
 
     return alquileresFiltrados;
   }
