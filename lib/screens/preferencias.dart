@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rebooty_repair/database.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
 
 class PantallaPreferencias extends StatefulWidget {
   const PantallaPreferencias({super.key});
@@ -71,7 +73,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
               ),
               const SizedBox(height: 25),
 
-              // Tarjetas de ingresos ALARGADAS
+              // Tarjetas de ingresos
               _cardIngreso("Ingresos en Efectivo", ganancias["Efectivo"]!, Colors.green, Icons.money),
               const SizedBox(height: 12),
               _cardIngreso("Ingresos por Tarjeta", ganancias["Tarjeta"]!, Colors.blue, Icons.credit_card),
@@ -108,10 +110,21 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                         if (importado) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text("Base de datos importada. Reinicia la app para ver los cambios."),
+                              content: Text("Base de datos importada. La app se cerrará para aplicar los cambios."),
+                              duration: Duration(seconds: 2),
                               backgroundColor: Colors.green,
                             ),
                           );
+
+                          // Esperamos un momento para que el usuario lea el mensaje y luego cerramos
+                          await Future.delayed(const Duration(seconds: 2));
+
+                          // Cerramos la app según la plataforma
+                          if (Platform.isAndroid || Platform.isIOS) {
+                            SystemNavigator.pop(); // Mejor para móviles
+                          } else {
+                            exit(0); // Cierre forzoso y limpio para Windows, macOS y Linux
+                          }
                         } else {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
