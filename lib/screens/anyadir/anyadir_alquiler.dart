@@ -33,6 +33,9 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   String estadoActual = "Pendiente";
   String formaPagoActual = "Efectivo";
 
+  // Variable para controlar si se debe devolver la fianza
+  bool devolverFianza = false;
+
   Future<void> cargarIdsClientes() async {
     final db = await DatabaseHelper.proyectodb();
     final clientes = await db.query("clientes");
@@ -138,7 +141,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                                   return GestureDetector(
                                     onTap: () => onSelected(cliente),
                                     child: Container(
-                                      color: Color(0xFF2F3136),  // color para filas impares
+                                      color: Color(0xFF2F3136), // color para filas impares
                                       padding: const EdgeInsets.symmetric(horizontal: 10),
                                       child: ListTile(
                                         title: Text(cliente["documento_oficial"]),
@@ -203,7 +206,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                                   return GestureDetector(
                                     onTap: () => onSelected(vehiculo),
                                     child: Container(
-                                      color: Color(0xFF2F3136),  // color para filas impares
+                                      color: Color(0xFF2F3136), // color para filas impares
                                       padding: const EdgeInsets.symmetric(horizontal: 10),
                                       child: ListTile(
                                         title: Text(vehiculo["matricula"]),
@@ -230,7 +233,10 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 children: [
                   Expanded(
                     child: TextFormField(
-                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                      style: TextStyle(color: Theme
+                          .of(context)
+                          .colorScheme
+                          .tertiary),
                       controller: _fechaInicioController,
                       readOnly: true,
                       decoration: InputDecoration(
@@ -245,7 +251,10 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: TextFormField(
-                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                      style: TextStyle(color: Theme
+                          .of(context)
+                          .colorScheme
+                          .tertiary),
                       controller: _fechaFinController,
                       readOnly: true,
                       decoration: InputDecoration(
@@ -276,7 +285,10 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 children: [
                   Expanded(
                     child: TextFormField(
-                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                      style: TextStyle(color: Theme
+                          .of(context)
+                          .colorScheme
+                          .tertiary),
                       controller: _precioController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
@@ -296,7 +308,10 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: TextFormField(
-                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                      style: TextStyle(color: Theme
+                          .of(context)
+                          .colorScheme
+                          .tertiary),
                       controller: _fianzaController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
@@ -331,13 +346,19 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         prefixIcon: const Icon(Icons.payment_rounded),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      dropdownColor: Theme.of(context).colorScheme.primary,
+                      dropdownColor: Theme
+                          .of(context)
+                          .colorScheme
+                          .primary,
                       items: ["Efectivo", "Tarjeta", "Transferencia"].map((forma) {
                         return DropdownMenuItem(
                           value: forma,
                           child: Text(
                             forma,
-                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+                            style: TextStyle(color: Theme
+                                .of(context)
+                                .colorScheme
+                                .tertiary, fontSize: 12),
                           ),
                         );
                       }).toList(),
@@ -357,13 +378,19 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         prefixIcon: const Icon(Icons.info_outline),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      dropdownColor: Theme.of(context).colorScheme.primary,
+                      dropdownColor: Theme
+                          .of(context)
+                          .colorScheme
+                          .primary,
                       items: ["Pendiente", "En proceso", "Terminado"].map((estado) {
                         return DropdownMenuItem(
                           value: estado,
                           child: Text(
                             estado,
-                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+                            style: TextStyle(color: Theme
+                                .of(context)
+                                .colorScheme
+                                .tertiary, fontSize: 12),
                           ),
                         );
                       }).toList(),
@@ -379,14 +406,47 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
               const SizedBox(height: 25),
 
-              TextFormField(
-                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                controller: _observacionesController,
-                decoration: InputDecoration(
-                  labelText: "Notas",
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
+              // Notas y Devolver fianza (Mitad y mitad, mismo estilo)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      style: TextStyle(color: Theme
+                          .of(context)
+                          .colorScheme
+                          .tertiary),
+                      controller: _observacionesController,
+                      decoration: InputDecoration(
+                        labelText: "Notas",
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: "¿Devolver fianza?",
+                        prefixIcon: const Icon(Icons.assignment_return_outlined),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Switch(
+                          value: devolverFianza,
+                          onChanged: (bool nuevoValor) {
+                            setState(() {
+                              devolverFianza = nuevoValor;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 30),
@@ -415,7 +475,10 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                           width: 200,
                           margin: const EdgeInsets.only(bottom: 10),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Theme
+                                .of(context)
+                                .colorScheme
+                                .primary,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
                             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
@@ -496,13 +559,13 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         "id_coche": _idVehiculoSeleccionado,
                         "id_cliente": _idClienteSeleccionado,
                         "precio": double.parse(_precioController.text),
-                        // MODIFICACIÓN: Si está vacío, se guarda como 0.0
                         "fianza": double.tryParse(_fianzaController.text) ?? 0.0,
                         "forma_pago": formaPagoActual,
                         "fecha_inicio": _fechaInicioController.text,
                         "fecha_fin": _fechaFinController.text,
                         "estado": estadoActual,
                         "observaciones": _observacionesController.text,
+                        "devolver_fianza": devolverFianza ? 1 : 0
                       });
 
                       for (String ruta in fotosTemporales) {
@@ -563,7 +626,9 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     if (fechaElegida != null) {
       setState(() {
         String fechaFormateada =
-            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day
+            .toString()
+            .padLeft(2, '0')}";
 
         if (esInicio) {
           fechaInicio = fechaElegida;

@@ -37,7 +37,7 @@ class DatabaseHelper {
         // Tabla de los Alquileres (La que une coche y cliente)
         await db.execute(
           "CREATE TABLE alquileres (id INTEGER PRIMARY KEY, id_coche INTEGER, id_cliente INTEGER, fecha_inicio TEXT, fecha_fin TEXT, "
-          "fecha_devolucion TEXT, precio REAL, estado TEXT, observaciones TEXT, forma_pago TEXT, fianza REAL)",
+          "fecha_devolucion TEXT, precio REAL, estado TEXT, observaciones TEXT, forma_pago TEXT, fianza REAL, devolver_fianza INTEGER)",
         );
 
         // tabla fotos (se relaciona con alquileres)
@@ -232,13 +232,14 @@ class DatabaseHelper {
 
     final List<Map<String, dynamic>> resultados = await db.rawQuery(
       '''SELECT forma_pago, 
-         SUM(CASE 
-               WHEN estado = 'Terminado' THEN IFNULL(precio, 0) 
-               ELSE IFNULL(fianza, 0) 
-             END) as total 
-         FROM alquileres 
-         WHERE fecha_inicio <= ? AND fecha_fin >= ?
-         GROUP BY forma_pago''',
+       SUM(
+         IFNULL(precio, 0) + 
+         CASE WHEN devolver_fianza = 0 THEN IFNULL(fianza, 0) ELSE 0 END
+       ) as total 
+       FROM alquileres 
+       WHERE estado = 'Terminado'
+       AND fecha_inicio <= ? AND fecha_fin >= ?
+       GROUP BY forma_pago''',
       [fin, inicio],
     );
 
