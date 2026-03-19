@@ -24,12 +24,13 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   TextEditingController _fechaLimiteControler = TextEditingController();
   TextEditingController _fechaDevoControler = TextEditingController();
   TextEditingController _precioController = TextEditingController();
-  TextEditingController _fianzaController = TextEditingController(); // Nuevo
+  TextEditingController _fianzaController = TextEditingController();
   TextEditingController _observacionesController = TextEditingController();
   final TextEditingController _clienteNombreController = TextEditingController();
   final TextEditingController _cocheMatriculaController = TextEditingController();
   String _estadoActual = "";
-  String _formaPagoActual = ""; // Nuevo
+  String _formaPagoActual = "";
+  bool _devolverFianza = false;
 
   Future<void> cargarAlquiler(int idAlquiler) async {
     // guardamos el alquiler con el id recibido
@@ -47,6 +48,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
         _observacionesController = TextEditingController(text: alquiler['observaciones']);
         _estadoActual = alquiler['estado'];
         _formaPagoActual = alquiler['forma_pago'] ?? "Efectivo"; // Cargar forma pago
+        _devolverFianza = (alquiler['devolver_fianza'] ?? 0) == 1; // Cargar devolver fianza
       });
 
       await cargarCocheYCliente(alquiler['id_coche'], alquiler['id_cliente']);
@@ -98,116 +100,156 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     TextEditingController cantidadCombustibleController = TextEditingController(
       text: coche['cantidad_combustible'].toString(),
     );
+    bool necesitaLimpieza = false;
+    bool quedarseFianza = false;
 
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: const Text("Finalizar Alquiler", style: TextStyle(color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Actualiza los datos del vehículo al recibirlo:", style: TextStyle(color: Colors.white70)),
-              const SizedBox(height: 15),
-              TextField(
-                controller: kilometrosController,
-                keyboardType: TextInputType.number,
-                // Texto que escribe el usuario en blanco
-                style: const TextStyle(color: Colors.white),
-                cursorColor: Colors.white,
-                decoration: InputDecoration(
-                  labelText: "Kilómetros actuales",
-                  // Texto de la etiqueta en blanco
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Colors.white30),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1E1E1E),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            title: const Text("Finalizar Alquiler", style: TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Actualiza los datos del vehículo al recibirlo:", style: TextStyle(color: Colors.white70)),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: kilometrosController,
+                  keyboardType: TextInputType.number,
+                  // Texto que escribe el usuario en blanco
+                  style: const TextStyle(color: Colors.white),
+                  cursorColor: Colors.white,
+                  decoration: InputDecoration(
+                    labelText: "Kilómetros actuales",
+                    // Texto de la etiqueta en blanco
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.white30),
+                    ),
                   ),
                 ),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: cantidadCombustibleController,
+                  keyboardType: TextInputType.number,
+                  // Texto que escribe el usuario en blanco
+                  style: const TextStyle(color: Colors.white),
+                  cursorColor: Colors.white,
+                  decoration: InputDecoration(
+                    labelText: "Nivel de combustible",
+                    // Texto de la etiqueta en blanco
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Colors.white30),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                // Switch necesita limpieza
+                Row(
+                  children: [
+                    const Icon(Icons.cleaning_services_outlined, color: Colors.white70),
+                    const SizedBox(width: 10),
+                    const Text("¿Necesita limpieza?", style: TextStyle(color: Colors.white70)),
+                    const Spacer(),
+                    Switch(
+                      value: necesitaLimpieza,
+                      onChanged: (val) => setStateDialog(() => necesitaLimpieza = val),
+                    ),
+                  ],
+                ),
+                // Switch quedarse fianza
+                Row(
+                  children: [
+                    const Icon(Icons.security_rounded, color: Colors.white70),
+                    const SizedBox(width: 10),
+                    const Text("¿Quedarse la fianza?", style: TextStyle(color: Colors.white70)),
+                    const Spacer(),
+                    Switch(
+                      value: quedarseFianza,
+                      onChanged: (val) => setStateDialog(() => quedarseFianza = val),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("CANCELAR", style: TextStyle(color: Colors.white60)),
               ),
-              const SizedBox(height: 15),
-              TextField(
-                controller: cantidadCombustibleController,
-                keyboardType: TextInputType.number,
-                // Texto que escribe el usuario en blanco
-                style: const TextStyle(color: Colors.white),
-                cursorColor: Colors.white,
-                decoration: InputDecoration(
-                  labelText: "Nivel de combustible",
-                  // Texto de la etiqueta en blanco
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Colors.white30),
-                  ),
-                ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                onPressed: () async {
+                  // Validaciones de números y valores negativos
+                  double? kms = double.tryParse(kilometrosController.text);
+                  int? combustible = int.tryParse(cantidadCombustibleController.text);
+
+                  if (kms == null || combustible == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Error: Debes introducir números válidos.")),
+                    );
+                    return;
+                  }
+
+                  if (kms < 0 || combustible < 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Error: Los valores no pueden ser menores a 0.")),
+                    );
+                    return;
+                  }
+
+                  DateTime hoy = DateTime.now();
+                  String fechaHoy =
+                      "${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}";
+
+                  final db = await DatabaseHelper.proyectodb();
+
+                  // Marcar alquiler como terminado y actualizar devolver_fianza
+                  await db.update(
+                    "alquileres",
+                    {
+                      "estado": "Terminado",
+                      "fecha_devolucion": fechaHoy,
+                      "devolver_fianza": quedarseFianza ? 0 : 1,
+                    },
+                    where: "id = ?",
+                    whereArgs: [alquiler["id"]],
+                  );
+
+                  // Liberar coche y actualizar sus datos
+                  await db.update(
+                    "vehiculos",
+                    {
+                      "estado": "Disponible",
+                      "kilometraje": kms,
+                      "cantidad_combustible": combustible,
+                      "necesita_limpieza": necesitaLimpieza ? 1 : 0,
+                    },
+                    where: "id = ?",
+                    whereArgs: [alquiler["id_coche"]],
+                  );
+
+                  Navigator.pop(context);
+                  cargarAlquiler(alquiler["id"]);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Alquiler finalizado y vehículo actualizado")),
+                  );
+                },
+                child: const Text("CONFIRMAR", style: TextStyle(color: Colors.white)),
               ),
             ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("CANCELAR", style: TextStyle(color: Colors.white60)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              onPressed: () async {
-                // Validaciones de números y valores negativos
-                double? kms = double.tryParse(kilometrosController.text);
-                int? combustible = int.tryParse(cantidadCombustibleController.text);
-
-                if (kms == null || combustible == null) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text("Error: Debes introducir números válidos.")));
-                  return;
-                }
-
-                if (kms < 0 || combustible < 0) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text("Error: Los valores no pueden ser menores a 0.")));
-                  return;
-                }
-
-                DateTime hoy = DateTime.now();
-                String fechaHoy =
-                    "${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}";
-
-                final db = await DatabaseHelper.proyectodb();
-
-                // Marcar alquiler como terminado
-                await db.update(
-                  "alquileres",
-                  {"estado": "Terminado", "fecha_devolucion": fechaHoy},
-                  where: "id = ?",
-                  whereArgs: [alquiler["id"]],
-                );
-
-                // Liberar coche y actualizar sus datos
-                await db.update(
-                  "vehiculos",
-                  {"estado": "Disponible", "kilometraje": kms, "cantidad_combustible": combustible},
-                  where: "id = ?",
-                  whereArgs: [alquiler["id_coche"]],
-                );
-
-                Navigator.pop(context);
-                cargarAlquiler(alquiler["id"]);
-
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text("Alquiler finalizado y vehículo actualizado")));
-              },
-              child: const Text("CONFIRMAR", style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -225,119 +267,187 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
           child: Column(
             children: [
               const SizedBox(height: 20),
-              // Card con información de los campos del alquiler
+
+              // Cards en dos columnas igual que detalles vehiculo
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 180),
-                child: Card(
-                  elevation: 8,
-                  shadowColor: Colors.black26,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
-                    child: Column(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.person, "Cliente", _clienteNombreController)),
-                            IconButton(
-                              onPressed: () async =>
-                                  await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente["id"]),
-                              icon: const Icon(Icons.arrow_forward_ios),
+                        // COLUMNA IZQUIERDA
+                        Expanded(
+                          child: Card(
+                            elevation: 8,
+                            shadowColor: Colors.black26,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(child: _infoRow(Icons.person, "Cliente", _clienteNombreController)),
+                                      IconButton(
+                                        onPressed: () async => await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente["id"]),
+                                        icon: const Icon(Icons.arrow_forward_ios),
+                                      ),
+                                    ],
+                                  ),
+                                  const Divider(height: 40),
+                                  Row(
+                                    children: [
+                                      Expanded(child: _infoRow(Icons.calendar_today, "Fecha de inicio", _fechaInicioControler)),
+                                      IconButton(
+                                        onPressed: () => _ventanaCambioFecha("fecha_inicio", _fechaInicioControler),
+                                        icon: const Icon(Icons.edit),
+                                      ),
+                                    ],
+                                  ),
+                                  const Divider(height: 40),
+                                  Row(
+                                    children: [
+                                      Expanded(child: _infoRow(Icons.event_busy, "Fecha limite", _fechaLimiteControler)),
+                                      IconButton(
+                                        onPressed: () => _ventanaCambioFecha("fecha_fin", _fechaLimiteControler),
+                                        icon: const Icon(Icons.edit),
+                                      ),
+                                    ],
+                                  ),
+                                  const Divider(height: 40),
+                                  Row(
+                                    children: [
+                                      Expanded(child: _infoRow(Icons.euro, "Precio", _precioController)),
+                                      IconButton(onPressed: () => _ventanaCambioPrecio(), icon: const Icon(Icons.edit)),
+                                    ],
+                                  ),
+                                  const Divider(height: 40),
+                                  // MOSTRAR FIANZA
+                                  Row(
+                                    children: [
+                                      Expanded(child: _infoRow(Icons.security_rounded, "Fianza", _fianzaController)),
+                                      IconButton(onPressed: () => _ventanaCambioFianza(), icon: const Icon(Icons.edit)),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
+                          ),
                         ),
-                        const Divider(height: 40),
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.directions_car, "Coche", _cocheMatriculaController)),
-                            IconButton(
-                              onPressed: () async =>
-                                  await Navigator.pushNamed(context, "detalles_vehiculo", arguments: coche["id"]),
-                              icon: const Icon(Icons.arrow_forward_ios),
+
+                        const SizedBox(width: 10),
+
+                        // COLUMNA DERECHA
+                        Expanded(
+                          child: Card(
+                            elevation: 8,
+                            shadowColor: Colors.black26,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(child: _infoRow(Icons.directions_car, "Coche", _cocheMatriculaController)),
+                                      IconButton(
+                                        onPressed: () async => await Navigator.pushNamed(context, "detalles_vehiculo", arguments: coche["id"]),
+                                        icon: const Icon(Icons.arrow_forward_ios),
+                                      ),
+                                    ],
+                                  ),
+                                  const Divider(height: 40),
+                                  // MOSTRAR FORMA DE PAGO
+                                  Row(
+                                    children: [
+                                      Expanded(child: _infoRowEstado(Icons.payment_rounded, "Forma de Pago", _formaPagoActual)),
+                                      IconButton(onPressed: () => _ventanaCambioFormaPago(), icon: const Icon(Icons.edit)),
+                                    ],
+                                  ),
+                                  const Divider(height: 40),
+                                  Row(
+                                    children: [
+                                      Expanded(child: _infoRow(Icons.search, "Observaciones", _observacionesController)),
+                                      IconButton(onPressed: () => _ventanaCambioObservaciones(), icon: const Icon(Icons.edit)),
+                                      IconButton(onPressed: mostrarObservaciones, icon: const Icon(Icons.visibility)),
+                                    ],
+                                  ),
+                                  const Divider(height: 40),
+                                  Row(
+                                    children: [
+                                      Expanded(child: _infoRow(Icons.event_available, "Fecha entrega", _fechaDevoControler)),
+                                      IconButton(
+                                        onPressed: () => _ventanaCambioFecha("fecha_devolucion", _fechaDevoControler),
+                                        icon: const Icon(Icons.edit),
+                                      ),
+                                    ],
+                                  ),
+                                  const Divider(height: 40),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _infoRowEstado(Icons.info_outline, "Estado de la devolucion", _estadoActual),
+                                      ),
+                                      IconButton(
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => _ventanaCambioEstado("estado", _estadoActual),
+                                          );
+                                        },
+                                        icon: const Icon(Icons.edit),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
-                        const Divider(height: 40),
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.calendar_today, "Fecha de inicio", _fechaInicioControler)),
-                            IconButton(
-                              onPressed: () => _ventanaCambioFecha("fecha_inicio", _fechaInicioControler),
-                              icon: const Icon(Icons.edit),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 40),
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.event_busy, "Fecha limite", _fechaLimiteControler)),
-                            IconButton(
-                              onPressed: () => _ventanaCambioFecha("fecha_fin", _fechaLimiteControler),
-                              icon: const Icon(Icons.edit),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 40),
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.euro, "Precio", _precioController)),
-                            IconButton(onPressed: () => _ventanaCambioPrecio(), icon: const Icon(Icons.edit)),
-                          ],
-                        ),
-                        const Divider(height: 40),
-                        // MOSTRAR FIANZA
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.security_rounded, "Fianza", _fianzaController)),
-                            IconButton(onPressed: () => _ventanaCambioFianza(), icon: const Icon(Icons.edit)),
-                          ],
-                        ),
-                        const Divider(height: 40),
-                        // MOSTRAR FORMA DE PAGO
-                        Row(
-                          children: [
-                            Expanded(child: _infoRowEstado(Icons.payment_rounded, "Forma de Pago", _formaPagoActual)),
-                            IconButton(onPressed: () => _ventanaCambioFormaPago(), icon: const Icon(Icons.edit)),
-                          ],
-                        ),
-                        const Divider(height: 40),
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.search, "Observaciones", _observacionesController)),
-                            IconButton(onPressed: () => _ventanaCambioObservaciones(), icon: const Icon(Icons.edit)),
-                            IconButton(onPressed: mostrarObservaciones, icon: const Icon(Icons.visibility)),
-                          ],
-                        ),
-                        const Divider(height: 40),
-                        Row(
-                          children: [
-                            Expanded(child: _infoRow(Icons.event_available, "Fecha entrega", _fechaDevoControler)),
-                            IconButton(
-                              onPressed: () => _ventanaCambioFecha("fecha_devolucion", _fechaDevoControler),
-                              icon: const Icon(Icons.edit),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 40),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _infoRowEstado(Icons.info_outline, "Estado de la devolucion", _estadoActual),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => _ventanaCambioEstado("estado", _estadoActual),
-                                );
-                              },
-                              icon: const Icon(Icons.edit),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
+
+                    // MOSTRAR DEVOLVER FIANZA - card ancha ocupando ambas columnas
+                    const SizedBox(height: 10),
+                    Card(
+                      elevation: 8,
+                      shadowColor: Colors.black26,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.deepPurple.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.assignment_return_outlined),
+                            ),
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("¿Devolver fianza?", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                                  Text(
+                                    _devolverFianza ? "Sí" : "No",
+                                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => _ventanaCambioDevolverFianza(),
+                              icon: const Icon(Icons.edit),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -346,7 +456,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
               // Botón Finalizar Alquiler (Solo si no está terminado)
               if (_estadoActual != "Terminado")
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 180.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: Column(
                     children: [
                       SizedBox(
@@ -372,7 +482,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                 ),
 
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 180.0),
+                padding: const EdgeInsets.symmetric(horizontal: 40.0),
                 child: Row(
                   children: [
                     const Icon(Icons.camera_alt, size: 24),
@@ -386,7 +496,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
               // lista de fotos
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 170.0),
+                padding: const EdgeInsets.symmetric(horizontal: 40.0),
                 child: SizedBox(
                   height: 250,
                   child: ListView.builder(
@@ -486,7 +596,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
               // Título sección Multas
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 180.0),
+                padding: const EdgeInsets.symmetric(horizontal: 40.0),
                 child: Row(
                   children: [
                     const Icon(Icons.receipt_long, size: 24),
@@ -500,7 +610,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
               // Lista de multas
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 170.0),
+                padding: const EdgeInsets.symmetric(horizontal: 40.0),
                 child: SizedBox(
                   height: 180,
                   child: ListView.builder(
@@ -624,6 +734,29 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
             children: [
               Text(titulo, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
               Text(estado, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Widget para mostrar un campo con un valor booleano como Sí/No
+  Widget _infoRowSwitch(IconData icon, String titulo, bool valor) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: Colors.deepPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+          child: Icon(icon),
+        ),
+        const SizedBox(width: 15),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(titulo, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+              Text(valor ? "Sí" : "No", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -787,6 +920,57 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
             child: const Text("GUARDAR"),
           ),
         ],
+      ),
+    );
+  }
+
+  // VENTANA PARA CAMBIAR DEVOLVER FIANZA
+  Future<void> _ventanaCambioDevolverFianza() async {
+    bool temporalDevolver = _devolverFianza;
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Text("Devolución de fianza"),
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.assignment_return_outlined),
+              const SizedBox(width: 10),
+              const Text("¿Devolver fianza?"),
+              const Spacer(),
+              Switch(
+                value: temporalDevolver,
+                onChanged: (nuevoValor) {
+                  setStateDialog(() {
+                    temporalDevolver = nuevoValor;
+                  });
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("CANCELAR"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final db = await DatabaseHelper.proyectodb();
+                await db.update(
+                  "alquileres",
+                  {"devolver_fianza": temporalDevolver ? 1 : 0},
+                  where: "id = ?",
+                  whereArgs: [alquiler["id"]],
+                );
+                Navigator.pop(context);
+                cargarAlquiler(alquiler["id"]);
+              },
+              child: const Text("GUARDAR"),
+            ),
+          ],
+        ),
       ),
     );
   }
