@@ -63,6 +63,40 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
           "Añade reparación para ${vehiculo["marca"]} ${vehiculo["modelo"]}",
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        leading: IconButton(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("¿Desea guardar los datos que ha introducido?"),
+                  content: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await _guardarReparacion();
+                        },
+                        label: const Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                      ),
+
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        },
+                        label: const Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+          icon: const Icon(Icons.chevron_left_outlined),
+        ),
       ),
 
       body: SafeArea(
@@ -254,35 +288,7 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
                   height: 55,
                   child: ElevatedButton.icon(
                     onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        // guardamos la base de datos
-                        final baseDatos = await DatabaseHelper.proyectodb();
-
-                        // Convertimos la lista de imágenes en una sola cadena separada por comas
-                        // o si no hay lo dejamos vacio
-                        String rutasFotos = imagenesSeleccionadas.isNotEmpty
-                            ? imagenesSeleccionadas.map((e) => e.path).join(",")
-                            : "";
-
-                        // insertamos en la tabal "reparaciones" los datos que hemos cogido
-                        await baseDatos.insert("reparaciones", {
-                          "id_coche": vehiculo["id"],
-                          "fecha_inicio": _fechaInicioController.text,
-                          "fecha_fin": _fechaFinController.text,
-                          "coste": double.parse(_costeController.text),
-                          "descripcion": _descripcionController.text,
-                          "rutas_fotos": rutasFotos,
-                        });
-                        _costeController.clear();
-
-                        // Aviso de éxito
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(const SnackBar(content: Text("Reparación guardada correctamente")));
-
-                        // Volvemos atrás después de guardar
-                        Navigator.pop(context);
-                      }
+                      await _guardarReparacion();
                     },
                     icon: const Icon(Icons.save),
                     label: const Text(
@@ -303,6 +309,27 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
         ),
       ),
     );
+  }
+
+  Future<void> _guardarReparacion() async {
+    if (!_formKey.currentState!.validate()) return;
+    final baseDatos = await DatabaseHelper.proyectodb();
+
+    // insertamos en la tabal "reparaciones" los datos que hemos cogido (Corregido texto SnackBar abajo)
+    await baseDatos.insert("reparaciones", {
+      "id_coche": vehiculo["id"],
+      "fecha_inicio": _fechaInicioController.text,
+      "fecha_fin": _fechaFinController.text,
+      "coste": double.parse(_costeController.text), // Guardamos como número para cálculos
+      "descripcion": _descripcionController.text,
+    });
+    _costeController.clear();
+
+    // Aviso de éxito (Corregido texto: Alquiler -> Reparación)
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Reparación guardada correctamente")));
+
+    // Volvemos atrás después de guardar
+    Navigator.pop(context);
   }
 
   /// metodo para elegir una fecha

@@ -30,7 +30,38 @@ class _PantallaAnyadirMultaState extends State<PantallaAnyadirMulta> {
       appBar: AppBar(
         title: Text("Añadir Multa al Alquiler #${widget.idAlquiler}"),
         centerTitle: true,
-        leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.chevron_left_outlined)),
+        leading: IconButton(onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text("¿Desea guardar los datos que ha introducido?"),
+                content: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _guardarMulta();
+                      },
+                      label: const Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                    ),
+
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                      label: const Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+            icon: const Icon(Icons.chevron_left_outlined)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(30.0),
@@ -132,25 +163,13 @@ class _PantallaAnyadirMultaState extends State<PantallaAnyadirMulta> {
                 height: 55,
                 child: ElevatedButton.icon(
                   onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      final baseDatos = await DatabaseHelper.proyectodb();
-
-                      await baseDatos.insert("multas", {
-                        "id_alquiler": widget.idAlquiler,
-                        "descripcion": _descripcionController.text,
-                        "fecha": _fechaController.text,
-                        "fecha_limite": _fechaLimiteController.text,
-                        "precio": double.parse(_precioController.text),
-                        "pagada": pagada,
-                      });
-
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Multa añadida correctamente")));
-                      Navigator.pop(context);
-                    }
+                    await _guardarMulta();
                   },
                   icon: const Icon(Icons.save),
                   label: const Text("GUARDAR MULTA"),
-                  style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
                 ),
               ),
             ],
@@ -158,6 +177,23 @@ class _PantallaAnyadirMultaState extends State<PantallaAnyadirMulta> {
         ),
       ),
     );
+  }
+
+  Future<void> _guardarMulta() async {
+    if (!_formKey.currentState!.validate()) return;
+    final baseDatos = await DatabaseHelper.proyectodb();
+
+    await baseDatos.insert("multas", {
+      "id_alquiler": widget.idAlquiler,
+      "descripcion": _descripcionController.text,
+      "fecha": _fechaController.text,
+      "fecha_limite": _fechaLimiteController.text,
+      "precio": double.parse(_precioController.text),
+      "pagada": pagada,
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Multa añadida correctamente")));
+    Navigator.pop(context);
   }
 
   Future<void> seleccionarFecha(bool esFechaMulta) async {

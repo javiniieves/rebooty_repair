@@ -79,7 +79,40 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
       appBar: AppBar(
         title: const Text("Añade un nuevo alquiler"),
         centerTitle: true,
-        leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.chevron_left_outlined)),
+        leading: IconButton(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("¿Desea guardar los datos que ha introducido?"),
+                  content: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await _guardarAlquiler();
+                        },
+                        label: const Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                      ),
+
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        },
+                        label: const Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+          icon: const Icon(Icons.chevron_left_outlined),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(30.0),
@@ -106,8 +139,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                           return documento.contains(textEditingValue.text.toLowerCase());
                         });
                       },
-                      displayStringForOption: (cliente) =>
-                      "${cliente["documento_oficial"]} - ${cliente["nombre"]}",
+                      displayStringForOption: (cliente) => "${cliente["documento_oficial"]} - ${cliente["nombre"]}",
                       fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
                         return TextFormField(
                           controller: controller,
@@ -115,9 +147,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                           decoration: InputDecoration(
                             labelText: "DNI del cliente",
                             prefixIcon: Icon(Icons.person_search),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         );
                       },
@@ -170,8 +200,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                           return matricula.contains(textEditingValue.text.toLowerCase());
                         });
                       },
-                      displayStringForOption: (vehiculo) =>
-                      "${vehiculo["matricula"]} - ${vehiculo["modelo"]}",
+                      displayStringForOption: (vehiculo) => "${vehiculo["matricula"]} - ${vehiculo["modelo"]}",
                       fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
                         return TextFormField(
                           controller: controller,
@@ -179,9 +208,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                           decoration: InputDecoration(
                             labelText: "Matricula del vehiculo",
                             prefixIcon: Icon(Icons.car_rental),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         );
                       },
@@ -233,10 +260,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 children: [
                   Expanded(
                     child: TextFormField(
-                      style: TextStyle(color: Theme
-                          .of(context)
-                          .colorScheme
-                          .tertiary),
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                       controller: _fechaInicioController,
                       readOnly: true,
                       decoration: InputDecoration(
@@ -251,10 +275,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: TextFormField(
-                      style: TextStyle(color: Theme
-                          .of(context)
-                          .colorScheme
-                          .tertiary),
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                       controller: _fechaFinController,
                       readOnly: true,
                       decoration: InputDecoration(
@@ -285,10 +306,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 children: [
                   Expanded(
                     child: TextFormField(
-                      style: TextStyle(color: Theme
-                          .of(context)
-                          .colorScheme
-                          .tertiary),
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                       controller: _precioController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
@@ -308,10 +326,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: TextFormField(
-                      style: TextStyle(color: Theme
-                          .of(context)
-                          .colorScheme
-                          .tertiary),
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                       controller: _fianzaController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
@@ -346,19 +361,13 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         prefixIcon: const Icon(Icons.payment_rounded),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      dropdownColor: Theme
-                          .of(context)
-                          .colorScheme
-                          .primary,
+                      dropdownColor: Theme.of(context).colorScheme.primary,
                       items: ["Efectivo", "Tarjeta", "Transferencia"].map((forma) {
                         return DropdownMenuItem(
                           value: forma,
                           child: Text(
                             forma,
-                            style: TextStyle(color: Theme
-                                .of(context)
-                                .colorScheme
-                                .tertiary, fontSize: 12),
+                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
                           ),
                         );
                       }).toList(),
@@ -378,19 +387,13 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         prefixIcon: const Icon(Icons.info_outline),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      dropdownColor: Theme
-                          .of(context)
-                          .colorScheme
-                          .primary,
+                      dropdownColor: Theme.of(context).colorScheme.primary,
                       items: ["Pendiente", "En proceso", "Terminado"].map((estado) {
                         return DropdownMenuItem(
                           value: estado,
                           child: Text(
                             estado,
-                            style: TextStyle(color: Theme
-                                .of(context)
-                                .colorScheme
-                                .tertiary, fontSize: 12),
+                            style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
                           ),
                         );
                       }).toList(),
@@ -412,10 +415,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 children: [
                   Expanded(
                     child: TextFormField(
-                      style: TextStyle(color: Theme
-                          .of(context)
-                          .colorScheme
-                          .tertiary),
+                      style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                       controller: _observacionesController,
                       decoration: InputDecoration(
                         labelText: "Notas",
@@ -475,10 +475,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                           width: 200,
                           margin: const EdgeInsets.only(bottom: 10),
                           decoration: BoxDecoration(
-                            color: Theme
-                                .of(context)
-                                .colorScheme
-                                .primary,
+                            color: Theme.of(context).colorScheme.primary,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
                             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
@@ -534,61 +531,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton.icon(
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      // NUEVO: Comprobar disponibilidad antes de guardar
-                      bool estaLibre = await DatabaseHelper.cocheEstaDisponible(
-                        int.parse(_idVehiculoSeleccionado!),
-                        _fechaInicioController.text,
-                        _fechaFinController.text,
-                      );
-
-                      if (!estaLibre) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Error: El coche está ocupado o en taller en esas fechas"),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        return;
-                      }
-                      final baseDatos = await DatabaseHelper.proyectodb();
-
-                      int idNuevoAlquiler = await baseDatos.insert("alquileres", {
-                        "id_coche": _idVehiculoSeleccionado,
-                        "id_cliente": _idClienteSeleccionado,
-                        "precio": double.parse(_precioController.text),
-                        "fianza": double.tryParse(_fianzaController.text) ?? 0.0,
-                        "forma_pago": formaPagoActual,
-                        "fecha_inicio": _fechaInicioController.text,
-                        "fecha_fin": _fechaFinController.text,
-                        "estado": estadoActual,
-                        "observaciones": _observacionesController.text,
-                        "devolver_fianza": devolverFianza ? 1 : 0
-                      });
-
-                      for (String ruta in fotosTemporales) {
-                        await baseDatos.insert("fotos", {"id_alquiler": idNuevoAlquiler, "ruta": ruta});
-                      }
-
-                      // Solo cambiamos a "Alquilado" para que visualmente se sepa
-                      // que tiene algún alquiler, pero como ahora cargamos todos los vehículos,
-                      // esto no impedirá volver a seleccionarlo para otro periodo.
-                      await baseDatos.update(
-                        "vehiculos",
-                        {"estado": "Alquilado"},
-                        where: "id = ?",
-                        whereArgs: [_idVehiculoSeleccionado],
-                      );
-
-                      _precioController.clear();
-                      _fianzaController.clear(); // Limpiar fianza
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(const SnackBar(content: Text("Alquiler guardado correctamente")));
-                      Navigator.pop(context);
-                    }
-                  },
+                  onPressed: _guardarAlquiler,
                   icon: const Icon(Icons.save),
                   label: const Text("GUARDAR ALQUILER"),
                   style: ElevatedButton.styleFrom(
@@ -625,9 +568,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     if (fechaElegida != null) {
       setState(() {
         String fechaFormateada =
-            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day
-            .toString()
-            .padLeft(2, '0')}";
+            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 
         if (esInicio) {
           fechaInicio = fechaElegida;
@@ -642,5 +583,66 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
         }
       });
     }
+  }
+
+  Future<void> _guardarAlquiler() async {
+    // Validación previa
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_idClienteSeleccionado == null || _idVehiculoSeleccionado == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Selecciona cliente y vehículo"), backgroundColor: Colors.red));
+      return;
+    }
+
+    bool estaLibre = await DatabaseHelper.cocheEstaDisponible(
+      int.parse(_idVehiculoSeleccionado!),
+      _fechaInicioController.text,
+      _fechaFinController.text,
+    );
+
+    if (!estaLibre) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error: El coche ya está ocupado en esas fechas"), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    final db = await DatabaseHelper.proyectodb();
+
+    int idNuevoAlquiler = await db.insert("alquileres", {
+      "id_coche": _idVehiculoSeleccionado,
+      "id_cliente": _idClienteSeleccionado,
+      "precio": double.parse(_precioController.text),
+      "fianza": double.tryParse(_fianzaController.text) ?? 0.0,
+      "forma_pago": formaPagoActual,
+      "fecha_inicio": _fechaInicioController.text,
+      "fecha_fin": _fechaFinController.text,
+      "estado": estadoActual,
+      "observaciones": _observacionesController.text,
+      "devolver_fianza": devolverFianza ? 1 : 0,
+    });
+
+    for (String ruta in fotosTemporales) {
+      await db.insert("fotos", {"id_alquiler": idNuevoAlquiler, "ruta": ruta});
+    }
+
+    await db.update("vehiculos", {"estado": "Alquilado"}, where: "id = ?", whereArgs: [_idVehiculoSeleccionado]);
+
+    _limpiarFormulario();
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Alquiler guardado correctamente")));
+
+    Navigator.pop(context);
+  }
+
+  void _limpiarFormulario() {
+    _precioController.clear();
+    _fianzaController.clear();
+    _fechaInicioController.clear();
+    _fechaFinController.clear();
+    _observacionesController.clear();
+    fotosTemporales.clear();
   }
 }
