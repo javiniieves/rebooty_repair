@@ -69,7 +69,35 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
         centerTitle: true,
         leading: IconButton(
           onPressed: () {
-            Navigator.pop(context);
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("¿Desea guardar los datos que ha introducido?"),
+                  content: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await _guardarCliente();
+                        },
+                        label: const Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                      ),
+
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        },
+                        label: const Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
           },
           icon: const Icon(Icons.chevron_left_outlined),
         ),
@@ -269,36 +297,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                   height: 55,
                   child: ElevatedButton.icon(
                     onPressed: () async {
-                      // Comprobamos si las validaciones del formulario son correctas
-                      if (_formKey.currentState!.validate()) {
-                        // guardamos la base de datos
-                        final baseDatos = await DatabaseHelper.proyectodb();
-
-                        // insertamos en la tabla "clientes" los datos que hemos cogido
-                        await baseDatos.insert("clientes", {
-                          "nombre": _nombreController.text,
-                          "tipo_documento": _tipoDocumentoSeleccionado,
-                          "documento_oficial": _dniController.text.toUpperCase(),
-                          "telefono": telefonoCompleto,
-                          "direccion": _direccionController.text,
-                          "email": _emailController.text.isEmpty ? null : _emailController.text,
-                          "ruta_foto": rutaFoto,
-                        });
-
-                        _nombreController.clear();
-                        _dniController.clear();
-                        _telefonoController.clear();
-                        _direccionController.clear();
-                        _emailController.clear();
-
-                        // Aviso de éxito
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(const SnackBar(content: Text("Cliente guardado correctamente")));
-
-                        // Cerramos la pantalla al terminar
-                        Navigator.pop(context);
-                      }
+                        await _guardarCliente();
                     },
                     icon: const Icon(Icons.save),
                     label: const Text("GUARDAR CLIENTE"),
@@ -313,5 +312,36 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
         ),
       ),
     );
+  }
+
+  Future<void> _guardarCliente() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final baseDatos = await DatabaseHelper.proyectodb();
+
+    // insertamos en la tabla "clientes" los datos que hemos cogido
+    await baseDatos.insert("clientes", {
+      "nombre": _nombreController.text,
+      "tipo_documento": _tipoDocumentoSeleccionado,
+      "documento_oficial": _dniController.text.toUpperCase(),
+      "telefono": telefonoCompleto,
+      "direccion": _direccionController.text,
+      "email": _emailController.text.isEmpty ? null : _emailController.text,
+      "ruta_foto": rutaFoto,
+    });
+
+    _nombreController.clear();
+    _dniController.clear();
+    _telefonoController.clear();
+    _direccionController.clear();
+    _emailController.clear();
+
+    // Aviso de éxito
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Cliente guardado correctamente")));
+
+    // Cerramos la pantalla al terminar
+    Navigator.pop(context);
   }
 }

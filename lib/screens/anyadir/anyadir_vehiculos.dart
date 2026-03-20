@@ -79,7 +79,35 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
         centerTitle: true,
         leading: IconButton(
           onPressed: () {
-            Navigator.pop(context);
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: const Text("¿Desea guardar los datos que ha introducido?"),
+                  content: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await _guardarVehiculo();
+                        },
+                        label: const Row(children: [Icon(Icons.check), Text("Confirmar")]),
+                      ),
+
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        },
+                        label: const Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
           },
           icon: const Icon(Icons.chevron_left_outlined),
         ),
@@ -483,53 +511,16 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       // Validamos el formulario antes de guardar
-                      if (_formKey.currentState!.validate()) {
-                        if (rutaFoto == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Debes seleccionar una foto del vehículo"),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          return;
-                        }
-
-                        // guardamos la base de datos
-                        final baseDatos = await DatabaseHelper.proyectodb();
-
-                        // insertamos en la tabal "vehiculos" el coche con los datos que hemos cogido
-                        await baseDatos.insert("vehiculos", {
-                          "matricula": _matriculaController.text,
-                          "marca": _marcaController.text,
-                          "modelo": _modeloController.text,
-                          "estado": estadoActual,
-                          "color": colorDelVehiculo.value,
-                          "kilometraje": _kilometrajeController.text,
-                          "anyo": _anyoController.text,
-                          "combustible": combustible,
-                          "observaciones": _observacionesController.text,
-                          "fecha_vencimiento_seguro": _fechaController.text,
-                          "fecha_proxima_itv": _itvController.text,
-                          "cantidad_combustible": int.parse(_combustibleCantidadController.text),
-                          "ruta_foto": rutaFoto,
-                          "necesita_limpieza": necesitaLimpieza ? 1 : 0
-                        });
-
-                        _matriculaController.clear();
-                        _marcaController.clear();
-                        _modeloController.clear();
-                        _observacionesController.clear();
-                        _kilometrajeController.clear();
-                        _anyoController.clear();
-                        _itvController.clear();
-                        _combustibleCantidadController.clear();
-
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(const SnackBar(content: Text("Vehículo guardado correctamente")));
-                        // Volvemos atrás tras el éxito
-                        Navigator.pop(context);
+                      if (rutaFoto == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Debes seleccionar una foto del vehículo"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
                       }
+                      await _guardarVehiculo();
                     },
                     icon: const Icon(Icons.save),
                     label: const Text("GUARDAR"),
@@ -544,6 +535,42 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
         ),
       ),
     );
+  }
+
+  Future<void> _guardarVehiculo() async {
+    if (!_formKey.currentState!.validate()) return;
+    final baseDatos = await DatabaseHelper.proyectodb();
+
+    // insertamos en la tabal "vehiculos" el coche con los datos que hemos cogido
+    await baseDatos.insert("vehiculos", {
+      "matricula": _matriculaController.text,
+      "marca": _marcaController.text,
+      "modelo": _modeloController.text,
+      "estado": estadoActual,
+      "color": colorDelVehiculo.value,
+      "kilometraje": _kilometrajeController.text,
+      "anyo": _anyoController.text,
+      "combustible": combustible,
+      "observaciones": _observacionesController.text,
+      "fecha_vencimiento_seguro": _fechaController.text,
+      "fecha_proxima_itv": _itvController.text,
+      "cantidad_combustible": int.parse(_combustibleCantidadController.text),
+      "ruta_foto": rutaFoto,
+      "necesita_limpieza": necesitaLimpieza ? 1 : 0,
+    });
+
+    _matriculaController.clear();
+    _marcaController.clear();
+    _modeloController.clear();
+    _observacionesController.clear();
+    _kilometrajeController.clear();
+    _anyoController.clear();
+    _itvController.clear();
+    _combustibleCantidadController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Vehículo guardado correctamente")));
+    // Volvemos atrás tras el éxito
+    Navigator.pop(context);
   }
 
   void mostrarSelectorColor() {
