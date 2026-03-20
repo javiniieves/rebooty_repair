@@ -103,7 +103,9 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                             final vehiculo = vehiculosFiltrados[index];
                             return ListTile(
                               leading: Image(image: FileImage(File(vehiculo["ruta_foto"]))),
-                              title: Text(vehiculo['matricula'] ?? 'Sin matricula'),
+                              title: Text(
+                                "${vehiculo['matricula'] ?? 'Sin matricula'} - ${vehiculo['marca']}/${vehiculo['modelo']}",
+                              ),
                               subtitle: Text(vehiculo['estado'] ?? 'Sin estado'),
                               onTap: () async {
                                 await Navigator.pushNamed(context, "detalles_vehiculo", arguments: vehiculo["id"]);
