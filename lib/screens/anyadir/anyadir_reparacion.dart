@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-
 import '../../database.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class PantallaAnyadirReparacion extends StatefulWidget {
   const PantallaAnyadirReparacion({super.key});
@@ -20,6 +21,10 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
   DateTime? fechaFin;
   final _costeController = TextEditingController();
 
+  // Lista para guardar las fotos seleccionadas temporalmente
+  List<XFile> imagenesSeleccionadas = [];
+  final ImagePicker _picker = ImagePicker();
+
   // metodo encargado de rellenar la variable vehiculo con
   // los datos del coche con el id recibido por parametro
   Future<void> cargarDatosVehiculo(int idVehiculo) async {
@@ -28,6 +33,16 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
     setState(() {
       vehiculo = vehiculosConIdRecibido.first;
     });
+  }
+
+  // 2. Método para seleccionar fotos
+  Future<void> seleccionarFotos() async {
+    final List<XFile> fotos = await _picker.pickMultiImage();
+    if (fotos.isNotEmpty) {
+      setState(() {
+        imagenesSeleccionadas.addAll(fotos);
+      });
+    }
   }
 
   @override
@@ -209,6 +224,60 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
                     // Si está bien, devolvemos null
                     return null;
                   },
+                ),
+
+                const SizedBox(height: 25),
+
+                // mostrar las fotos seleccionadas
+                if (imagenesSeleccionadas.isNotEmpty)
+                  SizedBox(
+                    height: 100,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: imagenesSeleccionadas.length,
+                      itemBuilder: (context, index) {
+                        return Stack(
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(right: 10),
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                image: DecorationImage(
+                                  image: FileImage(File(imagenesSeleccionadas[index].path)),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 5,
+                              top: -5,
+                              child: IconButton(
+                                icon: const Icon(Icons.remove_circle, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    imagenesSeleccionadas.removeAt(index);
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+
+                const SizedBox(height: 15),
+
+                // Botón para añadir fotos
+                OutlinedButton.icon(
+                  onPressed: seleccionarFotos,
+                  icon: const Icon(Icons.add_a_photo),
+                  label: const Text("AÑADIR FOTOS"),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
                 ),
 
                 const SizedBox(height: 60),

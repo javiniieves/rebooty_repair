@@ -159,10 +159,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                     const SizedBox(width: 10),
                     const Text("¿Necesita limpieza?", style: TextStyle(color: Colors.white70)),
                     const Spacer(),
-                    Switch(
-                      value: necesitaLimpieza,
-                      onChanged: (val) => setStateDialog(() => necesitaLimpieza = val),
-                    ),
+                    Switch(value: necesitaLimpieza, onChanged: (val) => setStateDialog(() => necesitaLimpieza = val)),
                   ],
                 ),
                 // Switch quedarse fianza
@@ -172,10 +169,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                     const SizedBox(width: 10),
                     const Text("¿Quedarse la fianza?", style: TextStyle(color: Colors.white70)),
                     const Spacer(),
-                    Switch(
-                      value: quedarseFianza,
-                      onChanged: (val) => setStateDialog(() => quedarseFianza = val),
-                    ),
+                    Switch(value: quedarseFianza, onChanged: (val) => setStateDialog(() => quedarseFianza = val)),
                   ],
                 ),
               ],
@@ -193,16 +187,16 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                   int? combustible = int.tryParse(cantidadCombustibleController.text);
 
                   if (kms == null || combustible == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Error: Debes introducir números válidos.")),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(const SnackBar(content: Text("Error: Debes introducir números válidos.")));
                     return;
                   }
 
                   if (kms < 0 || combustible < 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Error: Los valores no pueden ser menores a 0.")),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(const SnackBar(content: Text("Error: Los valores no pueden ser menores a 0.")));
                     return;
                   }
 
@@ -215,11 +209,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                   // Marcar alquiler como terminado y actualizar devolver_fianza
                   await db.update(
                     "alquileres",
-                    {
-                      "estado": "Terminado",
-                      "fecha_devolucion": fechaHoy,
-                      "devolver_fianza": quedarseFianza ? 0 : 1,
-                    },
+                    {"estado": "Terminado", "fecha_devolucion": fechaHoy, "devolver_fianza": quedarseFianza ? 0 : 1},
                     where: "id = ?",
                     whereArgs: [alquiler["id"]],
                   );
@@ -240,9 +230,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                   Navigator.pop(context);
                   cargarAlquiler(alquiler["id"]);
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Alquiler finalizado y vehículo actualizado")),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text("Alquiler finalizado y vehículo actualizado")));
                 },
                 child: const Text("CONFIRMAR", style: TextStyle(color: Colors.white)),
               ),
@@ -290,7 +280,11 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                     children: [
                                       Expanded(child: _infoRow(Icons.person, "Cliente", _clienteNombreController)),
                                       IconButton(
-                                        onPressed: () async => await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente["id"]),
+                                        onPressed: () async => await Navigator.pushNamed(
+                                          context,
+                                          "detalles_cliente",
+                                          arguments: cliente["id"],
+                                        ),
                                         icon: const Icon(Icons.arrow_forward_ios),
                                       ),
                                     ],
@@ -298,7 +292,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                   const Divider(height: 40),
                                   Row(
                                     children: [
-                                      Expanded(child: _infoRow(Icons.calendar_today, "Fecha de inicio", _fechaInicioControler)),
+                                      Expanded(
+                                        child: _infoRow(Icons.calendar_today, "Fecha de inicio", _fechaInicioControler),
+                                      ),
                                       IconButton(
                                         onPressed: () => _ventanaCambioFecha("fecha_inicio", _fechaInicioControler),
                                         icon: const Icon(Icons.edit),
@@ -308,7 +304,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                   const Divider(height: 40),
                                   Row(
                                     children: [
-                                      Expanded(child: _infoRow(Icons.event_busy, "Fecha limite", _fechaLimiteControler)),
+                                      Expanded(
+                                        child: _infoRow(Icons.event_busy, "Fecha limite", _fechaLimiteControler),
+                                      ),
                                       IconButton(
                                         onPressed: () => _ventanaCambioFecha("fecha_fin", _fechaLimiteControler),
                                         icon: const Icon(Icons.edit),
@@ -350,9 +348,15 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Expanded(child: _infoRow(Icons.directions_car, "Coche", _cocheMatriculaController)),
+                                      Expanded(
+                                        child: _infoRow(Icons.directions_car, "Coche", _cocheMatriculaController),
+                                      ),
                                       IconButton(
-                                        onPressed: () async => await Navigator.pushNamed(context, "detalles_vehiculo", arguments: coche["id"]),
+                                        onPressed: () async => await Navigator.pushNamed(
+                                          context,
+                                          "detalles_vehiculo",
+                                          arguments: coche["id"],
+                                        ),
                                         icon: const Icon(Icons.arrow_forward_ios),
                                       ),
                                     ],
@@ -361,22 +365,34 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                   // MOSTRAR FORMA DE PAGO
                                   Row(
                                     children: [
-                                      Expanded(child: _infoRowEstado(Icons.payment_rounded, "Forma de Pago", _formaPagoActual)),
-                                      IconButton(onPressed: () => _ventanaCambioFormaPago(), icon: const Icon(Icons.edit)),
+                                      Expanded(
+                                        child: _infoRowEstado(Icons.payment_rounded, "Forma de Pago", _formaPagoActual),
+                                      ),
+                                      IconButton(
+                                        onPressed: () => _ventanaCambioFormaPago(),
+                                        icon: const Icon(Icons.edit),
+                                      ),
                                     ],
                                   ),
                                   const Divider(height: 40),
                                   Row(
                                     children: [
-                                      Expanded(child: _infoRow(Icons.search, "Observaciones", _observacionesController)),
-                                      IconButton(onPressed: () => _ventanaCambioObservaciones(), icon: const Icon(Icons.edit)),
+                                      Expanded(
+                                        child: _infoRow(Icons.search, "Observaciones", _observacionesController),
+                                      ),
+                                      IconButton(
+                                        onPressed: () => _ventanaCambioObservaciones(),
+                                        icon: const Icon(Icons.edit),
+                                      ),
                                       IconButton(onPressed: mostrarObservaciones, icon: const Icon(Icons.visibility)),
                                     ],
                                   ),
                                   const Divider(height: 40),
                                   Row(
                                     children: [
-                                      Expanded(child: _infoRow(Icons.event_available, "Fecha entrega", _fechaDevoControler)),
+                                      Expanded(
+                                        child: _infoRow(Icons.event_available, "Fecha entrega", _fechaDevoControler),
+                                      ),
                                       IconButton(
                                         onPressed: () => _ventanaCambioFecha("fecha_devolucion", _fechaDevoControler),
                                         icon: const Icon(Icons.edit),
@@ -387,7 +403,11 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                   Row(
                                     children: [
                                       Expanded(
-                                        child: _infoRowEstado(Icons.info_outline, "Estado de la devolucion", _estadoActual),
+                                        child: _infoRowEstado(
+                                          Icons.info_outline,
+                                          "Estado de la devolucion",
+                                          _estadoActual,
+                                        ),
                                       ),
                                       IconButton(
                                         onPressed: () {
@@ -439,10 +459,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                 ],
                               ),
                             ),
-                            IconButton(
-                              onPressed: () => _ventanaCambioDevolverFianza(),
-                              icon: const Icon(Icons.edit),
-                            ),
+                            IconButton(onPressed: () => _ventanaCambioDevolverFianza(), icon: const Icon(Icons.edit)),
                           ],
                         ),
                       ),
@@ -778,6 +795,34 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
           "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 
       final baseDatos = await DatabaseHelper.proyectodb();
+
+      if (nombreCampo == "fecha_inicio" || nombreCampo == "fecha_fin") {
+        String nuevaFechaInicio = nombreCampo == "fecha_inicio" ? fechaFormateada : _fechaInicioControler.text;
+        String nuevaFechaFin = nombreCampo == "fecha_fin" ? fechaFormateada : _fechaLimiteControler.text;
+
+        final alquileresOcupados = await baseDatos.query(
+          "alquileres",
+          where: "id_coche = ? AND id != ? AND estado != ? AND ? <= fecha_fin AND ? >= fecha_inicio",
+          whereArgs: [alquiler["id_coche"], alquiler["id"], "Terminado", nuevaFechaInicio, nuevaFechaFin],
+        );
+
+        final tallerOcupado = await baseDatos.query(
+          "reparaciones",
+          where: "id_coche = ? AND ? <= fecha_fin AND ? >= fecha_inicio",
+          whereArgs: [alquiler["id_coche"], nuevaFechaInicio, nuevaFechaFin],
+        );
+
+        if (alquileresOcupados.isNotEmpty || tallerOcupado.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Error: El coche está ocupado o en taller en esas fechas"),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
+
       await baseDatos.update(
         "alquileres",
         {nombreCampo: fechaFormateada},
@@ -951,10 +996,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("CANCELAR"),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCELAR")),
             ElevatedButton(
               onPressed: () async {
                 final db = await DatabaseHelper.proyectodb();

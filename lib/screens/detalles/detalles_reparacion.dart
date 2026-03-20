@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../database.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class DetallesReparacionScreen extends StatefulWidget {
   const DetallesReparacionScreen({super.key});
@@ -17,6 +19,9 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
   final _descripcionController = TextEditingController();
   final _costeController = TextEditingController();
 
+  // Para seleccionar nuevas fotos
+  final ImagePicker _picker = ImagePicker();
+
   // metodo encargado de rellenar la variable reparacion con
   // los datos de la reparacion con el id recibido por parametro
   Future<void> cargarDatosReparacion() async {
@@ -27,6 +32,24 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
     vehiculoReparado = vehiculos.first;
 
     setState(() {});
+  }
+
+  // metodo para añadir más fotos a las que ya existen
+  Future<void> agregarMasFotos() async {
+    final List<XFile> nuevasFotos = await _picker.pickMultiImage();
+
+    if (nuevasFotos.isNotEmpty) {
+      // Cogemos las fotos que ya hay (si no hay, cadena vacía)
+      String fotosActuales = reparacion["ruta_foto"] ?? "";
+
+      // Convertimos las nuevas a una cadena separada por comas
+      String nuevasRutas = nuevasFotos.map((f) => f.path).join(",");
+
+      // Si ya había fotos, las juntamos con una coma en medio
+      String resultadoFinal = fotosActuales.isEmpty ? nuevasRutas : "$fotosActuales,$nuevasRutas";
+
+      await actualizarCampo("ruta_foto", resultadoFinal);
+    }
   }
 
   // metodo encargado de rellenar la variable vehiculo con
@@ -53,30 +76,43 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // Procesamos la cadena de fotos para convertirla en lista
+    List<String> listaFotos = [];
+    if (reparacion["rutas_fotos"] != null && reparacion["rutas_fotos"].toString().isNotEmpty) {
+      listaFotos = reparacion["rutas_fotos"].toString().split(",");
+    }
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
         leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back)),
-        title: Text("Detalles de Reparación", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Detalles de Reparación", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 30),
 
               // Icono y título del vehículo reparado
-              const CircleAvatar(radius: 35, child: Icon(Icons.build_circle, size: 40)),
-              const SizedBox(height: 15),
-              Text(
-                "${vehiculoReparado['marca']} ${vehiculoReparado['modelo']}",
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                "Matrícula: ${vehiculoReparado['matricula']}",
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
+              Center(
+                child: Column(
+                  children: [
+                    const CircleAvatar(radius: 35, child: Icon(Icons.build_circle, size: 40)),
+                    const SizedBox(height: 15),
+                    Text(
+                      "${vehiculoReparado['marca']} ${vehiculoReparado['modelo']}",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      "Matrícula: ${vehiculoReparado['matricula']}",
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 25),
@@ -97,27 +133,21 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
                           reparacion['fecha_inicio'],
                           () => _ventanaCambioFecha("fecha_inicio"),
                         ),
-
                         const Divider(),
-
                         _filaEditable(
                           Icons.event_available,
                           "Fecha Fin",
                           reparacion['fecha_fin'],
                           () => _ventanaCambioFecha("fecha_fin"),
                         ),
-
                         const Divider(),
-
                         _filaEditable(Icons.description, "Descripción", reparacion['descripcion'], () {
                           showDialog(
                             context: context,
                             builder: (_) => _ventanaCambio("descripcion", _descripcionController),
                           );
                         }),
-
                         const Divider(),
-
                         _filaEditable(Icons.monetization_on, "Coste", "${reparacion['coste']} €", () {
                           showDialog(context: context, builder: (_) => _ventanaCambio("coste", _costeController));
                         }),
@@ -127,7 +157,63 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
                 ),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 35),
+
+              // Sección de Fotos de la reparación alineada a la izquierda
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Fotos de la reparación", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 15),
+
+                    // Botón para añadir fotos alineado a la izquierda
+                    OutlinedButton.icon(
+                      onPressed: agregarMasFotos,
+                      icon: const Icon(Icons.add_a_photo, size: 20),
+                      label: const Text("Añadir fotos"),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        foregroundColor: Colors.deepPurple,
+                        side: const BorderSide(color: Colors.deepPurple),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    if (listaFotos.isEmpty)
+                      const Text("No hay fotos añadidas", style: TextStyle(color: Colors.grey))
+                    else
+                      SizedBox(
+                        height: 160,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: listaFotos.length,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              margin: const EdgeInsets.only(right: 15),
+                              width: 140,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 5,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                                image: DecorationImage(image: FileImage(File(listaFotos[index])), fit: BoxFit.cover),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 50),
             ],
           ),
         ),
@@ -234,16 +320,21 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
               actions: [
                 TextButton(
                   child: const Text("Cancelar"),
-                  onPressed: () {Navigator.pop(context, false);},
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  },
                 ),
                 ElevatedButton(
                   child: const Text("Confirmar"),
-                  onPressed: () {Navigator.pop(context, true);},
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
                 ),
               ],
             );
           },
-        ) ?? false;
+        ) ??
+        false;
     return confirmar;
   }
 }
