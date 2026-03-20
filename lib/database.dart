@@ -213,18 +213,27 @@ class DatabaseHelper {
     await db.delete("reparaciones", where: "id = ?", whereArgs: [idReparacion]);
   }
 
-  // Metodo para comprobar si un coche está libre en unas fechas concretas
   static Future<bool> cocheEstaDisponible(int idVehiculo, String inicio, String fin) async {
     final db = await proyectodb();
 
-    // AND estado != 'Terminado' --> Así solo chocará con alquileres que estén 'Pendiente' o 'En proceso'
-    final resultado = await db.query(
+    // 1. Comprobar si hay alquileres que coincidan
+    final alquileresOcupados = await db.query(
       "alquileres",
       where: "id_coche = ? AND estado != ? AND ? <= fecha_fin AND ? >= fecha_inicio",
       whereArgs: [idVehiculo, "Terminado", inicio, fin],
     );
 
-    return resultado.isEmpty;
+    if (alquileresOcupados.isNotEmpty) return false;
+
+    // 2. Comprobar si hay reparaciones (Taller) que coincidan
+    // Usamos fecha_inicio y fecha_fin de la tabla reparaciones
+    final tallerOcupado = await db.query(
+      "reparaciones",
+      where: "id_coche = ? AND ? <= fecha_fin AND ? >= fecha_inicio",
+      whereArgs: [idVehiculo, inicio, fin],
+    );
+
+    return tallerOcupado.isEmpty;
   }
 
   static Future<Map<String, double>> obtenerContabilidadPorFechas(String inicio, String fin) async {
@@ -253,5 +262,47 @@ class DatabaseHelper {
     }
 
     return totales;
+  }
+
+  // Metodo para comprobar si hoy hay reparaciones activas y actualizar el estado del vehiculo a "Taller"
+  static Future<void> actualizarEstadosTallerAutomaticamente() async {
+    final db = await proyectodb();
+
+    // Sacamos la fecha de hoy en formato YYYY-MM-DD
+    DateTime fechaHoy = DateTime.now();
+    String hoyStr =
+        "${fechaHoy.year}-${fechaHoy.month.toString().padLeft(2, '0')}-${fechaHoy.day.toString().padLeft(2, '0')}";
+
+    // Actualizamos a 'Taller' todos los vehículos que tengan una reparación
+    // donde la fecha de inicio sea <= hoy y la fecha de fin sea >= hoy
+    await db.rawUpdate(
+      '''
+      UPDATE vehiculos 
+      SET estado = 'Taller' 
+      WHERE id IN (
+        SELECT id_coche 
+        FROM reparaciones 
+        WHERE fecha_inicio <= ? AND fecha_fin >= ?
+      )
+    ''',
+      [hoyStr, hoyStr],
+    );
+
+    // Opcional: Si quieres que los coches salgan del taller automáticamente si la fecha de fin ya pasó
+    // y vuelvan a estar 'Disponible' (siempre que su estado actual sea 'Taller')
+    await db.rawUpdate(
+      '''
+      UPDATE vehiculos 
+      SET estado = 'Disponible' 
+      WHERE estado = 'Taller' AND id NOT IN (
+        SELECT id_coche 
+        FROM reparaciones 
+        WHERE fecha_inicio <= ? AND fecha_fin >= ?
+      )
+    ''',
+      [hoyStr, hoyStr],
+    );
+
+    print("Estados de taller actualizados automáticamente para la fecha: $hoyStr");
   }
 }

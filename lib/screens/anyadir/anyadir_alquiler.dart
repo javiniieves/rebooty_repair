@@ -546,13 +546,12 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       if (!estaLibre) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text("Error: El coche ya está ocupado en esas fechas"),
+                            content: Text("Error: El coche está ocupado o en taller en esas fechas"),
                             backgroundColor: Colors.red,
                           ),
                         );
                         return;
                       }
-
                       final baseDatos = await DatabaseHelper.proyectodb();
 
                       int idNuevoAlquiler = await baseDatos.insert("alquileres", {
