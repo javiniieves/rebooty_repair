@@ -80,22 +80,14 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                     return matricula.startsWith(filtro);
                   }).toList();
 
-                  vehiculosFiltrados.sort((a, b) {
-                    final disponibleA = a['estado'] == 'disponible' ? 1 : 0;
-                    final disponibleB = b['estado'] == 'disponible' ? 1 : 0;
-                    final limpioA = a['necesita_limpieza'] == 0 ? 1 : 0;
-                    final limpioB = b['necesita_limpieza'] == 0 ? 1 : 0;
-
-                    if (disponibleA != disponibleB) {
-                      return disponibleB - disponibleA; // disponible primero
-                    }
-
-                    return limpioB - limpioA; // limpios primero
-                  });
-
-                  // Filtramos solo los que necesitan limpieza para el panel derecho
+                  // Filtrado para alertas de limpieza
                   final vehiculosParaLimpiar = vehiculosFiltrados.where((vehiculo) {
                     return vehiculo['necesita_limpieza'] == 1;
+                  }).toList();
+
+                  // Filtrado para alertas de taller
+                  final vehiculosEnTaller = vehiculosFiltrados.where((vehiculo) {
+                    return vehiculo['estado'] == 'Taller';
                   }).toList();
 
                   return Row(
@@ -128,59 +120,30 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                         ),
                       ),
                       const SizedBox(width: 15),
-                      // LADO DERECHO:  mostramos los avisos de los vehiculos que necesitan limpieza
+                      // LADO DERECHO: alertas de limpieza
                       Expanded(
-                        flex: 1,
                         child: Column(
                           children: [
                             const Text(
                               "Vehículos a Limpiar",
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                             ),
                             const SizedBox(height: 10),
-                            Expanded(
-                              child: vehiculosParaLimpiar.isEmpty
-                                  ? const Center(
-                                      child: Text("Todo limpio", style: TextStyle(color: Colors.black)),
-                                    )
-                                  // si hay coches que limpiar los mostramos
-                                  : ListView.builder(
-                                      itemCount: vehiculosParaLimpiar.length,
-                                      itemBuilder: (context, index) {
-                                        final vehiculo = vehiculosParaLimpiar[index];
-
-                                        return GestureDetector(
-                                          onTap: () async {
-                                            await Navigator.pushNamed(
-                                              context,
-                                              "detalles_vehiculo",
-                                              arguments: vehiculo["id"],
-                                            );
-                                            // Al volver, ejecutamos setState para que
-                                            // el FutureBuilder vuelva a llamar a cargarVehiculos()
-                                            setState(() {});
-                                          },
-
-                                          child: Card(
-                                            color: Colors.red.shade50,
-                                            margin: const EdgeInsets.symmetric(vertical: 5),
-                                            child: ListTile(
-                                              dense: true,
-                                              title: Text(
-                                                vehiculo['matricula'],
-                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                                              ),
-                                              subtitle: const Text(
-                                                "¡LIMPIAR!",
-                                                style: TextStyle(color: Colors.red, fontSize: 11),
-                                              ),
-                                              trailing: const Icon(Icons.warning, color: Colors.red, size: 18),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
+                            Expanded(child: _construirListaAlertas(vehiculosParaLimpiar, "¡LIMPIAR!", Colors.red)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // LADO DERECHO (EXTREMO): alertas de taller
+                      Expanded(
+                        child: Column(
+                          children: [
+                            const Text(
+                              "Vehículos en Taller",
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                             ),
+                            const SizedBox(height: 10),
+                            Expanded(child: _construirListaAlertas(vehiculosEnTaller, "EN TALLER", Colors.orange)),
                           ],
                         ),
                       ),
@@ -195,6 +158,71 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
     );
   }
 
+  Widget _construirListaAlertas(List<Map<String, dynamic>> lista, String etiqueta, Color colorTema) {
+    if (lista.isEmpty) {
+      return const Center(child: Text("Sin avisos", style: TextStyle(fontSize: 12)));
+    }
+    return ListView.builder(
+      itemCount: lista.length,
+      itemBuilder: (context, index) {
+        final vehiculo = lista[index];
+        return Card(
+          elevation: 4,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          child: GestureDetector(
+            onTap: () async {
+              await Navigator.pushNamed(context, "detalles_vehiculo", arguments: vehiculo["id"]);
+              setState(() {});
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        vehiculo['matricula'] ?? '---',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: colorTema.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          etiqueta,
+                          style: TextStyle(color: colorTema, fontWeight: FontWeight.bold, fontSize: 9),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  Row(
+                    children: [
+                      Icon(Icons.directions_car, size: 16, color: colorTema),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          "${vehiculo['marca'] ?? ''} ${vehiculo['modelo'] ?? ''}",
+                          style: const TextStyle(fontSize: 11),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _confirmarBorrado(int id) {
     showDialog(
       context: context,
@@ -205,12 +233,7 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Cancelar"),
-                ),
+                ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
                 ElevatedButton(
                   onPressed: () async {
                     await DatabaseHelper.borrarVehiculo(id);
