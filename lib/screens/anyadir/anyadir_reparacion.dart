@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-
 import '../../database.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class PantallaAnyadirReparacion extends StatefulWidget {
   const PantallaAnyadirReparacion({super.key});
@@ -20,6 +21,10 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
   DateTime? fechaFin;
   final _costeController = TextEditingController();
 
+  // Lista para guardar las fotos seleccionadas temporalmente
+  List<XFile> imagenesSeleccionadas = [];
+  final ImagePicker _picker = ImagePicker();
+
   // metodo encargado de rellenar la variable vehiculo con
   // los datos del coche con el id recibido por parametro
   Future<void> cargarDatosVehiculo(int idVehiculo) async {
@@ -28,6 +33,16 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
     setState(() {
       vehiculo = vehiculosConIdRecibido.first;
     });
+  }
+
+  // 2. Método para seleccionar fotos
+  Future<void> seleccionarFotos() async {
+    final List<XFile> fotos = await _picker.pickMultiImage();
+    if (fotos.isNotEmpty) {
+      setState(() {
+        imagenesSeleccionadas.addAll(fotos);
+      });
+    }
   }
 
   @override
@@ -51,7 +66,8 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
       ),
 
       body: SafeArea(
-        child: SingleChildScrollView( // Añadido para evitar errores con el teclado
+        child: SingleChildScrollView(
+          // Añadido para evitar errores con el teclado
           padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 30.0), // Padding general
           child: Form(
             key: _formKey,
@@ -84,7 +100,8 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
                           ),
                           onTap: () => seleccionarFecha(true),
                           // Validación de fecha obligatoria
-                          validator: (value) => (value == null || value.isEmpty) ? "Selecciona la fecha de inicio" : null,
+                          validator: (value) =>
+                              (value == null || value.isEmpty) ? "Selecciona la fecha de inicio" : null,
                         ),
 
                         const SizedBox(height: 25),
@@ -175,6 +192,60 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
                   },
                 ),
 
+                const SizedBox(height: 25),
+
+                // mostrar las fotos seleccionadas
+                if (imagenesSeleccionadas.isNotEmpty)
+                  SizedBox(
+                    height: 100,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: imagenesSeleccionadas.length,
+                      itemBuilder: (context, index) {
+                        return Stack(
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(right: 10),
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                image: DecorationImage(
+                                  image: FileImage(File(imagenesSeleccionadas[index].path)),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 5,
+                              top: -5,
+                              child: IconButton(
+                                icon: const Icon(Icons.remove_circle, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    imagenesSeleccionadas.removeAt(index);
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+
+                const SizedBox(height: 15),
+
+                // Botón para añadir fotos
+                OutlinedButton.icon(
+                  onPressed: seleccionarFotos,
+                  icon: const Icon(Icons.add_a_photo),
+                  label: const Text("AÑADIR FOTOS"),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+
                 const SizedBox(height: 60),
 
                 // botón de añadir reparación con estilo mejorado
@@ -187,17 +258,24 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
                         // guardamos la base de datos
                         final baseDatos = await DatabaseHelper.proyectodb();
 
-                        // insertamos en la tabal "reparaciones" los datos que hemos cogido (Corregido texto SnackBar abajo)
+                        // Convertimos la lista de imágenes en una sola cadena separada por comas
+                        // o si no hay lo dejamos vacio
+                        String rutasFotos = imagenesSeleccionadas.isNotEmpty
+                            ? imagenesSeleccionadas.map((e) => e.path).join(",")
+                            : "";
+
+                        // insertamos en la tabal "reparaciones" los datos que hemos cogido
                         await baseDatos.insert("reparaciones", {
                           "id_coche": vehiculo["id"],
                           "fecha_inicio": _fechaInicioController.text,
                           "fecha_fin": _fechaFinController.text,
-                          "coste": double.parse(_costeController.text), // Guardamos como número para cálculos
+                          "coste": double.parse(_costeController.text),
                           "descripcion": _descripcionController.text,
+                          "rutas_fotos": rutasFotos,
                         });
                         _costeController.clear();
 
-                        // Aviso de éxito (Corregido texto: Alquiler -> Reparación)
+                        // Aviso de éxito
                         ScaffoldMessenger.of(
                           context,
                         ).showSnackBar(const SnackBar(content: Text("Reparación guardada correctamente")));
@@ -207,7 +285,11 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
                       }
                     },
                     icon: const Icon(Icons.save),
-                    label: const Text("GUARDAR REPARACIÓN", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), // Texto corregido
+                    label: const Text(
+                      "GUARDAR REPARACIÓN",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    // Texto corregido
                     style: ElevatedButton.styleFrom(
                       elevation: 5,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
