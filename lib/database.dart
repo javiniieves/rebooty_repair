@@ -26,7 +26,7 @@ class DatabaseHelper {
 
         // tabla reparaciones (se relacione con coche)
         await db.execute(
-          "CREATE TABLE reparaciones (id INTEGER PRIMARY KEY, id_coche INTEGER, descripcion TEXT, fecha_inicio TEXT, fecha_fin TEXT, coste REAL)",
+          "CREATE TABLE reparaciones (id INTEGER PRIMARY KEY, id_coche INTEGER, descripcion TEXT, fecha_inicio TEXT, fecha_fin TEXT, coste REAL, rutas_fotos TEXT)",
         );
 
         // Tabla de los Clientes (se relaciona con coche mediante la tabla Alquileres)
