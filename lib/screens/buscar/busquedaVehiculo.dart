@@ -80,6 +80,19 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                     return matricula.startsWith(filtro);
                   }).toList();
 
+                  vehiculosFiltrados.sort((a, b) {
+                    final disponibleA = a['estado'] == 'disponible' ? 1 : 0;
+                    final disponibleB = b['estado'] == 'disponible' ? 1 : 0;
+                    final limpioA = a['necesita_limpieza'] == 0 ? 1 : 0;
+                    final limpioB = b['necesita_limpieza'] == 0 ? 1 : 0;
+
+                    if (disponibleA != disponibleB) {
+                      return disponibleB - disponibleA; // disponible primero
+                    }
+
+                    return limpioB - limpioA; // limpios primero
+                  });
+
                   // Filtramos solo los que necesitan limpieza para el panel derecho
                   final vehiculosParaLimpiar = vehiculosFiltrados.where((vehiculo) {
                     return vehiculo['necesita_limpieza'] == 1;
@@ -98,7 +111,9 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                             final vehiculo = vehiculosFiltrados[index];
                             return ListTile(
                               leading: Image(image: FileImage(File(vehiculo["ruta_foto"]))),
-                              title: Text(vehiculo['matricula'] ?? 'Sin matricula'),
+                              title: Text(
+                                "${vehiculo['matricula'] ?? 'Sin matricula'} - ${vehiculo['marca']}/${vehiculo['modelo']}",
+                              ),
                               subtitle: Text(vehiculo['estado'] ?? 'Sin estado'),
                               onTap: () async {
                                 await Navigator.pushNamed(context, "detalles_vehiculo", arguments: vehiculo["id"]);
