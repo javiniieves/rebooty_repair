@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-
-import '../../database.dart';
+import 'package:rebooty_repair/models/Cliente.dart';
+import '../../DataBaseHelper.dart';
 
 class PantallaBusquedaCliente extends StatefulWidget {
   const PantallaBusquedaCliente({super.key});
@@ -14,17 +14,20 @@ class PantallaBusquedaCliente extends StatefulWidget {
 class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
   late TextEditingController _dniController;
 
-  Future<List<Map<String, dynamic>>> cargarClientes() async {
-    final baseDatos = await DatabaseHelper.proyectodb();
+  List<Cliente> listaClientes = [];
 
-    final List<Map<String, dynamic>> clientes = await baseDatos.query("clientes");
-    return clientes;
+  Future<void> cargarClientes() async {
+    final clientes = await DatabaseHelper.instance.obtenerClientes();
+    setState(() {
+      listaClientes = clientes;
+    });
   }
 
   @override
   void initState() {
     super.initState();
     _dniController = TextEditingController();
+    cargarClientes();
   }
 
   @override
@@ -80,22 +83,12 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
             const SizedBox(height: 30),
 
             Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: cargarClientes(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text("Error: ${snapshot.error}"));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text("No hay clientes"));
-                  }
-
-                  // Filtrado por DNI según lo escrito en el TextField
+              child: Builder(
+                builder: (context) {
                   final filtro = _dniController.text.toLowerCase();
-                  final clientesFiltrados = snapshot.data!.where((cliente) {
+                  final clientesFiltrados = listaClientes.where((cliente) {
                     // Usamos documento_oficial que es el nombre en la nueva tabla
-                    final doc = cliente['documento_oficial']?.toString().toLowerCase() ?? '';
+                    final doc = cliente.documentoOficial.toString().toLowerCase() ?? '';
                     return doc.contains(filtro);
                   }).toList();
 
@@ -106,13 +99,13 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                       final cliente = clientesFiltrados[index];
                       return ListTile(
                         // a la izquierda mostramos la foto del cleinte o un icono si no ha elegido
-                        leading: cliente["ruta_foto"] == null
-                            ? Icon(Icons.person)
-                            : Image(image: FileImage(File(cliente["ruta_foto"]))),
-                        title: Text(cliente['nombre'] ?? 'Sin nombre'),
-                        subtitle: Text("${cliente['tipo_documento']}: ${cliente['documento_oficial']}"),
+                        leading: (cliente.rutaFoto == null || cliente.rutaFoto!.isEmpty)
+                            ? const Icon(Icons.person)
+                            : Image.file(File(cliente.rutaFoto!)),
+                        title: Text(cliente.nombre),
+                        subtitle: Text("${cliente.tipoDocumento}: ${cliente.documentoOficial}"),
                         onTap: () async {
-                          await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente['id']);
+                          await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente);
                           setState(() {});
                         },
                         trailing: IconButton(
@@ -132,10 +125,10 @@ class _PantallaBusquedaClienteState extends State<PantallaBusquedaCliente> {
                                     children: [
                                       ElevatedButton.icon(
                                         onPressed: () async {
-                                          await DatabaseHelper.borrarCliente(cliente["id"]);
-
+                                          if (cliente.id != null) {
+                                            await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente.id!);
+                                          }
                                           setState(() {});
-
                                           Navigator.pop(context);
                                         },
                                         label: const Row(children: [Icon(Icons.check), Text("Confirmar")]),

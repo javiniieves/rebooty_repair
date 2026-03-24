@@ -1,9 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../database.dart';
+import '../../database.dart' hide DatabaseHelper;
 import 'package:email_validator/email_validator.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../models/Cliente.dart';
+import '../../DataBaseHelper.dart';
 
 class PantallaAnyadirClientes extends StatefulWidget {
   const PantallaAnyadirClientes({super.key});
@@ -317,31 +320,32 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
   Future<void> _guardarCliente() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final baseDatos = await DatabaseHelper.proyectodb();
+    final cliente = Cliente(
+      nombre: _nombreController.text,
+      tipoDocumento: _tipoDocumentoSeleccionado,
+      documentoOficial: _dniController.text.toUpperCase(),
+      telefono: telefonoCompleto,
+      direccion: _direccionController.text,
+      email: _emailController.text.isEmpty ? null : _emailController.text,
+      rutaFoto: rutaFoto,
+    );
 
-    // insertamos en la tabla "clientes" los datos que hemos cogido
-    await baseDatos.insert("clientes", {
-      "nombre": _nombreController.text,
-      "tipo_documento": _tipoDocumentoSeleccionado,
-      "documento_oficial": _dniController.text.toUpperCase(),
-      "telefono": telefonoCompleto,
-      "direccion": _direccionController.text,
-      "email": _emailController.text.isEmpty ? null : _emailController.text,
-      "ruta_foto": rutaFoto,
-    });
+    await DatabaseHelper.instance.insertarCliente(cliente);
 
+    _limpiarCampos();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Cliente guardado correctamente")),
+    );
+
+    Navigator.pop(context);
+  }
+
+  void _limpiarCampos() {
     _nombreController.clear();
     _dniController.clear();
     _telefonoController.clear();
     _direccionController.clear();
     _emailController.clear();
-
-    // Aviso de éxito
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Cliente guardado correctamente")));
-
-    // Cerramos la pantalla al terminar
-    Navigator.pop(context);
   }
 }

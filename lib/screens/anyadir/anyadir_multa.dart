@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:rebooty_repair/database.dart';
+import 'package:rebooty_repair/models/Multa.dart';
+import '../../DataBaseHelper.dart';
 
 class PantallaAnyadirMulta extends StatefulWidget {
   final int idAlquiler; // Recibe el id del alquiler por parámetro
@@ -72,7 +73,10 @@ class _PantallaAnyadirMultaState extends State<PantallaAnyadirMulta> {
             children: [
               // Descripción de la multa
               TextFormField(
-                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                style: TextStyle(color: Theme
+                    .of(context)
+                    .colorScheme
+                    .tertiary),
                 controller: _descripcionController,
                 decoration: InputDecoration(
                   labelText: "Descripción de la multa",
@@ -86,7 +90,10 @@ class _PantallaAnyadirMultaState extends State<PantallaAnyadirMulta> {
 
               // Introducir precio/importe
               TextFormField(
-                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                style: TextStyle(color: Theme
+                    .of(context)
+                    .colorScheme
+                    .tertiary),
                 controller: _precioController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
@@ -105,7 +112,10 @@ class _PantallaAnyadirMultaState extends State<PantallaAnyadirMulta> {
 
               // Elegir fecha de la multa
               TextFormField(
-                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                style: TextStyle(color: Theme
+                    .of(context)
+                    .colorScheme
+                    .tertiary),
                 controller: _fechaController,
                 readOnly: true,
                 decoration: InputDecoration(
@@ -121,7 +131,10 @@ class _PantallaAnyadirMultaState extends State<PantallaAnyadirMulta> {
 
               // Elegir fecha límite de pago
               TextFormField(
-                style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                style: TextStyle(color: Theme
+                    .of(context)
+                    .colorScheme
+                    .tertiary),
                 controller: _fechaLimiteController,
                 readOnly: true,
                 decoration: InputDecoration(
@@ -143,7 +156,10 @@ class _PantallaAnyadirMultaState extends State<PantallaAnyadirMulta> {
                   prefixIcon: Icon(Icons.payment),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                dropdownColor: Theme.of(context).colorScheme.primary,
+                dropdownColor: Theme
+                    .of(context)
+                    .colorScheme
+                    .primary,
                 items: [
                   DropdownMenuItem(value: 0, child: Text("No pagada")),
                   DropdownMenuItem(value: 1, child: Text("Sí, pagada")),
@@ -181,16 +197,24 @@ class _PantallaAnyadirMultaState extends State<PantallaAnyadirMulta> {
 
   Future<void> _guardarMulta() async {
     if (!_formKey.currentState!.validate()) return;
-    final baseDatos = await DatabaseHelper.proyectodb();
 
-    await baseDatos.insert("multas", {
+    final multa = Multa(idAlquiler: widget.idAlquiler,
+        descripcion: _descripcionController.text,
+        fecha: _fechaController.text,
+        fechaLimite: _fechaLimiteController.text,
+        precio: double.parse(_precioController.text),
+        pagada: pagada);
+
+    await DatabaseHelper.instance.insertarMulta(multa);
+
+    /*await baseDatos.insert("multas", {
       "id_alquiler": widget.idAlquiler,
       "descripcion": _descripcionController.text,
       "fecha": _fechaController.text,
       "fecha_limite": _fechaLimiteController.text,
       "precio": double.parse(_precioController.text),
       "pagada": pagada,
-    });
+    });*/
 
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Multa añadida correctamente")));
     Navigator.pop(context);
@@ -209,7 +233,9 @@ class _PantallaAnyadirMultaState extends State<PantallaAnyadirMulta> {
     if (fechaElegida != null) {
       setState(() {
         String fechaFormateada =
-            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day
+            .toString()
+            .padLeft(2, '0')}";
 
         if (esFechaMulta) {
           fechaMulta = fechaElegida;

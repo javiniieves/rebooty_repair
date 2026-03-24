@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:rebooty_repair/database.dart';
+import 'package:rebooty_repair/models/Reparacion.dart';
+import 'package:rebooty_repair/models/Vehiculo.dart';
+import '../../DataBaseHelper.dart';
 import 'package:image_picker/image_picker.dart';
 
 class DetallesVehiculoScreen extends StatefulWidget {
@@ -18,47 +20,40 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   final _kilometrajeController = TextEditingController();
   final _anyoController = TextEditingController();
   final _observacionesController = TextEditingController();
-  final _itvController = TextEditingController();
   final _combustibleController = TextEditingController();
   final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZQ]{3}$');
 
-  Map<String, dynamic>? vehiculo;
-  List<Map<String, dynamic>>? listaReparaciones;
-
-  late int idVehiculo;
+  late Vehiculo vehiculo;
+  List<Reparacion>? listaReparaciones;
   late bool confirmar;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    idVehiculo = ModalRoute.of(context)?.settings.arguments as int;
-
+    vehiculo = ModalRoute.of(context)!.settings.arguments as Vehiculo;
     cargarDatosVehiculo();
     cargarHistoricoReparaciones();
   }
 
   Future<void> cargarDatosVehiculo() async {
-    final datos = await DatabaseHelper.obtenerVehiculoPorId(idVehiculo);
+    final datos = await DatabaseHelper.instance.obtenerVehiculoPorId(vehiculo.id!);
 
-    setState(() {
-      vehiculo = datos.first;
-    });
+    if (datos != null) {
+      setState(() {
+        vehiculo = datos;
+      });
+    }
   }
 
   Future<void> cargarHistoricoReparaciones() async {
-    final lista = await DatabaseHelper.obtenerReparacionesPorIdVehiculo(idVehiculo);
-
+    final lista = await DatabaseHelper.instance.obtenerReparacionesPorVehiculo(vehiculo.id!);
     setState(() {
       listaReparaciones = lista;
     });
   }
 
   Future<void> actualizarVehiculo(String campo, dynamic valor) async {
-    final db = await DatabaseHelper.proyectodb();
-
-    await db.update("vehiculos", {campo: valor}, where: "id = ?", whereArgs: [idVehiculo]);
-
+    await DatabaseHelper.instance.actualizarCampoVehiculo(vehiculo.id!, campo, valor);
     await cargarDatosVehiculo();
   }
 
@@ -76,20 +71,12 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   Future<void> cambiarLimpieza(bool nuevoValorCheck) async {
     // Actualizamos el estado local primero para que la animación sea fluida
     setState(() {
-      // Importante: Creamos copia para que el estado se refresque bien
-      vehiculo = Map<String, dynamic>.from(vehiculo!);
-      vehiculo!["necesita_limpieza"] = nuevoValorCheck ? 1 : 0;
+      vehiculo.necesitaLimpieza = nuevoValorCheck ? 1 : 0;
     });
 
     // Guardamos en la base de datos
     try {
-      final db = await DatabaseHelper.proyectodb();
-      await db.update(
-        "vehiculos",
-        {"necesita_limpieza": nuevoValorCheck ? 1 : 0},
-        where: "id = ?",
-        whereArgs: [idVehiculo],
-      );
+      actualizarVehiculo('necesita_limpieza', vehiculo.necesitaLimpieza);
     } catch (e) {
       debugPrint("Error al guardar limpieza: $e");
     }
@@ -97,10 +84,6 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (vehiculo == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
     return Scaffold(
       appBar: AppBar(title: const Text("Detalles del Vehículo"), centerTitle: true),
 
@@ -110,7 +93,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
             const SizedBox(height: 20),
 
             // Mostramos la imagen del coche si existe
-            if (vehiculo!["ruta_foto"] != null)
+            if (vehiculo.rutaFoto != null)
               GestureDetector(
                 onTap: cambiarFoto, // Al pulsar, dejamos editar imaegn
                 child: Container(
@@ -122,7 +105,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                     boxShadow: [
                       BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 10)),
                     ],
-                    image: DecorationImage(image: FileImage(File(vehiculo!["ruta_foto"])), fit: BoxFit.cover),
+                    image: DecorationImage(image: FileImage(File(vehiculo.rutaFoto!)), fit: BoxFit.cover),
                   ),
                 ),
               ),
@@ -145,42 +128,42 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                 filaEditable(
                                   Icons.badge,
                                   "Matrícula",
-                                  vehiculo!["matricula"],
+                                  vehiculo.matricula,
                                   () => mostrarDialogoTexto("matricula", _matriculaController, esMatricula: true),
                                 ),
                                 const Divider(),
                                 filaEditable(
                                   Icons.model_training,
                                   "Modelo",
-                                  vehiculo!["modelo"],
+                                  vehiculo.modelo,
                                   () => mostrarDialogoTexto("modelo", _modeloController),
                                 ),
                                 const Divider(),
                                 filaEditable(
                                   Icons.speed,
                                   "Kilometraje",
-                                  "${vehiculo!["kilometraje"]} km",
+                                  "${vehiculo.kilometraje} km",
                                   () => mostrarDialogoTexto("kilometraje", _kilometrajeController, soloNumeros: true),
                                 ),
                                 const Divider(),
                                 filaEditable(
                                   Icons.security,
                                   "Fecha de caducidad del seguro",
-                                  vehiculo!["fecha_vencimiento_seguro"],
+                                  vehiculo.fechaVencimientoSeguro!,
                                   () => seleccionarFecha("fecha_vencimiento_seguro"),
                                 ),
                                 const Divider(),
                                 filaEditable(
                                   Icons.fact_check_outlined,
                                   "Próxima ITV",
-                                  vehiculo!["fecha_proxima_itv"] ?? "Sin fecha",
+                                  vehiculo.fechaProximaItv ?? "Sin fecha",
                                   () => seleccionarFecha("fecha_proxima_itv"),
                                 ),
                                 const Divider(),
                                 filaEditable(
                                   Icons.note,
                                   "Notas",
-                                  vehiculo!["observaciones"] ?? "Sin notas",
+                                  vehiculo.observaciones ?? "Sin notas",
                                   () => mostrarDialogoTexto("observaciones", _observacionesController),
                                 ),
                               ],
@@ -201,14 +184,14 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                 filaEditable(
                                   Icons.branding_watermark,
                                   "Marca",
-                                  vehiculo!["marca"],
+                                  vehiculo.marca,
                                   () => mostrarDialogoTexto("marca", _marcaController),
                                 ),
                                 const Divider(),
                                 filaEditable(
                                   Icons.calendar_month,
                                   "Año",
-                                  vehiculo!["anyo"].toString(),
+                                  vehiculo.anyo.toString(),
                                   () => mostrarDialogoTexto("anyo", _anyoController, soloNumeros: true),
                                 ),
                                 const Divider(),
@@ -216,7 +199,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                 filaEditable(
                                   Icons.oil_barrel_outlined,
                                   "Líneas de Combustible",
-                                  "${vehiculo!["cantidad_combustible"]} líneas",
+                                  "${vehiculo.cantidadCombustible} líneas",
                                   () => mostrarDialogoTexto(
                                     "cantidad_combustible",
                                     _combustibleController,
@@ -228,8 +211,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                 filaEditable(
                                   Icons.local_gas_station,
                                   "Combustible",
-                                  vehiculo!["combustible"],
-                                  () => mostrarDropdown("combustible", vehiculo!["combustible"], [
+                                  vehiculo.combustible!,
+                                  () => mostrarDropdown("combustible", vehiculo.combustible!, [
                                     "Diesel",
                                     "Gasoil",
                                     "Eléctrico",
@@ -240,8 +223,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                 filaEditable(
                                   Icons.info_outline,
                                   "Estado",
-                                  vehiculo!["estado"],
-                                  () => mostrarDropdown("estado", vehiculo!["estado"], [
+                                  vehiculo.estado,
+                                  () => mostrarDropdown("estado", vehiculo.estado, [
                                     "Disponible",
                                     "Alquilado",
                                     "Taller",
@@ -253,7 +236,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                   padding: const EdgeInsets.symmetric(vertical: 4),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.palette, color: Color(vehiculo!["color"]), size: 20),
+                                      Icon(Icons.palette, color: Color(vehiculo.color!), size: 20),
                                       const SizedBox(width: 10),
                                       const Expanded(
                                         child: Text(
@@ -301,7 +284,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                       // El círculo se pone azul cuando el fondo es blanco
 
                       // Fondo gris clarito cuando está a la izquierda (desactivado)
-                      value: vehiculo!["necesita_limpieza"] == 1,
+                      value: vehiculo.necesitaLimpieza == 1,
                       onChanged: (bool nuevoValor) {
                         cambiarLimpieza(nuevoValor);
                       },
@@ -323,7 +306,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () async {
-                    await Navigator.pushNamed(context, "añadir_reparacion", arguments: vehiculo?["id"]);
+                    await Navigator.pushNamed(context, "añadir_reparacion", arguments: vehiculo.id);
                     // Recargamos cuando volvemos
                     cargarHistoricoReparaciones();
                   },
@@ -353,10 +336,10 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const Icon(Icons.history),
-                                Text("${r["fecha_inicio"]} / ${r["fecha_fin"]}", style: TextStyle(fontSize: 12)),
+                                Text("${r.fechaInicio} / ${r.fechaFin}", style: TextStyle(fontSize: 12)),
                                 TextButton(
                                   onPressed: () {
-                                    Navigator.pushNamed(context, "detalles_reparacion", arguments: r["id"]);
+                                    Navigator.pushNamed(context, "detalles_reparacion", arguments: r.id);
                                   },
                                   child: const Text("Ver detalles"),
                                 ),

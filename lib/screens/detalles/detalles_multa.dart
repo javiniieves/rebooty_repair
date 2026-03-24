@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:rebooty_repair/database.dart';
+import '../../DataBaseHelper.dart';
+import 'package:rebooty_repair/models/Multa.dart';
 
 class DetallesMultaScreen extends StatefulWidget {
   const DetallesMultaScreen({super.key});
@@ -10,7 +11,7 @@ class DetallesMultaScreen extends StatefulWidget {
 }
 
 class _DetallesMultaScreenState extends State<DetallesMultaScreen> {
-  Map<String, dynamic> multa = {};
+  late Multa multa;
 
   final TextEditingController _descripcionController = TextEditingController();
   final TextEditingController _precioController = TextEditingController();
@@ -20,25 +21,20 @@ class _DetallesMultaScreenState extends State<DetallesMultaScreen> {
   late bool confirmar;
 
   Future<void> cargarMulta(int idMulta) async {
-    final baseDatos = await DatabaseHelper.proyectodb();
-    final List<Map<String, dynamic>> resultado = await baseDatos.query("multas", where: "id = ?", whereArgs: [idMulta]);
+    multa = (await DatabaseHelper.instance.obtenerMultaPorId(idMulta))!;
 
-    if (resultado.isNotEmpty) {
-      setState(() {
-        multa = resultado.first;
-        _descripcionController.text = multa['descripcion'] ?? "";
-        _precioController.text = multa['precio'].toString();
-        _fechaController.text = multa['fecha'] ?? "";
-        _fechaLimiteController.text = multa['fecha_limite'] ?? "";
-        _pagadaStatus = multa['pagada'] ?? 0;
-      });
-    }
+    setState(() {
+      _descripcionController.text = multa.descripcion;
+      _precioController.text = multa.precio.toString();
+      _fechaController.text = multa.fecha;
+      _fechaLimiteController.text = multa.fechaLimite;
+      _pagadaStatus = multa.pagada;
+    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Recibimos el ID de la multa por los argumentos de la ruta
     int idMulta = ModalRoute.of(context)?.settings.arguments as int;
     cargarMulta(idMulta);
   }
@@ -165,8 +161,7 @@ class _DetallesMultaScreenState extends State<DetallesMultaScreen> {
                           children: [
                             ElevatedButton.icon(
                               onPressed: () async {
-                                final baseDatos = await DatabaseHelper.proyectodb();
-                                await baseDatos.delete("multas", where: "id = ?", whereArgs: [multa["id"]]);
+                                await DatabaseHelper.instance.borrarMulta(multa);
 
                                 ScaffoldMessenger.of(
                                   context,
@@ -268,22 +263,25 @@ class _DetallesMultaScreenState extends State<DetallesMultaScreen> {
               confirmar = await confirmacion();
               if (!confirmar) return Navigator.pop(context);
 
-              final baseDatos = await DatabaseHelper.proyectodb();
               dynamic nuevoValor = tempController.text;
 
               if (esNumero) {
                 nuevoValor = double.tryParse(tempController.text) ?? 0.0;
               }
 
-              await baseDatos.update("multas", {nombreCampo: nuevoValor}, where: "id = ?", whereArgs: [multa["id"]]);
+              await actualizarMulta(nombreCampo, nuevoValor);
               Navigator.pop(context);
-              cargarMulta(multa["id"]);
+              cargarMulta(multa.id!);
             },
             child: const Text("GUARDAR"),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> actualizarMulta(String nombreCampo, nuevoValor) async {
+    await DatabaseHelper.instance.actualizarCampoMulta(multa.id!, nombreCampo, nuevoValor);
   }
 
   Future<void> _ventanaCambioFecha(String nombreCampo, TextEditingController controllerFecha) async {
@@ -300,11 +298,9 @@ class _DetallesMultaScreenState extends State<DetallesMultaScreen> {
       String fechaFormateada =
           "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 
-      final baseDatos = await DatabaseHelper.proyectodb();
+      actualizarMulta(nombreCampo, fechaFormateada);
 
-      await baseDatos.update("multas", {nombreCampo: fechaFormateada}, where: "id = ?", whereArgs: [multa["id"]]);
-
-      cargarMulta(multa["id"]);
+      cargarMulta(multa.id!);
     }
   }
 
@@ -332,13 +328,12 @@ class _DetallesMultaScreenState extends State<DetallesMultaScreen> {
               confirmar = await confirmacion();
               if (!confirmar) return Navigator.pop(context);
 
-              final baseDatos = await DatabaseHelper.proyectodb();
-              await baseDatos.update("multas", {"pagada": nuevoValor}, where: "id = ?", whereArgs: [multa["id"]]);
+              actualizarMulta("pagada", nuevoValor);
 
               setState(() {
                 _pagadaStatus = nuevoValor!;
                 Navigator.pop(context);
-                cargarMulta(multa["id"]);
+                cargarMulta(multa.id!);
               });
             },
           ),
@@ -358,16 +353,21 @@ class _DetallesMultaScreenState extends State<DetallesMultaScreen> {
               actions: [
                 TextButton(
                   child: const Text("Cancelar"),
-                  onPressed: () {Navigator.pop(context, false);},
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  },
                 ),
                 ElevatedButton(
                   child: const Text("Confirmar"),
-                  onPressed: () {Navigator.pop(context, true);},
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
                 ),
               ],
             );
           },
-        ) ?? false;
+        ) ??
+        false;
     return confirmar;
   }
 }

@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:rebooty_repair/database.dart';
+import 'package:rebooty_repair/database.dart' hide DatabaseHelper;
 import 'package:validators/validators.dart';
+
+import '../../models/Vehiculo.dart';
+import '../../DataBaseHelper.dart';
 
 class PantallaAnyadirVehiculos extends StatefulWidget {
   const PantallaAnyadirVehiculos({super.key});
@@ -29,15 +32,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
   // estado por defecto al añadir un coche
   String estadoActual = "Disponible";
-
   Color colorDelVehiculo = Colors.white;
-
   String combustible = "Gasoil";
-
   DateTime? fechaVencimientoSeguro;
-
   String? rutaFoto;
-
   bool necesitaLimpieza = false;
 
   @override
@@ -122,75 +120,78 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
               children: [
                 // Para añadir una foto del coche
                 rutaFoto == null
-                    // si aún no ha elegido foto, le damos la opción
+                // si aún no ha elegido foto, le damos la opción
                     ? GestureDetector(
-                        onTap: () => _ventanaAnyadirFoto(),
-                        child: Container(
-                          width: 200,
-                          height: 200,
-                          margin: EdgeInsets.only(bottom: 20),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add_photo_alternate_outlined, size: 50),
-                              SizedBox(height: 10),
-                              Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                        ),
-                        // si hay foto elegida la mostramos
-                      )
+                  onTap: () => _ventanaAnyadirFoto(),
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    margin: EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Theme
+                          .of(context)
+                          .colorScheme
+                          .primary,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_photo_alternate_outlined, size: 50),
+                        SizedBox(height: 10),
+                        Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                  // si hay foto elegida la mostramos
+                )
                     : GestureDetector(
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: Text("¿Eliminar imagen?"),
-                                content: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          rutaFoto = null;
-                                        });
-                                        Navigator.pop(context);
-                                      },
-                                      child: Text("Eliminar"),
-                                    ),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: Text("¿Eliminar imagen?"),
+                          content: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    rutaFoto = null;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                child: Text("Eliminar"),
+                              ),
 
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: Text("Cancelar"),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
-                        },
-                        child: Container(
-                          width: 200,
-                          height: 200,
-                          margin: EdgeInsets.only(bottom: 20),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: Offset(0, 10)),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text("Cancelar"),
+                              ),
                             ],
-                            image: DecorationImage(image: FileImage(File(rutaFoto!)), fit: BoxFit.cover),
                           ),
-                        ),
-                      ),
+                        );
+                      },
+                    );
+                  },
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    margin: EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: Offset(0, 10)),
+                      ],
+                      image: DecorationImage(image: FileImage(File(rutaFoto!)), fit: BoxFit.cover),
+                    ),
+                  ),
+                ),
 
                 // Matricula y Marca
                 Row(
@@ -198,7 +199,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   children: [
                     Expanded(
                       child: TextFormField(
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        style: TextStyle(color: Theme
+                            .of(context)
+                            .colorScheme
+                            .tertiary),
                         controller: _matriculaController,
                         decoration: InputDecoration(
                           labelText: "Matricula",
@@ -221,7 +225,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     const SizedBox(width: 15),
                     Expanded(
                       child: TextFormField(
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        style: TextStyle(color: Theme
+                            .of(context)
+                            .colorScheme
+                            .tertiary),
                         controller: _marcaController,
                         decoration: InputDecoration(
                           labelText: "Marca",
@@ -248,7 +255,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   children: [
                     Expanded(
                       child: TextFormField(
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        style: TextStyle(color: Theme
+                            .of(context)
+                            .colorScheme
+                            .tertiary),
                         controller: _modeloController,
                         decoration: InputDecoration(
                           labelText: "Modelo",
@@ -273,13 +283,19 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           prefixIcon: Icon(Icons.local_gas_station_outlined),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        dropdownColor: Theme.of(context).colorScheme.primary,
+                        dropdownColor: Theme
+                            .of(context)
+                            .colorScheme
+                            .primary,
                         items: ["Diesel", "Gasoil", "Eléctrico", "Híbrido"].map((combustibleActual) {
                           return DropdownMenuItem(
                             value: combustibleActual,
                             child: Text(
                               combustibleActual,
-                              style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+                              style: TextStyle(color: Theme
+                                  .of(context)
+                                  .colorScheme
+                                  .tertiary, fontSize: 12),
                             ),
                           );
                         }).toList(),
@@ -302,7 +318,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     Expanded(
                       child: TextFormField(
                         keyboardType: TextInputType.number,
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        style: TextStyle(color: Theme
+                            .of(context)
+                            .colorScheme
+                            .tertiary),
                         controller: _anyoController,
                         decoration: InputDecoration(
                           labelText: "Año",
@@ -325,7 +344,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     Expanded(
                       child: TextFormField(
                         keyboardType: TextInputType.number,
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        style: TextStyle(color: Theme
+                            .of(context)
+                            .colorScheme
+                            .tertiary),
                         controller: _kilometrajeController,
                         decoration: InputDecoration(
                           labelText: "Kilometraje",
@@ -356,7 +378,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     Expanded(
                       child: TextFormField(
                         controller: _fechaController,
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+                        style: TextStyle(color: Theme
+                            .of(context)
+                            .colorScheme
+                            .tertiary, fontSize: 12),
                         readOnly: true,
                         decoration: InputDecoration(
                           labelText: "Fecha finalización del seguro",
@@ -366,7 +391,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                         onTap: () => seleccionarFecha(_fechaController),
                         // Validación de fecha obligatoria
                         validator: (value) =>
-                            (value == null || value.isEmpty) ? "Introduzca la fecha de finalización del seguro" : null,
+                        (value == null || value.isEmpty) ? "Introduzca la fecha de finalización del seguro" : null,
                       ),
                     ),
                     const SizedBox(width: 15),
@@ -378,11 +403,17 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           prefixIcon: Icon(Icons.info_outline),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        dropdownColor: Theme.of(context).colorScheme.primary,
+                        dropdownColor: Theme
+                            .of(context)
+                            .colorScheme
+                            .primary,
                         items: ["Disponible", "Alquilado", "Taller"].map((estadoActual) {
                           return DropdownMenuItem(
                             value: estadoActual,
-                            child: Text(estadoActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
+                            child: Text(estadoActual, style: TextStyle(color: Theme
+                                .of(context)
+                                .colorScheme
+                                .tertiary)),
                           );
                         }).toList(),
                         onChanged: (nuevoEstado) {
@@ -404,7 +435,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     Expanded(
                       child: TextFormField(
                         controller: _itvController,
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
+                        style: TextStyle(color: Theme
+                            .of(context)
+                            .colorScheme
+                            .tertiary, fontSize: 12),
                         readOnly: true,
                         decoration: InputDecoration(
                           labelText: "Próxima ITV",
@@ -420,7 +454,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     Expanded(
                       child: TextFormField(
                         keyboardType: TextInputType.number,
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        style: TextStyle(color: Theme
+                            .of(context)
+                            .colorScheme
+                            .tertiary),
                         controller: _combustibleCantidadController,
                         decoration: InputDecoration(
                           labelText: "Lineas de combustible",
@@ -460,7 +497,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   children: [
                     Expanded(
                       child: TextFormField(
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        style: TextStyle(color: Theme
+                            .of(context)
+                            .colorScheme
+                            .tertiary),
                         readOnly: true,
                         decoration: InputDecoration(
                           labelText: "Color",
@@ -477,7 +517,10 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     const SizedBox(width: 15),
                     Expanded(
                       child: TextFormField(
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        style: TextStyle(color: Theme
+                            .of(context)
+                            .colorScheme
+                            .tertiary),
                         controller: _observacionesController,
                         decoration: InputDecoration(
                           labelText: "Notas",
@@ -539,26 +582,33 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
   Future<void> _guardarVehiculo() async {
     if (!_formKey.currentState!.validate()) return;
-    final baseDatos = await DatabaseHelper.proyectodb();
 
-    // insertamos en la tabal "vehiculos" el coche con los datos que hemos cogido
-    await baseDatos.insert("vehiculos", {
-      "matricula": _matriculaController.text,
-      "marca": _marcaController.text,
-      "modelo": _modeloController.text,
-      "estado": estadoActual,
-      "color": colorDelVehiculo.value,
-      "kilometraje": _kilometrajeController.text,
-      "anyo": _anyoController.text,
-      "combustible": combustible,
-      "observaciones": _observacionesController.text,
-      "fecha_vencimiento_seguro": _fechaController.text,
-      "fecha_proxima_itv": _itvController.text,
-      "cantidad_combustible": int.parse(_combustibleCantidadController.text),
-      "ruta_foto": rutaFoto,
-      "necesita_limpieza": necesitaLimpieza ? 1 : 0,
-    });
+    final vehiculo = Vehiculo(matricula: _matriculaController.text,
+        marca: _marcaController.text,
+        modelo: _modeloController.text,
+        estado: estadoActual,
+      color: colorDelVehiculo.value,
+      kilometraje: double.tryParse(_kilometrajeController.text),
+      anyo: int.tryParse(_anyoController.text),
+      combustible: combustible,
+      observaciones: _observacionesController.text,
+      fechaVencimientoSeguro: _fechaController.text,
+      fechaProximaItv: _itvController.text,
+      cantidadCombustible: int.parse(_combustibleCantidadController.text),
+      rutaFoto: rutaFoto,
+      necesitaLimpieza: necesitaLimpieza ? 1 : 0
+    );
 
+    await DatabaseHelper.instance.insertarVehiculo(vehiculo);
+
+    _limpiarCampos();
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Vehículo guardado correctamente")));
+    // Volvemos atrás tras el éxito
+    Navigator.pop(context);
+  }
+
+  void _limpiarCampos() {
     _matriculaController.clear();
     _marcaController.clear();
     _modeloController.clear();
@@ -567,10 +617,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     _anyoController.clear();
     _itvController.clear();
     _combustibleCantidadController.clear();
-
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Vehículo guardado correctamente")));
-    // Volvemos atrás tras el éxito
-    Navigator.pop(context);
   }
 
   void mostrarSelectorColor() {
@@ -583,21 +629,22 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Selecciona un color"),
-        content: SingleChildScrollView(
-          child: ColorPicker(pickerColor: pickerColor, onColorChanged: changeColor),
-        ),
-        actions: [
-          ElevatedButton(
-            child: const Text('seleccionar'),
-            onPressed: () async {
-              setState(() => colorDelVehiculo = pickerColor);
-              Navigator.pop(context);
-            },
+      builder: (context) =>
+          AlertDialog(
+            title: const Text("Selecciona un color"),
+            content: SingleChildScrollView(
+              child: ColorPicker(pickerColor: pickerColor, onColorChanged: changeColor),
+            ),
+            actions: [
+              ElevatedButton(
+                child: const Text('seleccionar'),
+                onPressed: () async {
+                  setState(() => colorDelVehiculo = pickerColor);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -618,7 +665,9 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     if (fechaElegida != null) {
       setState(() {
         String fechaFormateada =
-            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day
+            .toString()
+            .padLeft(2, '0')}";
         controller.text = fechaFormateada;
       });
     }

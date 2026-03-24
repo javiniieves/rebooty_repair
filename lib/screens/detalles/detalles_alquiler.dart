@@ -1,6 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:rebooty_repair/database.dart';
+import 'package:rebooty_repair/models/Alquiler.dart';
+import 'package:rebooty_repair/models/Cliente.dart';
+import 'package:rebooty_repair/models/Foto.dart';
+import 'package:rebooty_repair/models/Multa.dart';
+import 'package:rebooty_repair/models/Vehiculo.dart';
+import '../../DataBaseHelper.dart';
 import 'package:image_picker/image_picker.dart';
 
 class DetallesAlquilerScreen extends StatefulWidget {
@@ -11,12 +16,12 @@ class DetallesAlquilerScreen extends StatefulWidget {
 }
 
 class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
-  Map<String, dynamic> alquiler = {};
-  Map<String, dynamic> coche = {};
-  Map<String, dynamic> cliente = {};
+  late Alquiler alquiler;
+  late Vehiculo coche;
+  late Cliente cliente;
 
-  List<Map<String, dynamic>> fotos = [];
-  List<Map<String, dynamic>> multas = [];
+  List<Foto> fotos = [];
+  List<Multa> multas = [];
 
   late bool confirmar;
 
@@ -34,43 +39,22 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
   Future<void> cargarAlquiler(int idAlquiler) async {
     // guardamos el alquiler con el id recibido
-    final alquileresConIdRecibido = await DatabaseHelper.obtenerAlquilerPorId(idAlquiler);
-
-    if (alquileresConIdRecibido.isNotEmpty) {
-      alquiler = alquileresConIdRecibido.first;
-
-      setState(() {
-        _fechaInicioControler = TextEditingController(text: alquiler['fecha_inicio']);
-        _fechaLimiteControler = TextEditingController(text: alquiler['fecha_fin']);
-        _fechaDevoControler = TextEditingController(text: alquiler['fecha_devolucion'] ?? "");
-        _precioController = TextEditingController(text: alquiler['precio'].toString());
-        _fianzaController = TextEditingController(text: alquiler['fianza'].toString()); // Cargar fianza
-        _observacionesController = TextEditingController(text: alquiler['observaciones']);
-        _estadoActual = alquiler['estado'];
-        _formaPagoActual = alquiler['forma_pago'] ?? "Efectivo"; // Cargar forma pago
-        _devolverFianza = (alquiler['devolver_fianza'] ?? 0) == 1; // Cargar devolver fianza
-      });
-
-      await cargarCocheYCliente(alquiler['id_coche'], alquiler['id_cliente']);
-    }
+    alquiler = (await DatabaseHelper.instance.obtenerAlquilerPorId(idAlquiler))!;
   }
 
   Future<void> cargarCocheYCliente(int idCoche, int idCliente) async {
-    final cochesConId = await DatabaseHelper.obtenerVehiculoPorId(idCoche);
-    final clienteConId = await DatabaseHelper.obtenerClientesPorId(idCliente);
+    coche = (await DatabaseHelper.instance.obtenerVehiculoPorId(alquiler.idCoche))!;
+    cliente = (await DatabaseHelper.instance.obtenerClientePorId(alquiler.idCliente))!;
 
     setState(() {
-      coche = cochesConId.first;
-      cliente = clienteConId.first;
-
-      _clienteNombreController.text = cliente['nombre'] ?? "";
-      _cocheMatriculaController.text = coche['matricula'] ?? "";
+      _clienteNombreController.text = cliente.nombre;
+      _cocheMatriculaController.text = coche.matricula;
     });
   }
 
   // metodo para rellenar la variable fotos con los datos de la base de datos asociados al alquiler con el id recibido
   Future<void> cargarFotos(int idAlquiler) async {
-    final fotosDelAlquiler = await DatabaseHelper.obtenerFotosPorIdAlquiler(idAlquiler);
+    final fotosDelAlquiler = await DatabaseHelper.instance.obtenerFotosPorAlquiler(idAlquiler);
     setState(() {
       fotos = fotosDelAlquiler;
     });
@@ -78,7 +62,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
 
   // metodo para rellenar la variable multas con los datos de la base de datos asociados al alquiler con el id recibido
   Future<void> cargarMultas(int idAlquiler) async {
-    final multasDelAlquiler = await DatabaseHelper.obtenerMultasPorIdAlquiler(idAlquiler);
+    final multasDelAlquiler = await DatabaseHelper.instance.obtenerMultasPorAlquiler(idAlquiler);
     setState(() {
       multas = multasDelAlquiler;
     });
@@ -89,16 +73,47 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     super.didChangeDependencies();
     int idAlquiler = ModalRoute.of(context)?.settings.arguments as int;
 
-    cargarAlquiler(idAlquiler);
-    cargarFotos(idAlquiler);
-    cargarMultas(idAlquiler);
+    _cargarTodo(idAlquiler);
+  }
+
+  Future<void> _cargarTodo(int idAlquiler) async {
+    alquiler = (await DatabaseHelper.instance.obtenerAlquilerPorId(idAlquiler))!;
+    coche = (await DatabaseHelper.instance.obtenerVehiculoPorId(alquiler.idCoche))!;
+    cliente = (await DatabaseHelper.instance.obtenerClientePorId(alquiler.idCliente))!;
+    fotos = await DatabaseHelper.instance.obtenerFotosPorAlquiler(idAlquiler);
+    multas = await DatabaseHelper.instance.obtenerMultasPorAlquiler(idAlquiler);
+
+    // Actualiza los controladores
+    _clienteNombreController.text = cliente.nombre;
+    _cocheMatriculaController.text = coche.matricula;
+    _fechaInicioControler.text = alquiler.fechaInicio;
+    _fechaLimiteControler.text = alquiler.fechaFin;
+    _fechaDevoControler.text = alquiler.fechaDevolucion ?? "";
+    _precioController.text = alquiler.precio.toString();
+    _fianzaController.text = alquiler.fianza.toString();
+    _observacionesController.text = alquiler.observaciones ?? "";
+    _formaPagoActual = alquiler.formaPago ?? "Efectivo";
+    _estadoActual = alquiler.estado;
+    _devolverFianza = alquiler.devolverFianza == 1;
+
+    setState(() {});
+  }
+
+  Future<void> actualizarAlquiler(String campo, dynamic valor) async {
+    await DatabaseHelper.instance.actualizarCampoAlquiler(alquiler.id!, campo, valor);
+    await cargarAlquiler(alquiler.id!);
+  }
+
+  Future<void> actualizarVehiculo(String campo, dynamic valor) async {
+    await DatabaseHelper.instance.actualizarCampoVehiculo(coche.id!, campo, valor);
+    await cargarCocheYCliente(alquiler.idCoche, alquiler.idCliente);
   }
 
   // Metodo para finalizar el alquiler
   Future<void> _finalizarAlquiler() async {
-    TextEditingController kilometrosController = TextEditingController(text: coche['kilometraje'].toString());
+    TextEditingController kilometrosController = TextEditingController(text: coche.kilometraje.toString());
     TextEditingController cantidadCombustibleController = TextEditingController(
-      text: coche['cantidad_combustible'].toString(),
+      text: coche.cantidadCombustible.toString(),
     );
     bool necesitaLimpieza = false;
     bool quedarseFianza = false;
@@ -204,31 +219,16 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                   String fechaHoy =
                       "${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}";
 
-                  final db = await DatabaseHelper.proyectodb();
-
-                  // Marcar alquiler como terminado y actualizar devolver_fianza
-                  await db.update(
-                    "alquileres",
-                    {"estado": "Terminado", "fecha_devolucion": fechaHoy, "devolver_fianza": quedarseFianza ? 0 : 1},
-                    where: "id = ?",
-                    whereArgs: [alquiler["id"]],
-                  );
-
-                  // Liberar coche y actualizar sus datos
-                  await db.update(
-                    "vehiculos",
-                    {
-                      "estado": "Disponible",
-                      "kilometraje": kms,
-                      "cantidad_combustible": combustible,
-                      "necesita_limpieza": necesitaLimpieza ? 1 : 0,
-                    },
-                    where: "id = ?",
-                    whereArgs: [alquiler["id_coche"]],
-                  );
+                  actualizarAlquiler("estado", _estadoActual);
+                  actualizarAlquiler("fecha_devolucion", fechaHoy);
+                  actualizarAlquiler("devolver_fianza", quedarseFianza ? 0 : 1);
+                  actualizarVehiculo("estado", "Disponible");
+                  actualizarVehiculo("kilometraje", kms);
+                  actualizarVehiculo("cantidad_combustible", combustible);
+                  actualizarVehiculo("necesita_limpieza", necesitaLimpieza ? 1 : 0);
 
                   Navigator.pop(context);
-                  cargarAlquiler(alquiler["id"]);
+                  cargarAlquiler(alquiler.id!);
 
                   ScaffoldMessenger.of(
                     context,
@@ -283,7 +283,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                         onPressed: () async => await Navigator.pushNamed(
                                           context,
                                           "detalles_cliente",
-                                          arguments: cliente["id"],
+                                          arguments: cliente,
                                         ),
                                         icon: const Icon(Icons.arrow_forward_ios),
                                       ),
@@ -355,7 +355,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                         onPressed: () async => await Navigator.pushNamed(
                                           context,
                                           "detalles_vehiculo",
-                                          arguments: coche["id"],
+                                          arguments: coche,
                                         ),
                                         icon: const Icon(Icons.arrow_forward_ios),
                                       ),
@@ -557,7 +557,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(15),
                                       child: Image(
-                                        image: FileImage(File(fotos[index]["ruta"])),
+                                        image: FileImage(File(fotos[index].ruta)),
                                         height: 450,
                                         fit: BoxFit.contain,
                                       ),
@@ -571,13 +571,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       ),
                                       onPressed: () async {
-                                        final baseDatos = await DatabaseHelper.proyectodb();
-                                        await baseDatos.delete(
-                                          "fotos",
-                                          where: "id = ?",
-                                          whereArgs: [fotos[index]["id"]],
-                                        );
-                                        cargarFotos(alquiler["id"]);
+                                        await DatabaseHelper.instance.borrarFoto(fotos[index]);
+                                        cargarFotos(alquiler.id!);
                                         Navigator.pop(context);
                                       },
                                       icon: const Icon(Icons.delete_forever),
@@ -601,7 +596,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                 offset: const Offset(0, 10),
                               ),
                             ],
-                            image: DecorationImage(image: FileImage(File(fotos[index]["ruta"])), fit: BoxFit.cover),
+                            image: DecorationImage(image: FileImage(File(fotos[index].ruta)), fit: BoxFit.cover),
                           ),
                         ),
                       );
@@ -637,8 +632,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                       if (index == multas.length) {
                         return GestureDetector(
                           onTap: () async {
-                            await Navigator.pushNamed(context, "añadir_multa", arguments: alquiler["id"]);
-                            cargarMultas(alquiler["id"]);
+                            await Navigator.pushNamed(context, "añadir_multa", arguments: alquiler.id);
+                            cargarMultas(alquiler.id!);
                           },
                           child: Container(
                             width: 200,
@@ -664,8 +659,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                       final multaActual = multas[index];
                       return GestureDetector(
                         onTap: () async {
-                          await Navigator.pushNamed(context, "detalles_multa", arguments: multaActual["id"]);
-                          cargarMultas(alquiler["id"]);
+                          await Navigator.pushNamed(context, "detalles_multa", arguments: multaActual.id);
+                          cargarMultas(alquiler.id!);
                         },
                         child: Container(
                           width: 200,
@@ -687,18 +682,18 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                             children: [
                               Icon(
                                 Icons.warning_amber_rounded,
-                                color: multaActual["pagada"] == 1 ? Colors.green : Colors.red,
+                                color: multaActual.pagada == 1 ? Colors.green : Colors.red,
                                 size: 40,
                               ),
                               const SizedBox(height: 10),
                               Text(
-                                multaActual["descripcion"],
+                                multaActual.descripcion,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 5),
-                              Text("${multaActual["precio"]} €", style: const TextStyle(fontSize: 18)),
+                              Text("${multaActual.precio} €", style: const TextStyle(fontSize: 18)),
                             ],
                           ),
                         ),
@@ -794,22 +789,20 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
       String fechaFormateada =
           "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 
-      final baseDatos = await DatabaseHelper.proyectodb();
-
       if (nombreCampo == "fecha_inicio" || nombreCampo == "fecha_fin") {
         String nuevaFechaInicio = nombreCampo == "fecha_inicio" ? fechaFormateada : _fechaInicioControler.text;
         String nuevaFechaFin = nombreCampo == "fecha_fin" ? fechaFormateada : _fechaLimiteControler.text;
 
-        final alquileresOcupados = await baseDatos.query(
-          "alquileres",
-          where: "id_coche = ? AND id != ? AND estado != ? AND ? <= fecha_fin AND ? >= fecha_inicio",
-          whereArgs: [alquiler["id_coche"], alquiler["id"], "Terminado", nuevaFechaInicio, nuevaFechaFin],
+        final alquileresOcupados = await DatabaseHelper.instance.obtenerAlquileresOcupados(
+          idVehiculo: alquiler.idCoche,
+          fechaInicio: nuevaFechaInicio,
+          fechaFin: nuevaFechaFin,
         );
 
-        final tallerOcupado = await baseDatos.query(
-          "reparaciones",
-          where: "id_coche = ? AND ? <= fecha_fin AND ? >= fecha_inicio",
-          whereArgs: [alquiler["id_coche"], nuevaFechaInicio, nuevaFechaFin],
+        final tallerOcupado = await DatabaseHelper.instance.obtenerReparacionesOcupadas(
+          idVehiculo: alquiler.idCoche,
+          fechaInicio: nuevaFechaInicio,
+          fechaFin: nuevaFechaFin,
         );
 
         if (alquileresOcupados.isNotEmpty || tallerOcupado.isNotEmpty) {
@@ -823,14 +816,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
         }
       }
 
-      await baseDatos.update(
-        "alquileres",
-        {nombreCampo: fechaFormateada},
-        where: "id = ?",
-        whereArgs: [alquiler["id"]],
-      );
-
-      cargarAlquiler(alquiler["id"]);
+      actualizarAlquiler(nombreCampo, fechaFormateada);
+      cargarAlquiler(alquiler.id!);
     }
   }
 
@@ -860,15 +847,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                   child: const Text("Guardar cambios"),
                   onPressed: () async {
                     if (await confirmacion()) {
-                      final db = await DatabaseHelper.proyectodb();
-                      await db.update(
-                        "alquileres",
-                        {"precio": double.tryParse(nuevoPrecio.text) ?? 0.0},
-                        where: "id = ?",
-                        whereArgs: [alquiler["id"]],
-                      );
+                      actualizarAlquiler("precio", double.tryParse(nuevoPrecio.text) ?? 0.0);
                       Navigator.pop(context);
-                      cargarAlquiler(alquiler["id"]);
+                      cargarAlquiler(alquiler.id!);
                     }
                   },
                 ),
@@ -907,15 +888,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                   child: const Text("Guardar cambios"),
                   onPressed: () async {
                     if (await confirmacion()) {
-                      final db = await DatabaseHelper.proyectodb();
-                      await db.update(
-                        "alquileres",
-                        {"fianza": double.tryParse(nuevaFianza.text) ?? 0.0},
-                        where: "id = ?",
-                        whereArgs: [alquiler["id"]],
-                      );
+                      actualizarAlquiler("fianza", double.tryParse(nuevaFianza.text) ?? 0.0);
                       Navigator.pop(context);
-                      cargarAlquiler(alquiler["id"]);
+                      cargarAlquiler(alquiler.id!);
                     }
                   },
                 ),
@@ -951,15 +926,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
           ElevatedButton(
             onPressed: () async {
               if (await confirmacion()) {
-                final db = await DatabaseHelper.proyectodb();
-                await db.update(
-                  "alquileres",
-                  {"forma_pago": temporalForma},
-                  where: "id = ?",
-                  whereArgs: [alquiler["id"]],
-                );
+                actualizarAlquiler("forma_pago", temporalForma);
                 Navigator.pop(context);
-                cargarAlquiler(alquiler["id"]);
+                cargarAlquiler(alquiler.id!);
               }
             },
             child: const Text("GUARDAR"),
@@ -999,15 +968,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
             TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCELAR")),
             ElevatedButton(
               onPressed: () async {
-                final db = await DatabaseHelper.proyectodb();
-                await db.update(
-                  "alquileres",
-                  {"devolver_fianza": temporalDevolver ? 1 : 0},
-                  where: "id = ?",
-                  whereArgs: [alquiler["id"]],
-                );
+                actualizarAlquiler("devolver_fianza", temporalDevolver ? 1 : 0);
                 Navigator.pop(context);
-                cargarAlquiler(alquiler["id"]);
+                cargarAlquiler(alquiler.id!);
               },
               child: const Text("GUARDAR"),
             ),
@@ -1032,15 +995,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
           actions: [
             ElevatedButton(
               onPressed: () async {
-                final db = await DatabaseHelper.proyectodb();
-                await db.update(
-                  "alquileres",
-                  {"observaciones": nuevasObs.text},
-                  where: "id = ?",
-                  whereArgs: [alquiler["id"]],
-                );
+                actualizarAlquiler("observaciones", nuevasObs.text);
                 Navigator.pop(context);
-                cargarAlquiler(alquiler["id"]);
+                cargarAlquiler(alquiler.id!);
               },
               child: const Text("Guardar"),
             ),
@@ -1082,15 +1039,9 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
             ].map((estado) => DropdownMenuItem(value: estado, child: Text(estado))).toList(),
             onChanged: (nuevoEstado) async {
               if (nuevoEstado != null && await confirmacion()) {
-                final baseDatos = await DatabaseHelper.proyectodb();
-                await baseDatos.update(
-                  "alquileres",
-                  {"estado": nuevoEstado},
-                  where: "id = ?",
-                  whereArgs: [alquiler["id"]],
-                );
+                actualizarAlquiler("estado", nuevoEstado);
                 Navigator.pop(context);
-                cargarAlquiler(alquiler["id"]);
+                cargarAlquiler(alquiler.id!);
               }
             },
           ),
@@ -1124,9 +1075,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     final ImagePicker imagePicker = ImagePicker();
     final XFile? imagen = await imagePicker.pickImage(source: ImageSource.gallery);
     if (imagen != null) {
-      final baseDatos = await DatabaseHelper.proyectodb();
-      await baseDatos.insert("fotos", {"id_alquiler": alquiler["id"], "ruta": imagen.path});
-      cargarFotos(alquiler["id"]);
+      await DatabaseHelper.instance.insertarFoto(alquiler.id!, imagen.path);
+      cargarFotos(alquiler.id!);
     }
   }
 }
