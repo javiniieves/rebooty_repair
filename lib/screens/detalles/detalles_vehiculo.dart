@@ -21,6 +21,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   final _anyoController = TextEditingController();
   final _observacionesController = TextEditingController();
   final _combustibleController = TextEditingController();
+  final _precioController = TextEditingController();
+
   final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZQ]{3}$');
 
   late Vehiculo vehiculo;
@@ -166,6 +168,24 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                   vehiculo.observaciones ?? "Sin notas",
                                   () => mostrarDialogoTexto("observaciones", _observacionesController),
                                 ),
+                                const Divider(),
+                                // Fila para elegir si hay que limpiar
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 0),
+                                  child: SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text(
+                                      "Limpieza",
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                    ),
+                                    secondary: const Icon(Icons.cleaning_services_outlined, size: 20),
+                                    activeColor: Colors.black,
+                                    value: vehiculo!["necesita_limpieza"] == 1,
+                                    onChanged: (bool nuevoValor) {
+                                      cambiarLimpieza(nuevoValor);
+                                    },
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -195,7 +215,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                   () => mostrarDialogoTexto("anyo", _anyoController, soloNumeros: true),
                                 ),
                                 const Divider(),
-
+                                // PRECIO (Ahora en la tercera fila de la derecha)
                                 filaEditable(
                                   Icons.oil_barrel_outlined,
                                   "Líneas de Combustible",
@@ -206,6 +226,10 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                     soloNumeros: true,
                                     esCombustible: true,
                                   ),
+                                  Icons.euro,
+                                  "Precio",
+                                  "${vehiculo!["precio"]} €",
+                                  () => mostrarDialogoTexto("precio", _precioController, soloNumeros: true),
                                 ),
                                 const Divider(),
                                 filaEditable(
@@ -231,7 +255,6 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                   ]),
                                 ),
                                 const Divider(),
-
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 4),
                                   child: Row(
@@ -253,6 +276,19 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                         ),
                                       ),
                                     ],
+                                  ),
+                                ),
+                                const Divider(),
+                                // LÍNEAS DE COMBUSTIBLE (Ahora al final de la derecha)
+                                filaEditable(
+                                  Icons.oil_barrel_outlined,
+                                  "Líneas de Combustible",
+                                  "${vehiculo!["cantidad_combustible"]} líneas",
+                                  () => mostrarDialogoTexto(
+                                    "cantidad_combustible",
+                                    _combustibleController,
+                                    soloNumeros: true,
+                                    esCombustible: true,
                                   ),
                                 ),
                               ],
@@ -329,7 +365,6 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                         final r = listaReparaciones![index];
                         return Card(
                           margin: const EdgeInsets.all(10),
-
                           child: SizedBox(
                             width: 200,
                             child: Column(
@@ -419,7 +454,6 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                   if (esMatricula && !regex.hasMatch(value.toUpperCase())) {
                     return "4 números y 3 consonantes";
                   }
-                  // validacion de lineas de combustible
                   if (esCombustible) {
                     int? valor = int.tryParse(value);
                     if (valor == null || valor < 0 || valor > 12) {
@@ -436,7 +470,6 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                   if (!confirmar) return Navigator.pop(context);
 
                   if (formKey.currentState!.validate()) {
-                    // si son numeros lo guardamos como entero
                     dynamic valorAGuardar = soloNumeros ? int.parse(controller.text) : controller.text;
                     await actualizarVehiculo(campo, valorAGuardar);
                     controller.clear();
@@ -529,18 +562,8 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
               title: const Text("Confirmar cambio"),
               content: const Text("¿Seguro que quieres actualizar los datos?"),
               actions: [
-                TextButton(
-                  child: const Text("Cancelar"),
-                  onPressed: () {
-                    Navigator.pop(context, false);
-                  },
-                ),
-                ElevatedButton(
-                  child: const Text("Confirmar"),
-                  onPressed: () {
-                    Navigator.pop(context, true);
-                  },
-                ),
+                TextButton(child: const Text("Cancelar"), onPressed: () => Navigator.pop(context, false)),
+                ElevatedButton(child: const Text("Confirmar"), onPressed: () => Navigator.pop(context, true)),
               ],
             );
           },

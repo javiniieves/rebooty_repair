@@ -21,7 +21,7 @@ class DatabaseHelper {
         await db.execute(
           "CREATE TABLE vehiculos (id INTEGER PRIMARY KEY, matricula TEXT, marca TEXT, modelo TEXT, estado TEXT, "
           "color INTEGER, kilometraje REAL, anyo INTEGER, combustible TEXT, observaciones TEXT, fecha_vencimiento_seguro TEXT, "
-          "ruta_foto TEXT, cantidad_combustible INTEGER, fecha_proxima_itv TEXT, necesita_limpieza INTEGER)",
+          "ruta_foto TEXT, cantidad_combustible INTEGER, fecha_proxima_itv TEXT, necesita_limpieza INTEGER, precio REAL)",
         );
 
         // tabla reparaciones (se relacione con coche)
@@ -288,8 +288,8 @@ class DatabaseHelper {
       [hoyStr, hoyStr],
     );
 
-    // Opcional: Si quieres que los coches salgan del taller automáticamente si la fecha de fin ya pasó
-    // y vuelvan a estar 'Disponible' (siempre que su estado actual sea 'Taller')
+    // los coches salgan del taller automáticamente si la fecha de fin ya pasó
+    // vuelvan a estar 'Disponible' (siempre que su estado actual sea 'Taller')
     await db.rawUpdate(
       '''
       UPDATE vehiculos 

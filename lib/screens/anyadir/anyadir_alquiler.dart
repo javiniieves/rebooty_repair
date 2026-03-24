@@ -24,7 +24,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   List<Cliente> listaClientes = [];
   List<Vehiculo> listaVehiculos = [];
 
-  // Lista para almacenar las rutas de las fotos antes de guardar
   List<String> fotosTemporales = [];
 
   final _precioController = TextEditingController();
@@ -38,7 +37,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   String estadoActual = "Pendiente";
   String formaPagoActual = "Efectivo";
 
-  // Variable para controlar si se debe devolver la fianza
+  double? precioBaseDelCoche;
+
   bool devolverFianza = false;
 
   Future<void> cargarIdsClientes() async {
@@ -48,7 +48,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     });
   }
 
-  // CORRECCIÓN AQUÍ: Cargamos todos los vehículos para poder alquilarlos en distintos periodos
   Future<void> cargarIdsVehiculos() async {
     final vehiculos = await DatabaseHelper.instance.obtenerVehiculos();
 
@@ -99,7 +98,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         },
                         label: const Row(children: [Icon(Icons.check), Text("Confirmar")]),
                       ),
-
                       ElevatedButton.icon(
                         onPressed: () {
                           Navigator.pop(context);
@@ -125,17 +123,13 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
             children: [
               const SizedBox(height: 20),
 
-              // DNI Cliente y Matrícula
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Autocomplete<Cliente>(
                       optionsBuilder: (TextEditingValue textEditingValue) {
-                        if (textEditingValue.text.isEmpty) {
-                          return listaClientes;
-                        }
-
+                        if (textEditingValue.text.isEmpty) return listaClientes;
                         return listaClientes.where((cliente) {
                           return cliente.documentoOficial.toLowerCase().contains(textEditingValue.text.toLowerCase());
                         });
@@ -154,10 +148,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   Expanded(
                     child: Autocomplete<Vehiculo>(
                       optionsBuilder: (TextEditingValue textEditingValue) {
-                        if (textEditingValue.text.isEmpty) {
-                          return listaVehiculos;
-                        }
-
+                        if (textEditingValue.text.isEmpty) return listaVehiculos;
                         return listaVehiculos.where((vehiculo) {
                           return vehiculo.matricula.toLowerCase().contains(textEditingValue.text.toLowerCase());
                         });
@@ -177,7 +168,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
               const SizedBox(height: 25),
 
-              // Fecha Inicio y Fecha Fin
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -210,9 +200,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       validator: (value) {
                         if (value == null || value.isEmpty) return "Selecciona fin";
                         if (fechaInicio != null && fechaFin != null) {
-                          if (fechaFin!.isBefore(fechaInicio!)) {
-                            return "Error en fechas";
-                          }
+                          if (fechaFin!.isBefore(fechaInicio!)) return "Error en fechas";
                         }
                         return null;
                       },
@@ -223,7 +211,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
               const SizedBox(height: 25),
 
-              // Precio y Fianza
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -258,7 +245,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       validator: (value) {
-                        // MODIFICACIÓN: Ya no es obligatorio introducir fianza.
                         if (value != null && value.isNotEmpty) {
                           final numero = double.tryParse(value);
                           if (numero == null) return "No válida";
@@ -272,7 +258,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
               const SizedBox(height: 25),
 
-              // Forma de Pago y Estado
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -294,11 +279,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                           ),
                         );
                       }).toList(),
-                      onChanged: (nuevaForma) {
-                        setState(() {
-                          formaPagoActual = nuevaForma!;
-                        });
-                      },
+                      onChanged: (nuevaForma) => setState(() => formaPagoActual = nuevaForma!),
                     ),
                   ),
                   const SizedBox(width: 15),
@@ -320,11 +301,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                           ),
                         );
                       }).toList(),
-                      onChanged: (nuevoEstado) {
-                        setState(() {
-                          estadoActual = nuevoEstado!;
-                        });
-                      },
+                      onChanged: (nuevoEstado) => setState(() => estadoActual = nuevoEstado!),
                     ),
                   ),
                 ],
@@ -332,7 +309,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
               const SizedBox(height: 25),
 
-              // Notas y Devolver fianza (Mitad y mitad, mismo estilo)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -360,11 +336,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         alignment: Alignment.centerLeft,
                         child: Switch(
                           value: devolverFianza,
-                          onChanged: (bool nuevoValor) {
-                            setState(() {
-                              devolverFianza = nuevoValor;
-                            });
-                          },
+                          onChanged: (bool nuevoValor) => setState(() => devolverFianza = nuevoValor),
                         ),
                       ),
                     ),
@@ -384,7 +356,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
               const SizedBox(height: 10),
 
-              // lista de fotos
               SizedBox(
                 height: 250,
                 child: ListView.builder(
@@ -401,33 +372,25 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                             color: Theme.of(context).colorScheme.primary,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                           ),
                           child: const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.add_photo_alternate_outlined, size: 50),
                               SizedBox(height: 10),
-                              Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
+                              const Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
                             ],
                           ),
                         ),
                       );
                     }
                     return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          fotosTemporales.removeAt(index);
-                        });
-                      },
+                      onTap: () => setState(() => fotosTemporales.removeAt(index)),
                       child: Container(
                         width: 200,
                         margin: const EdgeInsets.only(right: 20, bottom: 10),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 10)),
-                          ],
                           image: DecorationImage(image: FileImage(File(fotosTemporales[index])), fit: BoxFit.cover),
                         ),
                         child: const Align(
@@ -449,7 +412,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
               const SizedBox(height: 50),
 
-              // botón de añadir alquiler
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -472,11 +434,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   Future<void> _ventanaAnyadirFoto() async {
     final ImagePicker imagePicker = ImagePicker();
     final XFile? imagen = await imagePicker.pickImage(source: ImageSource.gallery);
-    if (imagen != null) {
-      setState(() {
-        fotosTemporales.add(imagen.path);
-      });
-    }
+    if (imagen != null) setState(() => fotosTemporales.add(imagen.path));
   }
 
   Future<void> seleccionarFecha(bool esInicio) async {
@@ -490,19 +448,28 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
     if (fechaElegida != null) {
       setState(() {
-        String fechaFormateada =
-            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
+        // Forzamos a que la fecha no tenga horas/minutos para que la resta sea exacta
+        DateTime fechaLimpia = DateTime(fechaElegida.year, fechaElegida.month, fechaElegida.day);
+        String fechaFormateada = "${fechaLimpia.year}-${fechaLimpia.month.toString().padLeft(2, '0')}-${fechaLimpia.day.toString().padLeft(2, '0')}";
 
         if (esInicio) {
-          fechaInicio = fechaElegida;
+          fechaInicio = fechaLimpia;
           _fechaInicioController.text = fechaFormateada;
-          if (fechaFin != null && fechaFin!.isBefore(fechaInicio!)) {
-            fechaFin = null;
-            _fechaFinController.clear();
-          }
         } else {
-          fechaFin = fechaElegida;
+          fechaFin = fechaLimpia;
           _fechaFinController.text = fechaFormateada;
+        }
+
+        // Comprobamos si hay un mes de diferencia
+        if (fechaInicio != null && fechaFin != null) {
+          // Usamos un pequeño margen para que si son 29 días y 23 horas cuente como 30
+          final diferencia = fechaFin!.difference(fechaInicio!).inDays;
+
+          if (diferencia >= 29) {
+            _precioController.text = "700";
+          } else if (precioBaseDelCoche != null) {
+            _precioController.text = precioBaseDelCoche.toString();
+          }
         }
       });
     }
@@ -552,21 +519,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
       await db.insert("fotos", foto.toMap());
     }
 
-    await db.update("vehiculos", {"estado": "Alquilado"}, where: "id = ?", whereArgs: [_idVehiculoSeleccionado]);
-
-    _limpiarFormulario();
-
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Alquiler guardado correctamente")));
-
     Navigator.pop(context);
-  }
-
-  void _limpiarFormulario() {
-    _precioController.clear();
-    _fianzaController.clear();
-    _fechaInicioController.clear();
-    _fechaFinController.clear();
-    _observacionesController.clear();
-    fotosTemporales.clear();
   }
 }
