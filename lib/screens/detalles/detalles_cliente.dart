@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../database.dart';
+import 'package:rebooty_repair/models/Cliente.dart';
+import '../../DataBaseHelper.dart';
 
 class DetallesClienteScreen extends StatefulWidget {
   const DetallesClienteScreen({super.key});
@@ -18,11 +19,11 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
   final _direccionControler = TextEditingController();
   final _correoControler = TextEditingController();
 
-  Map<String, dynamic>? cliente;
+  late Cliente cliente;
 
   // Variable para controlar el tipo de documento en la edición
   String _tipoDocumento = "DNI";
-  String telefonoCompleto = "";
+  late String telefonoCompleto = cliente.telefono ?? "";
 
   late int idCliente;
   late bool confirmar;
@@ -30,27 +31,15 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    idCliente = ModalRoute.of(context)!.settings.arguments as int;
+    cliente = ModalRoute.of(context)!.settings.arguments as Cliente;
+    idCliente = cliente.id!;
     cargarDatosCliente(idCliente);
   }
 
-  // metodo encargado de rellenar la variable vehiculo con
-  // los datos del coche con el id recibido por parametro
   Future<void> cargarDatosCliente(int idCliente) async {
-    final clienteConIdRecibido = await DatabaseHelper.obtenerClientesPorId(idCliente);
-
     setState(() {
-      cliente = clienteConIdRecibido.first;
-      // Sincronizamos el tipo de documento actual
-      _tipoDocumento = cliente!['tipo_documento'] ?? "DNI";
+      _tipoDocumento = cliente.documentoOficial;
     });
-  }
-
-  Future<void> actualizarCliente(String campo, dynamic valor) async {
-    final db = await DatabaseHelper.proyectodb();
-
-    await db.update("clientes", {campo: valor}, where: "id = ?", whereArgs: [idCliente]);
-    cargarDatosCliente(idCliente);
   }
 
   // Función para cambiar la foto del cliente
@@ -59,7 +48,7 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
     final XFile? imagen = await picker.pickImage(source: ImageSource.gallery);
 
     if (imagen != null) {
-      await actualizarCliente("ruta_foto", imagen.path);
+      await actualizarCampo("ruta_foto", imagen.path);
     }
   }
 
@@ -99,17 +88,17 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                     BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 10)),
                   ],
                 ),
-                child: cliente!["ruta_foto"] != null
+                child: cliente.rutaFoto != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: Image.file(File(cliente!["ruta_foto"]), fit: BoxFit.cover),
+                        child: Image.file(File(cliente.rutaFoto!), fit: BoxFit.cover),
                       )
                     : Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              cliente!['nombre'].substring(0, 1).toUpperCase(),
+                              cliente.nombre.substring(0, 1).toUpperCase(),
                               style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold),
                             ),
                             const Text("Añadir Foto", style: TextStyle(fontSize: 12)),
@@ -133,35 +122,35 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                       filaEditable(
                         Icons.person,
                         "Nombre",
-                        cliente!["nombre"],
+                        cliente.nombre,
                         () => mostrarDialogoTexto("nombre", _nombreControler),
                       ),
                       const Divider(),
                       filaEditable(
                         Icons.badge,
-                        cliente!['tipo_documento'] ?? "Documento",
-                        cliente!['documento_oficial'],
+                        cliente.tipoDocumento ?? "Documento",
+                        cliente.documentoOficial,
                         () => showDialog(context: context, builder: (context) => _ventanaCambioDocumento(idCliente)),
                       ),
                       const Divider(),
                       filaEditable(
                         Icons.phone,
                         "Teléfono",
-                        cliente!['telefono'],
+                        cliente.telefono!,
                         () => mostrarDialogoTexto("telefono", _telefonoControler, esTelefono: true),
                       ),
                       const Divider(),
                       filaEditable(
                         Icons.location_on,
                         "Dirección",
-                        cliente!['direccion'],
+                        cliente.direccion!,
                         () => mostrarDialogoTexto("direccion", _direccionControler),
                       ),
                       const Divider(),
                       filaEditable(
                         Icons.email,
                         "Email",
-                        cliente!['email'] ?? "Sin correo",
+                        cliente.email ?? "Sin correo",
                         () => mostrarDialogoTexto("email", _correoControler, esEmail: true),
                       ),
                     ],
@@ -231,6 +220,10 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                         labelText: "Teléfono",
                       ),
                       onChanged: (phone) => telefonoCompleto = phone.completeNumber,
+                      validator: (phone) {
+                        if (phone == null || phone.number.isEmpty) return "Campo obligatorio";
+                        return null;
+                      },
                     )
                   : TextFormField(
                       controller: controller,
@@ -251,10 +244,17 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                 onPressed: () async {
                   confirmar = await confirmacion();
                   if (!confirmar) return Navigator.pop(context);
-
+                  if (esTelefono) {
+                    if (telefonoCompleto.isEmpty) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text("El teléfono es obligatorio")));
+                      return;
+                    }
+                  }
                   if (formKey.currentState!.validate()) {
                     String valorFinal = esTelefono ? telefonoCompleto : controller.text;
-                    await actualizarCliente(campo, valorFinal);
+                    await actualizarCampo(campo, valorFinal);
                     controller.clear();
                     Navigator.pop(context);
                   }
@@ -330,13 +330,8 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
                 confirmar = await confirmacion();
                 if (!confirmar) return Navigator.pop(context);
 
-                final db = await DatabaseHelper.proyectodb();
-                await db.update(
-                  "clientes",
-                  {"tipo_documento": _tipoDocumento, "documento_oficial": valor},
-                  where: "id = ?",
-                  whereArgs: [idCliente],
-                );
+                actualizarCampo('tipo_documento', _tipoDocumento);
+                actualizarCampo('documento_oficial', _documentoController.text);
 
                 _documentoController.clear();
                 cargarDatosCliente(idCliente);
@@ -348,6 +343,30 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> actualizarCampo(String campo, String valor) async {
+    final dbHelper = DatabaseHelper.instance;
+    
+    switch (campo) {
+      case "nombre":
+        cliente.nombre = valor;
+        break;
+      case "telefono":
+        cliente.telefono = valor;
+        break;
+      case "direccion":
+        cliente.direccion = valor;
+        break;
+      case "email":
+        cliente.email = valor;
+        break;
+      case "ruta_foto":
+        cliente.rutaFoto = valor;
+        break;
+    }
+    await dbHelper.actualizarCliente(cliente);
+    setState(() {});
   }
 
   Future<bool> confirmacion() async {

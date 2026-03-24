@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../database.dart';
+import 'package:rebooty_repair/models/Reparacion.dart';
+import 'package:rebooty_repair/models/Vehiculo.dart';
+import '../../DataBaseHelper.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -11,10 +13,11 @@ class DetallesReparacionScreen extends StatefulWidget {
 }
 
 class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
-  Map<String, dynamic> vehiculoReparado = {};
-  Map<String, dynamic> reparacion = {};
+  late Vehiculo vehiculoReparado;
+  late Reparacion reparacion;
   late int idReparacion;
   late bool confirmar;
+  bool cargando = true;
 
   final _descripcionController = TextEditingController();
   final _costeController = TextEditingController();
@@ -24,14 +27,13 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
 
   // metodo encargado de rellenar la variable reparacion con
   // los datos de la reparacion con el id recibido por parametro
-  Future<void> cargarDatosReparacion() async {
-    final reparaciones = await DatabaseHelper.obtenerReparacionesPorId(idReparacion);
-    reparacion = reparaciones.first;
+  Future<void> cargarDatos() async {
+    reparacion = (await DatabaseHelper.instance.obtenerReparacionPorId(idReparacion))!;
+    vehiculoReparado = (await DatabaseHelper.instance.obtenerVehiculoPorId(reparacion.idCoche!))!;
 
-    final vehiculos = await DatabaseHelper.obtenerVehiculoPorId(reparacion["id_coche"]);
-    vehiculoReparado = vehiculos.first;
-
-    setState(() {});
+    setState(() {
+      cargando = false;
+    });
   }
 
   // metodo para añadir más fotos a las que ya existen
@@ -40,7 +42,7 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
 
     if (nuevasFotos.isNotEmpty) {
       // Cogemos las fotos que ya hay (si no hay, cadena vacía)
-      String fotosActuales = reparacion["ruta_foto"] ?? "";
+      String fotosActuales = reparacion.rutasFotos ?? "";
 
       // Convertimos las nuevas a una cadena separada por comas
       String nuevasRutas = nuevasFotos.map((f) => f.path).join(",");
@@ -52,36 +54,28 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
     }
   }
 
-  // metodo encargado de rellenar la variable vehiculo con
-  // los datos del coche con el id_coche de la repacion actual
-  Future<void> cargarDatosVehiculo(int idVehiculo) async {
-    final vehiculosConIdRecibido = await DatabaseHelper.obtenerVehiculoPorId(idVehiculo);
-
-    setState(() {
-      vehiculoReparado = vehiculosConIdRecibido.first;
-    });
-  }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    idReparacion = ModalRoute.of(context)?.settings.arguments as int;
-    cargarDatosReparacion();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args == null) return;
+
+    idReparacion = args as int;
+    cargarDatos();
   }
 
   @override
   Widget build(BuildContext context) {
     // Si la reparación o el vehículo aún no han cargado, mostramos el cargando para evitar errores de Null
-    if (reparacion.isEmpty || vehiculoReparado.isEmpty) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    List<String>? listaFotos = [];
+    if (cargando) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
-
-    // Procesamos la cadena de fotos para convertirla en lista
-    List<String> listaFotos = [];
-    if (reparacion["rutas_fotos"] != null && reparacion["rutas_fotos"].toString().isNotEmpty) {
-      listaFotos = reparacion["rutas_fotos"].toString().split(",");
+    if (reparacion.rutasFotos != null && reparacion.rutasFotos!.isNotEmpty) {
+      listaFotos = reparacion.rutasFotos?.split(",");
     }
-
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -103,12 +97,12 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
                     const CircleAvatar(radius: 35, child: Icon(Icons.build_circle, size: 40)),
                     const SizedBox(height: 15),
                     Text(
-                      "${vehiculoReparado['marca']} ${vehiculoReparado['modelo']}",
+                      "${vehiculoReparado.marca} ${vehiculoReparado.modelo}",
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      "Matrícula: ${vehiculoReparado['matricula']}",
+                      "Matrícula: ${vehiculoReparado.matricula}",
                       style: const TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   ],
@@ -130,25 +124,25 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
                         _filaEditable(
                           Icons.calendar_today,
                           "Fecha Inicio",
-                          reparacion['fecha_inicio'],
+                          reparacion.fechaInicio,
                           () => _ventanaCambioFecha("fecha_inicio"),
                         ),
                         const Divider(),
                         _filaEditable(
                           Icons.event_available,
                           "Fecha Fin",
-                          reparacion['fecha_fin'],
+                          reparacion.fechaFin,
                           () => _ventanaCambioFecha("fecha_fin"),
                         ),
                         const Divider(),
-                        _filaEditable(Icons.description, "Descripción", reparacion['descripcion'], () {
+                        _filaEditable(Icons.description, "Descripción", reparacion.descripcion, () {
                           showDialog(
                             context: context,
                             builder: (_) => _ventanaCambio("descripcion", _descripcionController),
                           );
                         }),
                         const Divider(),
-                        _filaEditable(Icons.monetization_on, "Coste", "${reparacion['coste']} €", () {
+                        _filaEditable(Icons.monetization_on, "Coste", "${reparacion.coste} €", () {
                           showDialog(context: context, builder: (_) => _ventanaCambio("coste", _costeController));
                         }),
                       ],
@@ -182,7 +176,7 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
 
                     const SizedBox(height: 20),
 
-                    if (listaFotos.isEmpty)
+                    if (listaFotos!.isEmpty)
                       const Text("No hay fotos añadidas", style: TextStyle(color: Colors.grey))
                     else
                       SizedBox(
@@ -203,7 +197,7 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
                                     offset: const Offset(0, 3),
                                   ),
                                 ],
-                                image: DecorationImage(image: FileImage(File(listaFotos[index])), fit: BoxFit.cover),
+                                image: DecorationImage(image: FileImage(File(listaFotos![index])), fit: BoxFit.cover),
                               ),
                             );
                           },
@@ -304,9 +298,8 @@ class _DetallesReparacionScreenState extends State<DetallesReparacionScreen> {
   }
 
   Future<void> actualizarCampo(String campo, dynamic valor) async {
-    final db = await DatabaseHelper.proyectodb();
-    await db.update("reparaciones", {campo: valor}, where: "id = ?", whereArgs: [idReparacion]);
-    await cargarDatosReparacion();
+    await DatabaseHelper.instance.actualizarCampoReparacion(idReparacion, campo, valor);
+    await cargarDatos();
   }
 
   Future<bool> confirmacion() async {

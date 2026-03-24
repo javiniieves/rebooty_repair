@@ -305,4 +305,15 @@ class DatabaseHelper {
 
     print("Estados de taller actualizados automáticamente para la fecha: $hoyStr");
   }
+
+  /*static Future<void> insertarCliente(Cliente cliente) async {
+    final db = await proyectodb();
+
+    await db.insert(
+      "clientes",
+      cliente.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }*/
 }
+

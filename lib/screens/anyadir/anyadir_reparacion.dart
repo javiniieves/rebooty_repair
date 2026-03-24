@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../database.dart';
+import 'package:rebooty_repair/models/Reparacion.dart';
+import 'package:rebooty_repair/models/Vehiculo.dart';
+import '../../DataBaseHelper.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
@@ -11,7 +13,7 @@ class PantallaAnyadirReparacion extends StatefulWidget {
 }
 
 class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
-  Map<String, dynamic> vehiculo = {};
+  late Vehiculo vehiculo;
 
   final _formKey = GlobalKey<FormState>();
   final _descripcionController = TextEditingController();
@@ -28,10 +30,10 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
   // metodo encargado de rellenar la variable vehiculo con
   // los datos del coche con el id recibido por parametro
   Future<void> cargarDatosVehiculo(int idVehiculo) async {
-    final vehiculosConIdRecibido = await DatabaseHelper.obtenerVehiculoPorId(idVehiculo);
+    final vehiculosConIdRecibido = await DatabaseHelper.instance.obtenerVehiculoPorId(idVehiculo);
 
     setState(() {
-      vehiculo = vehiculosConIdRecibido.first;
+      vehiculo = vehiculosConIdRecibido!;
     });
   }
 
@@ -60,7 +62,7 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          "Añade reparación para ${vehiculo["marca"]} ${vehiculo["modelo"]}",
+          "Añade reparación al vehiculo",
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
@@ -313,17 +315,16 @@ class _PantallaAnyadirReparacionState extends State<PantallaAnyadirReparacion> {
 
   Future<void> _guardarReparacion() async {
     if (!_formKey.currentState!.validate()) return;
-    final baseDatos = await DatabaseHelper.proyectodb();
 
-    // insertamos en la tabal "reparaciones" los datos que hemos cogido (Corregido texto SnackBar abajo)
-    await baseDatos.insert("reparaciones", {
-      "id_coche": vehiculo["id"],
-      "fecha_inicio": _fechaInicioController.text,
-      "fecha_fin": _fechaFinController.text,
-      "coste": double.parse(_costeController.text), // Guardamos como número para cálculos
-      "descripcion": _descripcionController.text,
-    });
-    _costeController.clear();
+    final reparacio = Reparacion(
+      idCoche: vehiculo.id,
+      descripcion: _descripcionController.text,
+      fechaInicio: _fechaInicioController.text,
+      fechaFin: _fechaFinController.text,
+      coste: double.parse(_costeController.text)
+    );
+
+    await DatabaseHelper.instance.insertarReparacion(reparacio);
 
     // Aviso de éxito (Corregido texto: Alquiler -> Reparación)
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Reparación guardada correctamente")));

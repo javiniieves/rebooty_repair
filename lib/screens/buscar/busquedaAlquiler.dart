@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../database.dart';
+import 'package:rebooty_repair/models/Vehiculo.dart';
+import '../../DataBaseHelper.dart';
 
 class PantallaBusquedaAlquiler extends StatefulWidget {
   const PantallaBusquedaAlquiler({super.key});
@@ -15,23 +16,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
   DateTime? fechaFin;
 
   Future<List<Map<String, dynamic>>> cargarAlquileres() async {
-    final db = await DatabaseHelper.proyectodb();
-    String query = '''
-    SELECT alquileres.*, 
-    vehiculos.matricula, vehiculos.marca, vehiculos.modelo,
-    clientes.nombre, clientes.documento_oficial
-    FROM alquileres
-    INNER JOIN vehiculos ON alquileres.id_coche = vehiculos.id
-    INNER JOIN clientes ON alquileres.id_cliente = clientes.id ''';
-
-    List<dynamic> args = [];
-
-    if (fechaInicio != null && fechaFin != null) {
-      query += " WHERE fecha_inicio BETWEEN ? AND ?";
-      args.add(fechaInicio!.toIso8601String().split('T')[0]);
-      args.add(fechaFin!.toIso8601String().split('T')[0]);
-    }
-    return await db.rawQuery(query, args);
+    return await DatabaseHelper.instance.obtenerAlquileresConDetalles(fechaInicio: fechaInicio, fechaFin: fechaFin);
   }
 
   Future<void> seleccionarFecha(bool esInicio) async {
@@ -166,23 +151,20 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                             return ListTile(
                               // en leading no podemos usar la imagen del coche directamente
                               // tenemos que usar future ya que necesiamos usar un metodo que llama a la base de datos
-                              leading: FutureBuilder<String>(
-                                future: obtenerImagenVehiculo(alquiler["id_coche"]),
-                                builder: (context, snapshotImagenCocheActual) {
-                                  // por si hay errores
-                                  if (snapshotImagenCocheActual.connectionState == ConnectionState.waiting) {
-                                    return const CircularProgressIndicator();
+                              leading: FutureBuilder<String?>(
+                                future: obtenerImagenVehiculo(alquiler['id_coche']),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return const SizedBox(
+                                      width: 50,
+                                      height: 50,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    );
                                   }
-                                  if (snapshotImagenCocheActual.hasError || !snapshotImagenCocheActual.hasData) {
-                                    return const Icon(Icons.directions_car);
+                                  if (!snapshot.hasData || snapshot.data == null || snapshot.data!.isEmpty) {
+                                    return const Icon(Icons.directions_car, size: 50);
                                   }
-                                  // si no hay problemas mostramos la imagen del vehículo
-                                  return Image(
-                                    image: FileImage(File(snapshotImagenCocheActual.data!)),
-                                    width: 50,
-                                    height: 50,
-                                    fit: BoxFit.cover,
-                                  );
+                                  return Image.file(File(snapshot.data!), width: 50, height: 50, fit: BoxFit.cover);
                                 },
                               ),
                               // Matrícula y Fechas en el centro como Fila
@@ -237,7 +219,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                                           children: [
                                             ElevatedButton.icon(
                                               onPressed: () async {
-                                                await DatabaseHelper.borrarAlquiler(alquiler["id"]);
+                                                await DatabaseHelper.instance.borrarAlquiler(alquiler['id']);
                                                 setState(() {});
                                                 Navigator.pop(context);
                                               },
@@ -271,9 +253,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                         child: Column(
                           children: [
                             const Text("Alquileres a recibir mañana"),
-
                             const SizedBox(height: 4),
-
                             listaAlquileresADevolver(false),
                           ],
                         ),
@@ -282,9 +262,7 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                         child: Column(
                           children: [
                             const Text("Alquileres pendientes a recibir"),
-
                             const SizedBox(height: 4),
-
                             listaAlquileresADevolver(true),
                           ],
                         ),
@@ -355,7 +333,11 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
                                 ),
                                 child: Text(
                                   pendiente ? "PENDIENTE" : "MAÑANA",
-                                  style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 10),
+                                  style: const TextStyle(
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
                                 ),
                               ),
                             ),
@@ -415,12 +397,9 @@ class _PantallaBusquedaAlquilerState extends State<PantallaBusquedaAlquiler> {
   }
 
   // metodo encargado de mediante un id de un vehiculo sacar su imagen de la base de datos
-  Future<String> obtenerImagenVehiculo(int idVehiculo) async {
-    List<Map<String, dynamic>> cochesConIdIndicado = await DatabaseHelper.obtenerVehiculoPorId(idVehiculo);
-
-    Map<String, dynamic> cocheConIdEspecificado = cochesConIdIndicado.first;
-
-    return cocheConIdEspecificado["ruta_foto"];
+  Future<String?> obtenerImagenVehiculo(int idVehiculo) async {
+    final Vehiculo? vehiculo = await DatabaseHelper.instance.obtenerVehiculoPorId(idVehiculo);
+    return vehiculo?.rutaFoto;
   }
 
   Future<List<Map<String, dynamic>>> alquileresARecibirPronto(bool pendientes) async {

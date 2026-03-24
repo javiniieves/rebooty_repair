@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../database.dart';
+import 'package:rebooty_repair/models/Vehiculo.dart';
+import '../../DataBaseHelper.dart';
 
 class PantallaBusquedaVehiculo extends StatefulWidget {
   const PantallaBusquedaVehiculo({super.key});
@@ -12,16 +13,20 @@ class PantallaBusquedaVehiculo extends StatefulWidget {
 class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
   late TextEditingController _matriculaController;
 
-  Future<List<Map<String, dynamic>>> cargarVehiculos() async {
-    final baseDatos = await DatabaseHelper.proyectodb();
-    final List<Map<String, dynamic>> vehiculos = await baseDatos.query("vehiculos");
-    return vehiculos;
+  List<Vehiculo> listaVehiculos = [];
+
+  Future<void> cargarVehiculos() async {
+    final vehiculos = await DatabaseHelper.instance.obtenerVehiculos();
+    setState(() {
+      listaVehiculos = vehiculos;
+    });
   }
 
   @override
   void initState() {
     super.initState();
     _matriculaController = TextEditingController();
+    cargarVehiculos();
   }
 
   @override
@@ -62,88 +67,84 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
             ),
             const SizedBox(height: 30),
             Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: cargarVehiculos(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text("Error: ${snapshot.error}"));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text("No hay Vehiculos"));
-                  }
-
-                  // Filtrado por matrícula según lo escrito en el TextField
+              child: Builder(
+                builder: (context) {
                   final filtro = _matriculaController.text.toLowerCase();
-                  final vehiculosFiltrados = snapshot.data!.where((vehiculo) {
-                    final matricula = vehiculo['matricula']?.toString().toLowerCase() ?? '';
-                    return matricula.startsWith(filtro);
+
+                  final vehiculosFiltrados = listaVehiculos.where((vehiculo) {
+                    return vehiculo.matricula.toLowerCase().startsWith(filtro);
                   }).toList();
 
-                  // Filtrado para alertas de limpieza
-                  final vehiculosParaLimpiar = vehiculosFiltrados.where((vehiculo) {
-                    return vehiculo['necesita_limpieza'] == 1;
+                  final vehiculosParaLimpiar = vehiculosFiltrados.where((v) {
+                    return v.necesitaLimpieza == 1;
                   }).toList();
 
-                  // Filtrado para alertas de taller
-                  final vehiculosEnTaller = vehiculosFiltrados.where((vehiculo) {
-                    return vehiculo['estado'] == 'Taller';
+                  final vehiculosEnTaller = vehiculosFiltrados.where((v) {
+                    return v.estado == 'Taller';
                   }).toList();
+
+                  if (vehiculosFiltrados.isEmpty) {
+                    return const Center(child: Text("No hay Vehículos"));
+                  }
 
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // LADO IZQUIERDO: listamos todos los coches que coinciden con la búsqueda
                       Expanded(
                         flex: 2,
                         child: ListView.separated(
-                          separatorBuilder: (context, index) => const Divider(),
+                          separatorBuilder: (_, __) => const Divider(),
                           itemCount: vehiculosFiltrados.length,
                           itemBuilder: (context, index) {
                             final vehiculo = vehiculosFiltrados[index];
+
                             return ListTile(
-                              leading: Image(image: FileImage(File(vehiculo["ruta_foto"]))),
-                              title: Text(
-                                "${vehiculo['matricula'] ?? 'Sin matricula'} - ${vehiculo['marca']}/${vehiculo['modelo']}",
-                              ),
-                              subtitle: Text(vehiculo['estado'] ?? 'Sin estado'),
+                              leading: vehiculo.rutaFoto != null
+                                  ? Image.file(File(vehiculo.rutaFoto!))
+                                  : const Icon(Icons.car_rental),
+
+                              title: Text("${vehiculo.matricula} - ${vehiculo.marca}/${vehiculo.modelo}"),
+
+                              subtitle: Text(vehiculo.estado),
+
                               onTap: () async {
-                                await Navigator.pushNamed(context, "detalles_vehiculo", arguments: vehiculo["id"]);
-                                setState(() {});
+                                await Navigator.pushNamed(context, "detalles_vehiculo", arguments: vehiculo);
+                                cargarVehiculos(); // refrescar
                               },
+
                               trailing: IconButton(
                                 icon: const Icon(Icons.delete),
-                                onPressed: () => _confirmarBorrado(vehiculo["id"]),
+                                onPressed: () => _confirmarBorrado(vehiculo.id!),
                               ),
                             );
                           },
                         ),
                       ),
+
                       const SizedBox(width: 15),
-                      // LADO DERECHO: alertas de limpieza
+
+                      /// LIMPIEZA
                       Expanded(
                         child: Column(
                           children: [
-                            const Text(
-                              "Vehículos a Limpiar",
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            const Text("Vehículos a Limpiar"),
+                            Expanded(
+                              child: _construirListaAlertasVehiculo(vehiculosParaLimpiar, "¡LIMPIAR!", Colors.red),
                             ),
-                            const SizedBox(height: 10),
-                            Expanded(child: _construirListaAlertas(vehiculosParaLimpiar, "¡LIMPIAR!", Colors.red)),
                           ],
                         ),
                       ),
+
                       const SizedBox(width: 10),
-                      // LADO DERECHO (EXTREMO): alertas de taller
+
+                      /// TALLER
                       Expanded(
                         child: Column(
                           children: [
-                            const Text(
-                              "Vehículos en Taller",
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            const Text("Vehículos en Taller"),
+                            Expanded(
+                              child: _construirListaAlertasVehiculo(vehiculosEnTaller, "EN TALLER", Colors.orange),
                             ),
-                            const SizedBox(height: 10),
-                            Expanded(child: _construirListaAlertas(vehiculosEnTaller, "EN TALLER", Colors.orange)),
                           ],
                         ),
                       ),
@@ -158,7 +159,7 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
     );
   }
 
-  Widget _construirListaAlertas(List<Map<String, dynamic>> lista, String etiqueta, Color colorTema) {
+  Widget _construirListaAlertasVehiculo(List<Vehiculo> lista, String etiqueta, Color colorTema) {
     if (lista.isEmpty) {
       return const Center(child: Text("Sin avisos", style: TextStyle(fontSize: 12)));
     }
@@ -172,7 +173,7 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           child: GestureDetector(
             onTap: () async {
-              await Navigator.pushNamed(context, "detalles_vehiculo", arguments: vehiculo["id"]);
+              await Navigator.pushNamed(context, "detalles_vehiculo", arguments: vehiculo);
               setState(() {});
             },
             child: Container(
@@ -183,10 +184,7 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        vehiculo['matricula'] ?? '---',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
+                      Text(vehiculo.matricula, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
@@ -207,7 +205,7 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
-                          "${vehiculo['marca'] ?? ''} ${vehiculo['modelo'] ?? ''}",
+                          "${vehiculo.marca} ${vehiculo.modelo}",
                           style: const TextStyle(fontSize: 11),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -236,9 +234,9 @@ class _PantallaBusquedaVehiculoState extends State<PantallaBusquedaVehiculo> {
                 ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
                 ElevatedButton(
                   onPressed: () async {
-                    await DatabaseHelper.borrarVehiculo(id);
+                    await DatabaseHelper.instance.borrarVehiculo(id);
                     Navigator.pop(context);
-                    setState(() {});
+                    await cargarVehiculos();
                   },
                   child: const Text("Confirmar"),
                 ),

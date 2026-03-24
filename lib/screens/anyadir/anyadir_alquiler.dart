@@ -1,7 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:rebooty_repair/database.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../models/Alquiler.dart';
+import '../../DataBaseHelper.dart';
+import '../../models/Cliente.dart';
+import '../../models/Foto.dart';
+import '../../models/Vehiculo.dart';
 
 class PantallaAnyadirAlquiler extends StatefulWidget {
   const PantallaAnyadirAlquiler({super.key});
@@ -16,8 +21,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   String? _idClienteSeleccionado;
   String? _idVehiculoSeleccionado;
 
-  List<Map<String, dynamic>> listaClientes = [];
-  List<Map<String, dynamic>> listaVehiculos = [];
+  List<Cliente> listaClientes = [];
+  List<Vehiculo> listaVehiculos = [];
 
   List<String> fotosTemporales = [];
 
@@ -37,19 +42,17 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   bool devolverFianza = false;
 
   Future<void> cargarIdsClientes() async {
-    final db = await DatabaseHelper.proyectodb();
-    final clientes = await db.query("clientes");
+    final clientes = await DatabaseHelper.instance.obtenerClientes();
     setState(() {
       listaClientes = clientes;
     });
   }
 
   Future<void> cargarIdsVehiculos() async {
-    final db = await DatabaseHelper.proyectodb();
-    final vehiculos = await db.query("vehiculos", where: "estado != ?", whereArgs: ["Taller"]);
+    final vehiculos = await DatabaseHelper.instance.obtenerVehiculos();
 
     setState(() {
-      listaVehiculos = vehiculos;
+      listaVehiculos = vehiculos.where((v) => v.estado != "Taller").toList();
     });
   }
 
@@ -124,64 +127,38 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Autocomplete<Map<String, dynamic>>(
+                    child: Autocomplete<Cliente>(
                       optionsBuilder: (TextEditingValue textEditingValue) {
                         if (textEditingValue.text.isEmpty) return listaClientes;
                         return listaClientes.where((cliente) {
-                          final documento = cliente["documento_oficial"].toLowerCase();
-                          return documento.contains(textEditingValue.text.toLowerCase());
+                          return cliente.documentoOficial.toLowerCase().contains(textEditingValue.text.toLowerCase());
                         });
                       },
-                      displayStringForOption: (cliente) => "${cliente["documento_oficial"]} - ${cliente["nombre"]}",
-                      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-                        return TextFormField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          decoration: InputDecoration(
-                            labelText: "DNI del cliente",
-                            prefixIcon: const Icon(Icons.person_search),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
-                      },
+
+                      displayStringForOption: (cliente) => "${cliente.documentoOficial} - ${cliente.nombre}",
+
                       onSelected: (clienteSeleccionado) {
                         setState(() {
-                          _idClienteSeleccionado = clienteSeleccionado["id"].toString();
+                          _idClienteSeleccionado = clienteSeleccionado.id.toString();
                         });
                       },
                     ),
                   ),
                   const SizedBox(width: 15),
                   Expanded(
-                    child: Autocomplete<Map<String, dynamic>>(
+                    child: Autocomplete<Vehiculo>(
                       optionsBuilder: (TextEditingValue textEditingValue) {
                         if (textEditingValue.text.isEmpty) return listaVehiculos;
                         return listaVehiculos.where((vehiculo) {
-                          final matricula = vehiculo["matricula"].toLowerCase();
-                          return matricula.contains(textEditingValue.text.toLowerCase());
+                          return vehiculo.matricula.toLowerCase().contains(textEditingValue.text.toLowerCase());
                         });
                       },
-                      displayStringForOption: (vehiculo) => "${vehiculo["matricula"]} - ${vehiculo["modelo"]}",
-                      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-                        return TextFormField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          decoration: InputDecoration(
-                            labelText: "Matricula del vehiculo",
-                            prefixIcon: const Icon(Icons.car_rental),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
-                      },
+
+                      displayStringForOption: (vehiculo) => "${vehiculo.matricula} - ${vehiculo.modelo}",
+
                       onSelected: (vehiculoSeleccionado) {
                         setState(() {
-                          _idVehiculoSeleccionado = vehiculoSeleccionado["id"].toString();
-
-                          if (vehiculoSeleccionado["precio"] != null) {
-                            // GUARDAMOS EL PRECIO ORIGINAL EN LA VARIABLE DE MEMORIA
-                            precioBaseDelCoche = double.tryParse(vehiculoSeleccionado["precio"].toString());
-                            _precioController.text = vehiculoSeleccionado["precio"].toString();
-                          }
+                          _idVehiculoSeleccionado = vehiculoSeleccionado.id.toString();
                         });
                       },
                     ),
@@ -500,24 +477,46 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
   Future<void> _guardarAlquiler() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_idClienteSeleccionado == null || _idVehiculoSeleccionado == null) return;
 
-    final db = await DatabaseHelper.proyectodb();
-    int idNuevoAlquiler = await db.insert("alquileres", {
-      "id_coche": _idVehiculoSeleccionado,
-      "id_cliente": _idClienteSeleccionado,
-      "precio": double.parse(_precioController.text),
-      "fianza": double.tryParse(_fianzaController.text) ?? 0.0,
-      "forma_pago": formaPagoActual,
-      "fecha_inicio": _fechaInicioController.text,
-      "fecha_fin": _fechaFinController.text,
-      "estado": estadoActual,
-      "observaciones": _observacionesController.text,
-      "devolver_fianza": devolverFianza ? 1 : 0,
-    });
+    if (_idClienteSeleccionado == null || _idVehiculoSeleccionado == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Selecciona cliente y vehículo"), backgroundColor: Colors.red));
+      return;
+    }
+
+    bool estaLibre = await DatabaseHelper.instance.cocheEstaDisponible(
+      int.parse(_idVehiculoSeleccionado!),
+      _fechaInicioController.text,
+      _fechaFinController.text,
+    );
+
+    if (!estaLibre) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("El coche ya está ocupado en esa fecha"), backgroundColor: Colors.red));
+      return;
+    }
+
+    final alquiler = Alquiler(
+      idCoche: int.parse(_idVehiculoSeleccionado!),
+      idCliente: int.parse(_idClienteSeleccionado!),
+      fechaInicio: _fechaInicioController.text,
+      fechaFin: _fechaFinController.text,
+      precio: double.parse(_precioController.text),
+      fianza: double.tryParse(_fianzaController.text) ?? 0.0,
+      estado: estadoActual,
+      observaciones: _observacionesController.text,
+      formaPago: formaPagoActual,
+      devolverFianza: devolverFianza ? 1 : 0,
+    );
+
+    final db = await DatabaseHelper.instance.database;
+    int idNuevoAlquiler = await db.insert("alquileres", alquiler.toMap());
 
     for (String ruta in fotosTemporales) {
-      await db.insert("fotos", {"id_alquiler": idNuevoAlquiler, "ruta": ruta});
+      final foto = Foto(idAlquiler: idNuevoAlquiler, ruta: ruta);
+      await db.insert("fotos", foto.toMap());
     }
 
     Navigator.pop(context);
