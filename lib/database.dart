@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -247,15 +246,16 @@ class DatabaseHelper {
        ) as total 
        FROM alquileres 
        WHERE estado = 'Terminado'
-       AND fecha_inicio <= ? AND fecha_fin >= ?
+       AND fecha_inicio BETWEEN ? AND ?  -- CAMBIO AQUÍ: Usamos BETWEEN
        GROUP BY forma_pago''',
-      [fin, inicio],
+      [inicio, fin], // Ahora el orden es Inicio, Fin
     );
 
     Map<String, double> totales = {"Efectivo": 0.0, "Tarjeta": 0.0, "Transferencia": 0.0};
 
     for (var row in resultados) {
       String? fp = row['forma_pago'];
+      // Asegúrate de que comparas exactamente con los strings del mapa
       if (fp != null && totales.containsKey(fp)) {
         totales[fp] = (row['total'] as num).toDouble();
       }

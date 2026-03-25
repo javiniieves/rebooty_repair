@@ -1,5 +1,7 @@
 import 'dart:io';
-
+import 'package:path_provider/path_provider.dart'; // Añade esta dependencia en pubspec.yaml
+import 'package:path/path.dart' as p;
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:image_picker/image_picker.dart';
@@ -133,10 +135,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     height: 200,
                     margin: const EdgeInsets.only(bottom: 20),
                     decoration: BoxDecoration(
-                      color: Theme
-                          .of(context)
-                          .colorScheme
-                          .primary,
+                      color: Theme.of(context).colorScheme.primary,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.deepPurple.withOpacity(0.3), width: 2),
                       boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
@@ -191,7 +190,11 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 10)),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 10),
+                        ),
                       ],
                       image: DecorationImage(image: FileImage(File(rutaFoto!)), fit: BoxFit.cover),
                     ),
@@ -204,10 +207,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   children: [
                     Expanded(
                       child: TextFormField(
-                        style: TextStyle(color: Theme
-                            .of(context)
-                            .colorScheme
-                            .tertiary),
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                         controller: _matriculaController,
                         decoration: InputDecoration(
                           labelText: "Matricula",
@@ -229,10 +229,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     const SizedBox(width: 15),
                     Expanded(
                       child: TextFormField(
-                        style: TextStyle(color: Theme
-                            .of(context)
-                            .colorScheme
-                            .tertiary),
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                         controller: _marcaController,
                         decoration: InputDecoration(
                           labelText: "Marca",
@@ -258,10 +255,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   children: [
                     Expanded(
                       child: TextFormField(
-                        style: TextStyle(color: Theme
-                            .of(context)
-                            .colorScheme
-                            .tertiary),
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                         controller: _modeloController,
                         decoration: InputDecoration(
                           labelText: "Modelo",
@@ -279,7 +273,8 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     const SizedBox(width: 15),
                     Expanded(
                       child: TextFormField(
-                        keyboardType: TextInputType.number,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                         style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                         controller: _precioController,
                         decoration: InputDecoration(
@@ -287,6 +282,11 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           prefixIcon: const Icon(Icons.euro),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return "Escribe el precio";
+                          if (double.tryParse(value) == null) return "Precio no válido";
+                          return null;
+                        },
                       ),
                     ),
                   ],
@@ -301,10 +301,8 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     Expanded(
                       child: TextFormField(
                         keyboardType: TextInputType.number,
-                        style: TextStyle(color: Theme
-                            .of(context)
-                            .colorScheme
-                            .tertiary),
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                         controller: _anyoController,
                         decoration: InputDecoration(
                           labelText: "Año",
@@ -326,10 +324,8 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     Expanded(
                       child: TextFormField(
                         keyboardType: TextInputType.number,
-                        style: TextStyle(color: Theme
-                            .of(context)
-                            .colorScheme
-                            .tertiary),
+                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                         controller: _kilometrajeController,
                         decoration: InputDecoration(
                           labelText: "Kilometraje",
@@ -359,10 +355,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     Expanded(
                       child: TextFormField(
                         controller: _fechaController,
-                        style: TextStyle(color: Theme
-                            .of(context)
-                            .colorScheme
-                            .tertiary, fontSize: 12),
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
                         readOnly: true,
                         decoration: InputDecoration(
                           labelText: "Fecha finalización del seguro",
@@ -383,17 +376,11 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           prefixIcon: const Icon(Icons.info_outline),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        dropdownColor: Theme
-                            .of(context)
-                            .colorScheme
-                            .primary,
+                        dropdownColor: Theme.of(context).colorScheme.primary,
                         items: ["Disponible", "Alquilado", "Taller"].map((estadoActual) {
                           return DropdownMenuItem(
                             value: estadoActual,
-                            child: Text(estadoActual, style: TextStyle(color: Theme
-                                .of(context)
-                                .colorScheme
-                                .tertiary)),
+                            child: Text(estadoActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
                           );
                         }).toList(),
                         onChanged: (nuevoEstado) {
@@ -415,10 +402,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     Expanded(
                       child: TextFormField(
                         controller: _itvController,
-                        style: TextStyle(color: Theme
-                            .of(context)
-                            .colorScheme
-                            .tertiary, fontSize: 12),
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
                         readOnly: true,
                         decoration: InputDecoration(
                           labelText: "Próxima ITV",
@@ -466,10 +450,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   children: [
                     Expanded(
                       child: TextFormField(
-                        style: TextStyle(color: Theme
-                            .of(context)
-                            .colorScheme
-                            .tertiary),
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                         readOnly: true,
                         decoration: InputDecoration(
                           labelText: "Color",
@@ -486,10 +467,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     const SizedBox(width: 15),
                     Expanded(
                       child: TextFormField(
-                        style: TextStyle(color: Theme
-                            .of(context)
-                            .colorScheme
-                            .tertiary),
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                         controller: _observacionesController,
                         decoration: InputDecoration(
                           labelText: "Notas",
@@ -523,6 +501,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     Expanded(
                       child: TextFormField(
                         keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                         controller: _combustibleCantidadController,
                         decoration: InputDecoration(
@@ -584,22 +563,31 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
   Future<void> _guardarVehiculo() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // GUARDAMOS LA FOTO DE FORMA PERMANENTE EN DOCUMENTOS
+    String? rutaFinal;
+    if (rutaFoto != null) {
+      final appDir = await getApplicationDocumentsDirectory();
+      final nombreImagen = p.basename(rutaFoto!);
+      final imagenGuardada = await File(rutaFoto!).copy('${appDir.path}/$nombreImagen');
+      rutaFinal = imagenGuardada.path;
+    }
+
     final vehiculo = Vehiculo(
-        matricula: _matriculaController.text,
-        marca: _marcaController.text,
-        modelo: _modeloController.text,
-        estado: estadoActual,
-        color: colorDelVehiculo.value,
-        kilometraje: double.tryParse(_kilometrajeController.text),
-        anyo: int.tryParse(_anyoController.text),
-        combustible: combustible,
-        observaciones: _observacionesController.text,
-        fechaVencimientoSeguro: _fechaController.text,
-        fechaProximaItv: _itvController.text,
-        cantidadCombustible: int.parse(_combustibleCantidadController.text),
-        rutaFoto: rutaFoto,
-        necesitaLimpieza: necesitaLimpieza ? 1 : 0,
-        precio: double.tryParse(_precioController.text)
+      matricula: _matriculaController.text,
+      marca: _marcaController.text,
+      modelo: _modeloController.text,
+      estado: estadoActual,
+      color: colorDelVehiculo.value,
+      kilometraje: double.tryParse(_kilometrajeController.text),
+      anyo: int.tryParse(_anyoController.text),
+      combustible: combustible,
+      observaciones: _observacionesController.text,
+      fechaVencimientoSeguro: _fechaController.text,
+      fechaProximaItv: _itvController.text,
+      cantidadCombustible: int.parse(_combustibleCantidadController.text),
+      rutaFoto: rutaFinal, // Usamos la ruta permanente
+      necesitaLimpieza: necesitaLimpieza ? 1 : 0,
+      precio: double.tryParse(_precioController.text),
     );
 
     await DatabaseHelper.instance.insertarVehiculo(vehiculo);
@@ -636,22 +624,21 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
     showDialog(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text("Selecciona un color"),
-            content: SingleChildScrollView(
-              child: ColorPicker(pickerColor: pickerColor, onColorChanged: changeColor),
-            ),
-            actions: [
-              ElevatedButton(
-                child: const Text('seleccionar'),
-                onPressed: () async {
-                  setState(() => colorDelVehiculo = pickerColor);
-                  Navigator.pop(context);
-                },
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text("Selecciona un color"),
+        content: SingleChildScrollView(
+          child: ColorPicker(pickerColor: pickerColor, onColorChanged: changeColor),
+        ),
+        actions: [
+          ElevatedButton(
+            child: const Text('seleccionar'),
+            onPressed: () async {
+              setState(() => colorDelVehiculo = pickerColor);
+              Navigator.pop(context);
+            },
           ),
+        ],
+      ),
     );
   }
 
@@ -667,9 +654,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     if (fechaElegida != null) {
       setState(() {
         String fechaFormateada =
-            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day
-            .toString()
-            .padLeft(2, '0')}";
+            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
         controller.text = fechaFormateada;
       });
     }

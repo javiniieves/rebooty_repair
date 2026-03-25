@@ -50,10 +50,25 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
   Future<void> cargarIdsVehiculos() async {
     final vehiculos = await DatabaseHelper.instance.obtenerVehiculos();
-
     setState(() {
       listaVehiculos = vehiculos.where((v) => v.estado != "Taller").toList();
     });
+  }
+
+  // --- NUEVA FUNCIÓN PARA CALCULAR EL PRECIO AUTOMÁTICAMENTE ---
+  void _calcularPrecioAutomatico() {
+    if (fechaInicio != null && fechaFin != null && precioBaseDelCoche != null) {
+      // Calculamos la diferencia en días. Sumamos +1 para que el mismo día cuente como 1
+      final diferencia = fechaFin!.difference(fechaInicio!).inDays + 1;
+
+      if (diferencia >= 30) {
+        _precioController.text = "700";
+      } else {
+        // Multiplicamos días por el precio que tenga el coche guardado
+        double total = diferencia * precioBaseDelCoche!;
+        _precioController.text = total.toStringAsFixed(2);
+      }
+    }
   }
 
   @override
@@ -134,9 +149,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                           return cliente.documentoOficial.toLowerCase().contains(textEditingValue.text.toLowerCase());
                         });
                       },
-
                       displayStringForOption: (cliente) => "${cliente.documentoOficial} - ${cliente.nombre}",
-
                       onSelected: (clienteSeleccionado) {
                         setState(() {
                           _idClienteSeleccionado = clienteSeleccionado.id.toString();
@@ -153,12 +166,14 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                           return vehiculo.matricula.toLowerCase().contains(textEditingValue.text.toLowerCase());
                         });
                       },
-
                       displayStringForOption: (vehiculo) => "${vehiculo.matricula} - ${vehiculo.modelo}",
-
                       onSelected: (vehiculoSeleccionado) {
                         setState(() {
                           _idVehiculoSeleccionado = vehiculoSeleccionado.id.toString();
+                          // AQUÍ GUARDAMOS EL PRECIO DEL COCHE ELEGIDO
+                          precioBaseDelCoche = vehiculoSeleccionado.precio;
+                          // RECALCULAMOS POR SI LAS FECHAS YA ESTABAN PUESTAS
+                          _calcularPrecioAutomatico();
                         });
                       },
                     ),
@@ -378,7 +393,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                             children: [
                               Icon(Icons.add_photo_alternate_outlined, size: 50),
                               SizedBox(height: 10),
-                              const Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
+                              Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
                             ],
                           ),
                         ),
@@ -460,17 +475,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
           _fechaFinController.text = fechaFormateada;
         }
 
-        // Comprobamos si hay un mes de diferencia
-        if (fechaInicio != null && fechaFin != null) {
-          // Usamos un pequeño margen para que si son 29 días y 23 horas cuente como 30
-          final diferencia = fechaFin!.difference(fechaInicio!).inDays;
-
-          if (diferencia >= 29) {
-            _precioController.text = "700";
-          } else if (precioBaseDelCoche != null) {
-            _precioController.text = precioBaseDelCoche.toString();
-          }
-        }
+        // LLAMAMOS AL NUEVO MÉTODO DE CÁLCULO
+        _calcularPrecioAutomatico();
       });
     }
   }

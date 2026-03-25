@@ -219,7 +219,7 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                   String fechaHoy =
                       "${hoy.year}-${hoy.month.toString().padLeft(2, '0')}-${hoy.day.toString().padLeft(2, '0')}";
 
-                  actualizarAlquiler("estado", _estadoActual);
+                  actualizarAlquiler("estado", "Terminado");
                   actualizarAlquiler("fecha_devolucion", fechaHoy);
                   actualizarAlquiler("devolver_fianza", quedarseFianza ? 0 : 1);
                   actualizarVehiculo("estado", "Disponible");
