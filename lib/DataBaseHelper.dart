@@ -43,7 +43,7 @@ class DatabaseHelper {
       cantidad_combustible INTEGER,
       fecha_proxima_itv TEXT,
       necesita_limpieza INTEGER,
-      precio REAL
+      precios REAL
     )
     ''');
 

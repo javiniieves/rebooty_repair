@@ -280,11 +280,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                     children: [
                                       Expanded(child: _infoRow(Icons.person, "Cliente", _clienteNombreController)),
                                       IconButton(
-                                        onPressed: () async => await Navigator.pushNamed(
-                                          context,
-                                          "detalles_cliente",
-                                          arguments: cliente,
-                                        ),
+                                        onPressed: () async =>
+                                            await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente),
                                         icon: const Icon(Icons.arrow_forward_ios),
                                       ),
                                     ],
@@ -352,11 +349,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
                                         child: _infoRow(Icons.directions_car, "Coche", _cocheMatriculaController),
                                       ),
                                       IconButton(
-                                        onPressed: () async => await Navigator.pushNamed(
-                                          context,
-                                          "detalles_vehiculo",
-                                          arguments: coche,
-                                        ),
+                                        onPressed: () async =>
+                                            await Navigator.pushNamed(context, "detalles_vehiculo", arguments: coche),
                                         icon: const Icon(Icons.arrow_forward_ios),
                                       ),
                                     ],

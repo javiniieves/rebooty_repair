@@ -484,24 +484,27 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                 // TABLA DE PRECIOS POR DÍAS (TIPO EXCEL)
                 const Text("TABLA DE PRECIOS (€)", style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                Table(
-                  border: TableBorder.all(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(5)),
-                  columnWidths: const { 0: FixedColumnWidth(60) },
-                  children: [
-                    TableRow(
-                      decoration: BoxDecoration(color: Colors.grey.shade200),
-                      children: const [
-                        Padding(padding: EdgeInsets.all(8.0), child: Text("Días", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                        Padding(padding: EdgeInsets.all(8.0), child: Text("Precio del alquiler (€)", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                      ],
-                    ),
-                    ...List.generate(7, (index) {
-                      return TableRow(
-                        children: [
-                          Padding(padding: const EdgeInsets.symmetric(vertical: 15), child: Text("${index + 1}", textAlign: TextAlign.center)),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: TextFormField(
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor, // color de fondo general
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Table(
+                    border: TableBorder.all(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(5)),
+                    columnWidths: const { 0: FixedColumnWidth(60) },
+                    children: [
+                      TableRow(
+                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
+                        children: const [
+                          Padding(padding: EdgeInsets.all(8.0), child: Text("Días", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                          Padding(padding: EdgeInsets.all(8.0), child: Text("Precio del alquiler (€)", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                        ],
+                      ),
+                      ...List.generate(7, (index) {
+                        return TableRow(
+                          children: [
+                            Padding(padding: const EdgeInsets.symmetric(vertical: 15), child: Text("${index + 1}", textAlign: TextAlign.center)),
+                            TextFormField(
                               controller: _preciosTableControllers[index],
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
@@ -509,11 +512,11 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                               decoration: const InputDecoration(border: InputBorder.none, hintText: "0.00"),
                               validator: (value) => (value == null || value.isEmpty) ? "Indique precio" : null,
                             ),
-                          ),
-                        ],
-                      );
-                    }),
-                  ],
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 50),

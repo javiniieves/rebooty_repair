@@ -318,7 +318,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   secondary: const Icon(Icons.cleaning_services_outlined, color: Colors.black),
-                  activeColor: Colors.deepPurple,
+                  activeColor: Theme.of(context).colorScheme.secondary,
                   value: vehiculo.necesitaLimpieza == 1,
                   onChanged: (bool nuevoValor) {
                     cambiarLimpieza(nuevoValor);
@@ -336,7 +336,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                 border: TableBorder.all(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
                 children: [
                   TableRow(
-                    decoration: BoxDecoration(color: Colors.grey.shade200),
+                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(10)),
                     children: const [
                       Padding(padding: EdgeInsets.all(8.0), child: Text("Día", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
                       Padding(padding: EdgeInsets.all(8.0), child: Text("Precio (€)", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
@@ -344,13 +344,14 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                   ),
                   ...List.generate(7, (index) {
                     return TableRow(
+                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
                       children: [
                         Padding(padding: const EdgeInsets.all(12.0), child: Text("${index + 1}", textAlign: TextAlign.center)),
                         InkWell(
                           onTap: () => editarPrecioDia(index, listaPrecios),
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
-                            child: Text("${listaPrecios[index]} €", textAlign: TextAlign.center, style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                            child: Text("${listaPrecios[index]} €", textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
                       ],
