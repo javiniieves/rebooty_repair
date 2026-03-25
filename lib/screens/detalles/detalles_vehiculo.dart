@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:rebooty_repair/models/Reparacion.dart';
 import 'package:rebooty_repair/models/Vehiculo.dart';
@@ -21,7 +22,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   final _anyoController = TextEditingController();
   final _observacionesController = TextEditingController();
   final _combustibleController = TextEditingController();
-  final _precioController = TextEditingController();
+  final _editPrecioController = TextEditingController();
 
   final regex = RegExp(r'^\d{4}[BCDFGHJKLMNPRSTVWXYZQ]{3}$');
 
@@ -84,8 +85,52 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
     }
   }
 
+  void editarPrecioDia(int index, List<String> listaPrecios) {
+    _editPrecioController.text = listaPrecios[index];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Editar Precio Día ${index + 1}"),
+        content: TextFormField(
+          controller: _editPrecioController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+          ],
+          decoration: const InputDecoration(
+            labelText: "Precio en Euros",
+            suffixText: "€",
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("CANCELAR")
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              String valorLimpio = _editPrecioController.text.trim();
+              if (valorLimpio.isEmpty) valorLimpio = "0.0";
+
+              listaPrecios[index] = valorLimpio;
+              String nuevoChurro = listaPrecios.join(',');
+
+              await actualizarVehiculo("precios", nuevoChurro);
+              Navigator.pop(context);
+            },
+            child: const Text("GUARDAR"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    List<String> listaPrecios = (vehiculo.precios ?? "0,0,0,0,0,0,0").split(',');
+
     return Scaffold(
       appBar: AppBar(title: const Text("Detalles del Vehículo"), centerTitle: true),
 
@@ -148,7 +193,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                             const Divider(),
                             filaEditable(
                               Icons.security,
-                              "Fecha de caducidad del seguro",
+                              "Fin Seguro",
                               vehiculo.fechaVencimientoSeguro!,
                                   () => seleccionarFecha("fecha_vencimiento_seguro"),
                             ),
@@ -162,22 +207,14 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                             const Divider(),
                             filaEditable(
                               Icons.oil_barrel_outlined,
-                              "Líneas de Combustible",
-                              "${vehiculo.cantidadCombustible} líneas",
+                              "Líneas Combustible",
+                              "${vehiculo.cantidadCombustible}",
                                   () => mostrarDialogoTexto(
                                 "cantidad_combustible",
                                 _combustibleController,
                                 soloNumeros: true,
                                 esCombustible: true,
                               ),
-                            ),
-                            const Divider(),
-                            // NOTAS COMO ÚLTIMA FILA DE LA IZQUIERDA
-                            filaEditable(
-                              Icons.note,
-                              "Notas",
-                              vehiculo.observaciones ?? "Sin notas",
-                                  () => mostrarDialogoTexto("observaciones", _observacionesController),
                             ),
                           ],
                         ),
@@ -210,10 +247,14 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                             ),
                             const Divider(),
                             filaEditable(
-                              Icons.euro,
-                              "Precio",
-                              "${vehiculo.precio} €",
-                                  () => mostrarDialogoTexto("precio", _precioController, soloNumeros: true),
+                              Icons.info_outline,
+                              "Estado",
+                              vehiculo.estado,
+                                  () => mostrarDropdown("estado", vehiculo.estado, [
+                                "Disponible",
+                                "Alquilado",
+                                "Taller",
+                              ]),
                             ),
                             const Divider(),
                             filaEditable(
@@ -225,17 +266,6 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                 "Gasoil",
                                 "Eléctrico",
                                 "Híbrido",
-                              ]),
-                            ),
-                            const Divider(),
-                            filaEditable(
-                              Icons.info_outline,
-                              "Estado",
-                              vehiculo.estado,
-                                  () => mostrarDropdown("estado", vehiculo.estado, [
-                                "Disponible",
-                                "Alquilado",
-                                "Taller",
                               ]),
                             ),
                             const Divider(),
@@ -263,25 +293,69 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                               ),
                             ),
                             const Divider(),
-                            // LIMPIEZA COMO ÚLTIMA FILA DE LA DERECHA
-                            SwitchListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: const Text(
-                                "Limpieza",
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                              ),
-                              secondary: const Icon(Icons.cleaning_services_outlined, size: 20),
-                              activeColor: Colors.black,
-                              value: vehiculo.necesitaLimpieza == 1,
-                              onChanged: (bool nuevoValor) {
-                                cambiarLimpieza(nuevoValor);
-                              },
+                            filaEditable(
+                              Icons.note,
+                              "Notas",
+                              vehiculo.observaciones ?? "Sin notas",
+                                  () => mostrarDialogoTexto("observaciones", _observacionesController),
                             ),
                           ],
                         ),
                       ),
                     ),
                   ),
+                ],
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Card(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                child: SwitchListTile(
+                  title: const Text(
+                    "¿EL VEHÍCULO NECESITA LIMPIEZA?",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  secondary: const Icon(Icons.cleaning_services_outlined, color: Colors.black),
+                  activeColor: Colors.deepPurple,
+                  value: vehiculo.necesitaLimpieza == 1,
+                  onChanged: (bool nuevoValor) {
+                    cambiarLimpieza(nuevoValor);
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text("PRECIOS POR DÍAS (Click para editar)", style: TextStyle(fontWeight: FontWeight.bold)),
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: Table(
+                border: TableBorder.all(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
+                children: [
+                  TableRow(
+                    decoration: BoxDecoration(color: Colors.grey.shade200),
+                    children: const [
+                      Padding(padding: EdgeInsets.all(8.0), child: Text("Día", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                      Padding(padding: EdgeInsets.all(8.0), child: Text("Precio (€)", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                    ],
+                  ),
+                  ...List.generate(7, (index) {
+                    return TableRow(
+                      children: [
+                        Padding(padding: const EdgeInsets.all(12.0), child: Text("${index + 1}", textAlign: TextAlign.center)),
+                        InkWell(
+                          onTap: () => editarPrecioDia(index, listaPrecios),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Text("${listaPrecios[index]} €", textAlign: TextAlign.center, style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
                 ],
               ),
             ),
@@ -378,12 +452,12 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   }
 
   void mostrarDialogoTexto(
-    String campo,
-    TextEditingController controller, {
-    bool soloNumeros = false,
-    bool esMatricula = false,
-    bool esCombustible = false,
-  }) {
+      String campo,
+      TextEditingController controller, {
+        bool soloNumeros = false,
+        bool esMatricula = false,
+        bool esCombustible = false,
+      }) {
     final formKey = GlobalKey<FormState>();
 
     showDialog(
@@ -477,8 +551,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
   }
 
   void mostrarSelectorColor() {
-    Color pickerColor = Color(0xff443a49);
-    Color currentColor = Color(0xff443a49);
+    Color pickerColor = Color(vehiculo.color!);
 
     void changeColor(Color color) {
       setState(() => pickerColor = color);
@@ -498,8 +571,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
               confirmar = await confirmacion();
               if (!confirmar) return Navigator.pop(context);
 
-              setState(() => currentColor = pickerColor);
-              await actualizarVehiculo("color", currentColor.value);
+              await actualizarVehiculo("color", pickerColor.value);
               Navigator.pop(context);
             },
           ),
@@ -523,7 +595,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
             );
           },
         ) ??
-        false;
+            false;
     return confirmar;
   }
 }
