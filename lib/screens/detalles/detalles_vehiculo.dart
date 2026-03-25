@@ -180,7 +180,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                     ),
                                     secondary: const Icon(Icons.cleaning_services_outlined, size: 20),
                                     activeColor: Colors.black,
-                                    value: vehiculo!["necesita_limpieza"] == 1,
+                                    value: vehiculo.necesitaLimpieza == 1,
                                     onChanged: (bool nuevoValor) {
                                       cambiarLimpieza(nuevoValor);
                                     },
@@ -226,10 +226,14 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                     soloNumeros: true,
                                     esCombustible: true,
                                   ),
+                                ),
+                                const Divider(),
+                                // PRECIO (Ahora en la tercera fila de la derecha)
+                                filaEditable(
                                   Icons.euro,
                                   "Precio",
-                                  "${vehiculo!["precio"]} €",
-                                  () => mostrarDialogoTexto("precio", _precioController, soloNumeros: true),
+                                  "${vehiculo.precio} €",
+                                      () => mostrarDialogoTexto("precio", _precioController, soloNumeros: true),
                                 ),
                                 const Divider(),
                                 filaEditable(
@@ -283,7 +287,7 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                                 filaEditable(
                                   Icons.oil_barrel_outlined,
                                   "Líneas de Combustible",
-                                  "${vehiculo!["cantidad_combustible"]} líneas",
+                                  "${vehiculo.cantidadCombustible} líneas",
                                   () => mostrarDialogoTexto(
                                     "cantidad_combustible",
                                     _combustibleController,

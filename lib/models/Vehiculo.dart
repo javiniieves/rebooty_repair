@@ -16,6 +16,7 @@ class Vehiculo {
   final int? cantidadCombustible;
   final String? fechaProximaItv;
   int? necesitaLimpieza;
+  double? precio;
 
   Vehiculo({
     this.id,
@@ -33,6 +34,7 @@ class Vehiculo {
     this.cantidadCombustible,
     this.fechaProximaItv,
     this.necesitaLimpieza,
+    this.precio
   });
 
   Map<String, dynamic> toMap() {
@@ -52,6 +54,7 @@ class Vehiculo {
       "cantidad_combustible": cantidadCombustible,
       "fecha_proxima_itv": fechaProximaItv,
       "necesita_limpieza": necesitaLimpieza,
+      "precio" : precio
     };
   }
 
@@ -72,6 +75,7 @@ class Vehiculo {
       cantidadCombustible: map["cantidad_combustible"],
       fechaProximaItv: map["fecha_proxima_itv"],
       necesitaLimpieza: map["necesita_limpieza"],
+      precio: map["precio"]
     );
   }
 }

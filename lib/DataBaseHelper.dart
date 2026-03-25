@@ -42,7 +42,8 @@ class DatabaseHelper {
       ruta_foto TEXT,
       cantidad_combustible INTEGER,
       fecha_proxima_itv TEXT,
-      necesita_limpieza INTEGER
+      necesita_limpieza INTEGER,
+      precio REAL
     )
     ''');
 

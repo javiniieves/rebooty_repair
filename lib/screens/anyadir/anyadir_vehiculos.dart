@@ -287,27 +287,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           prefixIcon: Icon(Icons.euro),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        dropdownColor: Theme
-                            .of(context)
-                            .colorScheme
-                            .primary,
-                        items: ["Diesel", "Gasoil", "Eléctrico", "Híbrido"].map((combustibleActual) {
-                          return DropdownMenuItem(
-                            value: combustibleActual,
-                            child: Text(
-                              combustibleActual,
-                              style: TextStyle(color: Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .tertiary, fontSize: 12),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (combustibleElegido) {
-                          setState(() {
-                            combustible = combustibleElegido!;
-                          });
-                        },
                       ),
                     ),
                   ],
@@ -452,13 +431,8 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     ),
                     const SizedBox(width: 15),
                     Expanded(
-                      child: TextFormField(
-                        keyboardType: TextInputType.number,
-                        style: TextStyle(color: Theme
-                            .of(context)
-                            .colorScheme
-                            .tertiary),
-                        controller: _combustibleCantidadController,
+                      child: DropdownButtonFormField(
+                        value: combustible,
                         decoration: InputDecoration(
                           labelText: "Combustible",
                           prefixIcon: Icon(Icons.local_gas_station_outlined),
@@ -608,25 +582,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
   Future<void> _guardarVehiculo() async {
     if (!_formKey.currentState!.validate()) return;
-    final baseDatos = await DatabaseHelper.proyectodb();
-
-    await baseDatos.insert("vehiculos", {
-      "matricula": _matriculaController.text,
-      "marca": _marcaController.text,
-      "modelo": _modeloController.text,
-      "estado": estadoActual,
-      "color": colorDelVehiculo.value,
-      "kilometraje": _kilometrajeController.text,
-      "anyo": _anyoController.text,
-      "combustible": combustible,
-      "observaciones": _observacionesController.text,
-      "fecha_vencimiento_seguro": _fechaController.text,
-      "fecha_proxima_itv": _itvController.text,
-      "cantidad_combustible": int.parse(_combustibleCantidadController.text),
-      "precio": double.parse(_precioController.text),
-      "ruta_foto": rutaFoto,
-      "necesita_limpieza": necesitaLimpieza ? 1 : 0,
-    });
 
     final vehiculo = Vehiculo(matricula: _matriculaController.text,
         marca: _marcaController.text,
@@ -641,7 +596,8 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
       fechaProximaItv: _itvController.text,
       cantidadCombustible: int.parse(_combustibleCantidadController.text),
       rutaFoto: rutaFoto,
-      necesitaLimpieza: necesitaLimpieza ? 1 : 0
+      necesitaLimpieza: necesitaLimpieza ? 1 : 0,
+        precio: double.tryParse(_precioController.text)
     );
 
     await DatabaseHelper.instance.insertarVehiculo(vehiculo);
