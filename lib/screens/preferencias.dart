@@ -121,9 +121,9 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
 
                           // Cerramos la app según la plataforma
                           if (Platform.isAndroid || Platform.isIOS) {
-                            SystemNavigator.pop(); // Mejor para móviles
+                            SystemNavigator.pop();
                           } else {
-                            exit(0); // Cierre forzoso y limpio para Windows, macOS y Linux
+                            exit(0);
                           }
                         } else {
                           if (context.mounted) {

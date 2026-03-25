@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:path_provider/path_provider.dart'; // Añade esta dependencia en pubspec.yaml
+import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
@@ -28,12 +28,11 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
   late TextEditingController _anyoController;
   late TextEditingController _observacionesController;
   late TextEditingController _fechaController;
-
   late TextEditingController _itvController;
   late TextEditingController _combustibleCantidadController;
 
-  // Controlador para el precio
-  late TextEditingController _precioController;
+  // Lista de controladores para la tabla de precios (Días 1 al 7)
+  late List<TextEditingController> _preciosTableControllers;
 
   // estado por defecto al añadir un coche
   String estadoActual = "Disponible";
@@ -55,7 +54,9 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     _fechaController = TextEditingController();
     _itvController = TextEditingController();
     _combustibleCantidadController = TextEditingController();
-    _precioController = TextEditingController();
+
+    // Inicialización de los 7 campos de la tabla de precios
+    _preciosTableControllers = List.generate(7, (index) => TextEditingController());
 
     _formKey = GlobalKey<FormState>();
   }
@@ -71,8 +72,9 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     _fechaController.dispose();
     _itvController.dispose();
     _combustibleCantidadController.dispose();
-    _precioController.dispose();
-
+    for (var controller in _preciosTableControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -209,6 +211,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                       child: TextFormField(
                         style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                         controller: _matriculaController,
+                        textCapitalization: TextCapitalization.characters,
                         decoration: InputDecoration(
                           labelText: "Matricula",
                           prefixIcon: const Icon(Icons.badge),
@@ -249,7 +252,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
                 const SizedBox(height: 20),
 
-                // Modelo y PRECIO (Cambiado por combustible)
+                // Modelo y Kilometraje
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -276,15 +279,19 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                         style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                        controller: _precioController,
+                        controller: _kilometrajeController,
                         decoration: InputDecoration(
-                          labelText: "Precio",
-                          prefixIcon: const Icon(Icons.euro),
+                          labelText: "Kilometraje",
+                          prefixIcon: const Icon(Icons.receipt_long),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return "Escribe el precio";
-                          if (double.tryParse(value) == null) return "Precio no válido";
+                          if (value == null || value.isEmpty) {
+                            return "Escribe los kilómetros del coche";
+                          }
+                          if (!isNumeric(value)) {
+                            return "Solo se pueden números";
+                          }
                           return null;
                         },
                       ),
@@ -294,7 +301,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
                 const SizedBox(height: 20),
 
-                // Año y Kilometraje
+                // Año y Seguro
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -323,71 +330,17 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     const SizedBox(width: 15),
                     Expanded(
                       child: TextFormField(
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                        controller: _kilometrajeController,
-                        decoration: InputDecoration(
-                          labelText: "Kilometraje",
-                          prefixIcon: const Icon(Icons.receipt_long),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Escribe los kilómetros del coche";
-                          }
-                          if (!isNumeric(value)) {
-                            return "Solo se pueden números";
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                // Seguro y Estado
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: TextFormField(
                         controller: _fechaController,
                         style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
                         readOnly: true,
                         decoration: InputDecoration(
-                          labelText: "Fecha finalización del seguro",
+                          labelText: "Fin del seguro",
                           prefixIcon: const Icon(Icons.calendar_today),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onTap: () => seleccionarFecha(_fechaController),
                         validator: (value) =>
-                        (value == null || value.isEmpty) ? "Introduzca la fecha de finalización del seguro" : null,
-                      ),
-                    ),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      child: DropdownButtonFormField(
-                        value: estadoActual,
-                        decoration: InputDecoration(
-                          labelText: "Estado",
-                          prefixIcon: const Icon(Icons.info_outline),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        dropdownColor: Theme.of(context).colorScheme.primary,
-                        items: ["Disponible", "Alquilado", "Taller"].map((estadoActual) {
-                          return DropdownMenuItem(
-                            value: estadoActual,
-                            child: Text(estadoActual, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
-                          );
-                        }).toList(),
-                        onChanged: (nuevoEstado) {
-                          setState(() {
-                            estadoActual = nuevoEstado!;
-                          });
-                        },
+                        (value == null || value.isEmpty) ? "Falta fecha seguro" : null,
                       ),
                     ),
                   ],
@@ -395,7 +348,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
                 const SizedBox(height: 20),
 
-                // ITV y COMBUSTIBLE (Cambiado por precio)
+                // ITV y Estado
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -416,6 +369,33 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                     const SizedBox(width: 15),
                     Expanded(
                       child: DropdownButtonFormField(
+                        value: estadoActual,
+                        decoration: InputDecoration(
+                          labelText: "Estado",
+                          prefixIcon: const Icon(Icons.info_outline),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        dropdownColor: Theme.of(context).colorScheme.primary,
+                        items: ["Disponible", "Alquilado", "Taller"].map((estado) {
+                          return DropdownMenuItem(
+                            value: estado,
+                            child: Text(estado, style: TextStyle(color: Theme.of(context).colorScheme.tertiary)),
+                          );
+                        }).toList(),
+                        onChanged: (nuevo) => setState(() => estadoActual = nuevo!),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // Combustible y Líneas
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField(
                         value: combustible,
                         decoration: InputDecoration(
                           labelText: "Combustible",
@@ -423,19 +403,32 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         dropdownColor: Theme.of(context).colorScheme.primary,
-                        items: ["Diesel", "Gasoil", "Eléctrico", "Híbrido"].map((combustibleActual) {
+                        items: ["Diesel", "Gasoil", "Eléctrico", "Híbrido"].map((c) {
                           return DropdownMenuItem(
-                            value: combustibleActual,
-                            child: Text(
-                              combustibleActual,
-                              style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12),
-                            ),
+                            value: c,
+                            child: Text(c, style: TextStyle(color: Theme.of(context).colorScheme.tertiary, fontSize: 12)),
                           );
                         }).toList(),
-                        onChanged: (combustibleElegido) {
-                          setState(() {
-                            combustible = combustibleElegido!;
-                          });
+                        onChanged: (elegido) => setState(() => combustible = elegido!),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: TextFormField(
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
+                        controller: _combustibleCantidadController,
+                        decoration: InputDecoration(
+                          labelText: "Líneas combustible",
+                          prefixIcon: const Icon(Icons.oil_barrel_outlined),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return "Introduzca líneas";
+                          int? v = int.tryParse(value);
+                          if (v == null || v < 0 || v > 12) return "Máximo 12 líneas";
+                          return null;
                         },
                       ),
                     ),
@@ -450,7 +443,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   children: [
                     Expanded(
                       child: TextFormField(
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                         readOnly: true,
                         decoration: InputDecoration(
                           labelText: "Color",
@@ -459,9 +451,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                           fillColor: colorDelVehiculo,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        onTap: () {
-                          mostrarSelectorColor();
-                        },
+                        onTap: () => mostrarSelectorColor(),
                       ),
                     ),
                     const SizedBox(width: 15),
@@ -471,7 +461,7 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                         controller: _observacionesController,
                         decoration: InputDecoration(
                           labelText: "Notas",
-                          prefixIcon: const Icon(Icons.search),
+                          prefixIcon: const Icon(Icons.note),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
@@ -481,49 +471,48 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
 
                 const SizedBox(height: 20),
 
-                // Limpieza y Cantidad Combustible
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Switch Limpieza
+                SwitchListTile(
+                  title: const Text("¿Necesita limpieza?", style: TextStyle(fontSize: 14)),
+                  secondary: const Icon(Icons.cleaning_services_outlined),
+                  value: necesitaLimpieza,
+                  onChanged: (bool val) => setState(() => necesitaLimpieza = val),
+                ),
+
+                const SizedBox(height: 30),
+
+                // TABLA DE PRECIOS POR DÍAS (TIPO EXCEL)
+                const Text("TABLA DE PRECIOS (€)", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                Table(
+                  border: TableBorder.all(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(5)),
+                  columnWidths: const { 0: FixedColumnWidth(60) },
                   children: [
-                    Expanded(
-                      child: SwitchListTile(
-                        title: const Text("¿Necesita limpieza?", style: TextStyle(fontSize: 14)),
-                        secondary: const Icon(Icons.cleaning_services_outlined),
-                        value: necesitaLimpieza,
-                        onChanged: (bool nuevoValor) {
-                          setState(() {
-                            necesitaLimpieza = nuevoValor;
-                          });
-                        },
-                      ),
+                    TableRow(
+                      decoration: BoxDecoration(color: Colors.grey.shade200),
+                      children: const [
+                        Padding(padding: EdgeInsets.all(8.0), child: Text("Días", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                        Padding(padding: EdgeInsets.all(8.0), child: Text("Precio del alquiler (€)", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                      ],
                     ),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      child: TextFormField(
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
-                        controller: _combustibleCantidadController,
-                        decoration: InputDecoration(
-                          labelText: "Lineas de combustible",
-                          prefixIcon: const Icon(Icons.oil_barrel_outlined),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Introduzca las líneas de combustible";
-                          }
-                          if (!isNumeric(value)) {
-                            return "Solo se permiten números";
-                          }
-                          int? valueInt = int.tryParse(value);
-                          if (valueInt == null) return 'Error de formato';
-                          if (valueInt < 0) return 'No puede tener líneas negativas';
-                          if (valueInt > 12) return 'El máximo son 12 lineas';
-                          return null;
-                        },
-                      ),
-                    ),
+                    ...List.generate(7, (index) {
+                      return TableRow(
+                        children: [
+                          Padding(padding: const EdgeInsets.symmetric(vertical: 15), child: Text("${index + 1}", textAlign: TextAlign.center)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: TextFormField(
+                              controller: _preciosTableControllers[index],
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
+                              textAlign: TextAlign.center,
+                              decoration: const InputDecoration(border: InputBorder.none, hintText: "0.00"),
+                              validator: (value) => (value == null || value.isEmpty) ? "Indique precio" : null,
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                   ],
                 ),
 
@@ -535,21 +524,14 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       if (rutaFoto == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Debes seleccionar una foto del vehículo"),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Seleccione una foto"), backgroundColor: Colors.red));
                         return;
                       }
                       await _guardarVehiculo();
                     },
                     icon: const Icon(Icons.save),
                     label: const Text("GUARDAR"),
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
+                    style: ElevatedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                   ),
                 ),
               ],
@@ -563,7 +545,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
   Future<void> _guardarVehiculo() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // GUARDAMOS LA FOTO DE FORMA PERMANENTE EN DOCUMENTOS
     String? rutaFinal;
     if (rutaFoto != null) {
       final appDir = await getApplicationDocumentsDirectory();
@@ -572,8 +553,13 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
       rutaFinal = imagenGuardada.path;
     }
 
+    // Unimos los 7 precios en un solo String separado por comas
+    String preciosConcatenados = _preciosTableControllers
+        .map((controller) => controller.text.trim().isEmpty ? "0.0" : controller.text.trim())
+        .join(',');
+
     final vehiculo = Vehiculo(
-      matricula: _matriculaController.text,
+      matricula: _matriculaController.text.toUpperCase(),
       marca: _marcaController.text,
       modelo: _modeloController.text,
       estado: estadoActual,
@@ -585,18 +571,16 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
       fechaVencimientoSeguro: _fechaController.text,
       fechaProximaItv: _itvController.text,
       cantidadCombustible: int.parse(_combustibleCantidadController.text),
-      rutaFoto: rutaFinal, // Usamos la ruta permanente
+      rutaFoto: rutaFinal,
       necesitaLimpieza: necesitaLimpieza ? 1 : 0,
-      precio: double.tryParse(_precioController.text),
+      precios: preciosConcatenados,
     );
 
     await DatabaseHelper.instance.insertarVehiculo(vehiculo);
-
     _limpiarCampos();
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Vehículo guardado correctamente")));
-      // Volvemos atrás tras el éxito
       Navigator.pop(context);
     }
   }
@@ -610,52 +594,35 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
     _anyoController.clear();
     _itvController.clear();
     _combustibleCantidadController.clear();
-    _precioController.clear();
-    setState(() {
-      rutaFoto = null;
-    });
+    for (var c in _preciosTableControllers) { c.clear(); }
+    setState(() => rutaFoto = null);
   }
 
   void mostrarSelectorColor() {
     Color pickerColor = const Color(0xff443a49);
-    void changeColor(Color color) {
-      setState(() => pickerColor = color);
-    }
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Selecciona un color"),
-        content: SingleChildScrollView(
-          child: ColorPicker(pickerColor: pickerColor, onColorChanged: changeColor),
-        ),
+        content: SingleChildScrollView(child: ColorPicker(pickerColor: pickerColor, onColorChanged: (c) => pickerColor = c)),
         actions: [
-          ElevatedButton(
-            child: const Text('seleccionar'),
-            onPressed: () async {
-              setState(() => colorDelVehiculo = pickerColor);
-              Navigator.pop(context);
-            },
-          ),
+          ElevatedButton(child: const Text('seleccionar'), onPressed: () { setState(() => colorDelVehiculo = pickerColor); Navigator.pop(context); }),
         ],
       ),
     );
   }
 
   Future<void> seleccionarFecha(TextEditingController controller) async {
-    DateTime fechaHoy = DateTime.now();
     final DateTime? fechaElegida = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2024),
-      lastDate: fechaHoy.add(const Duration(days: 365 * 5)),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
     );
 
     if (fechaElegida != null) {
       setState(() {
-        String fechaFormateada =
-            "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
-        controller.text = fechaFormateada;
+        controller.text = "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
       });
     }
   }
@@ -663,11 +630,6 @@ class _PantallaAnyadirVehiculosState extends State<PantallaAnyadirVehiculos> {
   Future<void> _ventanaAnyadirFoto() async {
     final ImagePicker imagePicker = ImagePicker();
     final XFile? imagen = await imagePicker.pickImage(source: ImageSource.gallery);
-
-    if (imagen != null) {
-      setState(() {
-        rutaFoto = imagen.path;
-      });
-    }
+    if (imagen != null) setState(() => rutaFoto = imagen.path);
   }
 }

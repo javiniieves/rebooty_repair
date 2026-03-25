@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/Alquiler.dart';
@@ -37,7 +38,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   String estadoActual = "Pendiente";
   String formaPagoActual = "Efectivo";
 
-  double? precioBaseDelCoche;
+  // Lista para almacenar los precios del vehículo seleccionado
+  List<double> preciosCocheSeleccionado = [];
 
   bool devolverFianza = false;
 
@@ -55,19 +57,25 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     });
   }
 
-  // --- NUEVA FUNCIÓN PARA CALCULAR EL PRECIO AUTOMÁTICAMENTE ---
   void _calcularPrecioAutomatico() {
-    if (fechaInicio != null && fechaFin != null && precioBaseDelCoche != null) {
-      // Calculamos la diferencia en días. Sumamos +1 para que el mismo día cuente como 1
-      final diferencia = fechaFin!.difference(fechaInicio!).inDays + 1;
+    if (fechaInicio != null && fechaFin != null && preciosCocheSeleccionado.isNotEmpty) {
+      final diferenciaDias = fechaFin!.difference(fechaInicio!).inDays + 1;
+      double total = 0.0;
 
-      if (diferencia >= 30) {
-        _precioController.text = "700";
+      if (diferenciaDias >= 30) {
+        total = 700.0;
+      } else if (diferenciaDias <= 7) {
+        // Precio directo de la tabla según el día
+        total = preciosCocheSeleccionado[diferenciaDias - 1];
       } else {
-        // Multiplicamos días por el precio que tenga el coche guardado
-        double total = diferencia * precioBaseDelCoche!;
-        _precioController.text = total.toStringAsFixed(2);
+        // Más de 7 días: Precio día 7 + (media diaria del día 7 * días extra)
+        double precioDia7 = preciosCocheSeleccionado[6];
+        double precioMedio = precioDia7 / 7;
+        int diasExtra = diferenciaDias - 7;
+        total = precioDia7 + (precioMedio * diasExtra);
       }
+
+      _precioController.text = total.toStringAsFixed(2);
     }
   }
 
@@ -170,9 +178,11 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       onSelected: (vehiculoSeleccionado) {
                         setState(() {
                           _idVehiculoSeleccionado = vehiculoSeleccionado.id.toString();
-                          // AQUÍ GUARDAMOS EL PRECIO DEL COCHE ELEGIDO
-                          precioBaseDelCoche = vehiculoSeleccionado.precio;
-                          // RECALCULAMOS POR SI LAS FECHAS YA ESTABAN PUESTAS
+                          // Extraemos la lista de precios del String
+                          preciosCocheSeleccionado = (vehiculoSeleccionado.precios ?? "0,0,0,0,0,0,0")
+                              .split(',')
+                              .map((p) => double.tryParse(p) ?? 0.0)
+                              .toList();
                           _calcularPrecioAutomatico();
                         });
                       },
@@ -233,7 +243,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                     child: TextFormField(
                       style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                       controller: _precioController,
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                       decoration: InputDecoration(
                         labelText: "Precio",
                         prefixIcon: const Icon(Icons.price_check_rounded),
@@ -241,9 +252,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) return "Introduce precio";
-                        final numero = double.tryParse(value);
-                        if (numero == null) return "No válido";
-                        if (numero < 0) return "Debe ser positivo";
                         return null;
                       },
                     ),
@@ -253,19 +261,13 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                     child: TextFormField(
                       style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
                       controller: _fianzaController,
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                       decoration: InputDecoration(
                         labelText: "Fianza",
                         prefixIcon: const Icon(Icons.security_rounded),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      validator: (value) {
-                        if (value != null && value.isNotEmpty) {
-                          final numero = double.tryParse(value);
-                          if (numero == null) return "No válida";
-                        }
-                        return null;
-                      },
                     ),
                   ),
                 ],
@@ -393,7 +395,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                             children: [
                               Icon(Icons.add_photo_alternate_outlined, size: 50),
                               SizedBox(height: 10),
-                              Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
+                              const Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
                             ],
                           ),
                         ),
@@ -463,9 +465,9 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
     if (fechaElegida != null) {
       setState(() {
-        // Forzamos a que la fecha no tenga horas/minutos para que la resta sea exacta
         DateTime fechaLimpia = DateTime(fechaElegida.year, fechaElegida.month, fechaElegida.day);
-        String fechaFormateada = "${fechaLimpia.year}-${fechaLimpia.month.toString().padLeft(2, '0')}-${fechaLimpia.day.toString().padLeft(2, '0')}";
+        String fechaFormateada =
+            "${fechaLimpia.year}-${fechaLimpia.month.toString().padLeft(2, '0')}-${fechaLimpia.day.toString().padLeft(2, '0')}";
 
         if (esInicio) {
           fechaInicio = fechaLimpia;
@@ -475,7 +477,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
           _fechaFinController.text = fechaFormateada;
         }
 
-        // LLAMAMOS AL NUEVO MÉTODO DE CÁLCULO
         _calcularPrecioAutomatico();
       });
     }
@@ -498,9 +499,9 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     );
 
     if (!estaLibre) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("El coche ya está ocupado en esa fecha"), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("El coche ya está ocupado en esa fecha"), backgroundColor: Colors.red),
+      );
       return;
     }
 

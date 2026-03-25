@@ -16,7 +16,8 @@ class Vehiculo {
   final int? cantidadCombustible;
   final String? fechaProximaItv;
   int? necesitaLimpieza;
-  double? precio;
+  // Cambiado de double a String para guardar los 7 precios de la tabla
+  String? precios;
 
   Vehiculo({
     this.id,
@@ -34,7 +35,7 @@ class Vehiculo {
     this.cantidadCombustible,
     this.fechaProximaItv,
     this.necesitaLimpieza,
-    this.precio
+    this.precios
   });
 
   Map<String, dynamic> toMap() {
@@ -54,28 +55,28 @@ class Vehiculo {
       "cantidad_combustible": cantidadCombustible,
       "fecha_proxima_itv": fechaProximaItv,
       "necesita_limpieza": necesitaLimpieza,
-      "precio" : precio
+      "precios" : precios // Mapeado como String
     };
   }
 
   factory Vehiculo.fromMap(Map<String, dynamic> map) {
     return Vehiculo(
-      id: map["id"],
-      matricula: map["matricula"],
-      marca: map["marca"],
-      modelo: map["modelo"],
-      estado: map["estado"],
-      color: map["color"],
-      kilometraje: map["kilometraje"],
-      anyo: map["anyo"],
-      combustible: map["combustible"],
-      observaciones: map["observaciones"],
-      fechaVencimientoSeguro: map["fecha_vencimiento_seguro"],
-      rutaFoto: map["ruta_foto"],
-      cantidadCombustible: map["cantidad_combustible"],
-      fechaProximaItv: map["fecha_proxima_itv"],
-      necesitaLimpieza: map["necesita_limpieza"],
-      precio: map["precio"]
+        id: map["id"],
+        matricula: map["matricula"],
+        marca: map["marca"],
+        modelo: map["modelo"],
+        estado: map["estado"],
+        color: map["color"],
+        kilometraje: map["kilometraje"],
+        anyo: map["anyo"],
+        combustible: map["combustible"],
+        observaciones: map["observaciones"],
+        fechaVencimientoSeguro: map["fecha_vencimiento_seguro"],
+        rutaFoto: map["ruta_foto"],
+        cantidadCombustible: map["cantidad_combustible"],
+        fechaProximaItv: map["fecha_proxima_itv"],
+        necesitaLimpieza: map["necesita_limpieza"],
+        precios: map["precios"] // Mapeado como String
     );
   }
 }
