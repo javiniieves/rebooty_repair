@@ -38,7 +38,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   String estadoActual = "Pendiente";
   String formaPagoActual = "Efectivo";
 
-  // Lista para almacenar los precios del vehículo seleccionado
   List<double> preciosCocheSeleccionado = [];
 
   bool devolverFianza = false;
@@ -57,25 +56,30 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     });
   }
 
+  // --- NUEVA FUNCIÓN PARA CALCULAR EL PRECIO AUTOMÁTICAMENTE ---
   void _calcularPrecioAutomatico() {
     if (fechaInicio != null && fechaFin != null && preciosCocheSeleccionado.isNotEmpty) {
       final diferenciaDias = fechaFin!.difference(fechaInicio!).inDays + 1;
       double total = 0.0;
 
-      if (diferenciaDias >= 30) {
-        total = 700.0;
-      } else if (diferenciaDias <= 7) {
-        // Precio directo de la tabla según el día
+      if (diferenciaDias < 7) {
         total = preciosCocheSeleccionado[diferenciaDias - 1];
-      } else {
-        // Más de 7 días: Precio día 7 + (media diaria del día 7 * días extra)
+      } else if (diferenciaDias >= 7 && diferenciaDias < 30) {
         double precioDia7 = preciosCocheSeleccionado[6];
         double precioMedio = precioDia7 / 7;
         int diasExtra = diferenciaDias - 7;
         total = precioDia7 + (precioMedio * diasExtra);
+      } else if (diferenciaDias == 30) {
+        total = 700.0;
+      } else {
+        double precioDiarioMensual = 700.0 / 30;
+        int diasExtraSobreMes = diferenciaDias - 30;
+        total = 700.0 + (precioDiarioMensual * diasExtraSobreMes);
       }
 
-      _precioController.text = total.toStringAsFixed(2);
+      setState(() {
+        _precioController.text = total.toStringAsFixed(2);
+      });
     }
   }
 
@@ -178,11 +182,12 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       onSelected: (vehiculoSeleccionado) {
                         setState(() {
                           _idVehiculoSeleccionado = vehiculoSeleccionado.id.toString();
-                          // Extraemos la lista de precios del String
+                          // AQUÍ GUARDAMOS EL PRECIO DEL COCHE ELEGIDO
                           preciosCocheSeleccionado = (vehiculoSeleccionado.precios ?? "0,0,0,0,0,0,0")
                               .split(',')
                               .map((p) => double.tryParse(p) ?? 0.0)
                               .toList();
+                          // RECALCULAMOS POR SI LAS FECHAS YA ESTABAN PUESTAS
                           _calcularPrecioAutomatico();
                         });
                       },
@@ -252,6 +257,9 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) return "Introduce precio";
+                        final numero = double.tryParse(value);
+                        if (numero == null) return "No válido";
+                        if (numero < 0) return "Debe ser positivo";
                         return null;
                       },
                     ),
@@ -268,6 +276,13 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         prefixIcon: const Icon(Icons.security_rounded),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
+                      validator: (value) {
+                        if (value != null && value.isNotEmpty) {
+                          final numero = double.tryParse(value);
+                          if (numero == null) return "No válida";
+                        }
+                        return null;
+                      },
                     ),
                   ),
                 ],
@@ -395,7 +410,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                             children: [
                               Icon(Icons.add_photo_alternate_outlined, size: 50),
                               SizedBox(height: 10),
-                              const Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
+                              Text("Añadir Foto", style: TextStyle(fontWeight: FontWeight.w600)),
                             ],
                           ),
                         ),
@@ -477,6 +492,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
           _fechaFinController.text = fechaFormateada;
         }
 
+        // LLAMAMOS AL NUEVO MÉTODO DE CÁLCULO
         _calcularPrecioAutomatico();
       });
     }
