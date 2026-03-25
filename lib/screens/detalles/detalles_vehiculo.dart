@@ -114,227 +114,179 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              child: Column(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // BLOQUE IZQUIERDO
-                      Expanded(
-                        child: Card(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                            child: Column(
-                              children: [
-                                filaEditable(
-                                  Icons.badge,
-                                  "Matrícula",
-                                  vehiculo.matricula,
+                  // BLOQUE IZQUIERDO
+                  Expanded(
+                    child: Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                        child: Column(
+                          children: [
+                            filaEditable(
+                              Icons.badge,
+                              "Matrícula",
+                              vehiculo.matricula,
                                   () => mostrarDialogoTexto("matricula", _matriculaController, esMatricula: true),
-                                ),
-                                const Divider(),
-                                filaEditable(
-                                  Icons.model_training,
-                                  "Modelo",
-                                  vehiculo.modelo,
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.model_training,
+                              "Modelo",
+                              vehiculo.modelo,
                                   () => mostrarDialogoTexto("modelo", _modeloController),
-                                ),
-                                const Divider(),
-                                filaEditable(
-                                  Icons.speed,
-                                  "Kilometraje",
-                                  "${vehiculo.kilometraje} km",
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.speed,
+                              "Kilometraje",
+                              "${vehiculo.kilometraje} km",
                                   () => mostrarDialogoTexto("kilometraje", _kilometrajeController, soloNumeros: true),
-                                ),
-                                const Divider(),
-                                filaEditable(
-                                  Icons.security,
-                                  "Fecha de caducidad del seguro",
-                                  vehiculo.fechaVencimientoSeguro!,
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.security,
+                              "Fecha de caducidad del seguro",
+                              vehiculo.fechaVencimientoSeguro!,
                                   () => seleccionarFecha("fecha_vencimiento_seguro"),
-                                ),
-                                const Divider(),
-                                filaEditable(
-                                  Icons.fact_check_outlined,
-                                  "Próxima ITV",
-                                  vehiculo.fechaProximaItv ?? "Sin fecha",
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.fact_check_outlined,
+                              "Próxima ITV",
+                              vehiculo.fechaProximaItv ?? "Sin fecha",
                                   () => seleccionarFecha("fecha_proxima_itv"),
-                                ),
-                                const Divider(),
-                                filaEditable(
-                                  Icons.note,
-                                  "Notas",
-                                  vehiculo.observaciones ?? "Sin notas",
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.oil_barrel_outlined,
+                              "Líneas de Combustible",
+                              "${vehiculo.cantidadCombustible} líneas",
+                                  () => mostrarDialogoTexto(
+                                "cantidad_combustible",
+                                _combustibleController,
+                                soloNumeros: true,
+                                esCombustible: true,
+                              ),
+                            ),
+                            const Divider(),
+                            // NOTAS COMO ÚLTIMA FILA DE LA IZQUIERDA
+                            filaEditable(
+                              Icons.note,
+                              "Notas",
+                              vehiculo.observaciones ?? "Sin notas",
                                   () => mostrarDialogoTexto("observaciones", _observacionesController),
-                                ),
-                                const Divider(),
-                                // Fila para elegir si hay que limpiar
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 0),
-                                  child: SwitchListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    title: const Text(
-                                      "Limpieza",
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                    ),
-                                    secondary: const Icon(Icons.cleaning_services_outlined, size: 20),
-                                    activeColor: Colors.black,
-                                    value: vehiculo.necesitaLimpieza == 1,
-                                    onChanged: (bool nuevoValor) {
-                                      cambiarLimpieza(nuevoValor);
-                                    },
-                                  ),
-                                ),
-                              ],
                             ),
-                          ),
+                          ],
                         ),
                       ),
-
-                      const SizedBox(width: 5),
-                      // BLOQUE DERECHO
-                      Expanded(
-                        child: Card(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                            child: Column(
-                              children: [
-                                filaEditable(
-                                  Icons.branding_watermark,
-                                  "Marca",
-                                  vehiculo.marca,
-                                  () => mostrarDialogoTexto("marca", _marcaController),
-                                ),
-                                const Divider(),
-                                filaEditable(
-                                  Icons.calendar_month,
-                                  "Año",
-                                  vehiculo.anyo.toString(),
-                                  () => mostrarDialogoTexto("anyo", _anyoController, soloNumeros: true),
-                                ),
-                                const Divider(),
-                                // PRECIO (Ahora en la tercera fila de la derecha)
-                                filaEditable(
-                                  Icons.oil_barrel_outlined,
-                                  "Líneas de Combustible",
-                                  "${vehiculo.cantidadCombustible} líneas",
-                                  () => mostrarDialogoTexto(
-                                    "cantidad_combustible",
-                                    _combustibleController,
-                                    soloNumeros: true,
-                                    esCombustible: true,
-                                  ),
-                                ),
-                                const Divider(),
-                                // PRECIO (Ahora en la tercera fila de la derecha)
-                                filaEditable(
-                                  Icons.euro,
-                                  "Precio",
-                                  "${vehiculo.precio} €",
-                                      () => mostrarDialogoTexto("precio", _precioController, soloNumeros: true),
-                                ),
-                                const Divider(),
-                                filaEditable(
-                                  Icons.local_gas_station,
-                                  "Combustible",
-                                  vehiculo.combustible!,
-                                  () => mostrarDropdown("combustible", vehiculo.combustible!, [
-                                    "Diesel",
-                                    "Gasoil",
-                                    "Eléctrico",
-                                    "Híbrido",
-                                  ]),
-                                ),
-                                const Divider(),
-                                filaEditable(
-                                  Icons.info_outline,
-                                  "Estado",
-                                  vehiculo.estado,
-                                  () => mostrarDropdown("estado", vehiculo.estado, [
-                                    "Disponible",
-                                    "Alquilado",
-                                    "Taller",
-                                  ]),
-                                ),
-                                const Divider(),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.palette, color: Color(vehiculo.color!), size: 20),
-                                      const SizedBox(width: 10),
-                                      const Expanded(
-                                        child: Text(
-                                          "Color",
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 30,
-                                        child: IconButton(
-                                          padding: EdgeInsets.zero,
-                                          icon: const Icon(Icons.edit, size: 16),
-                                          onPressed: mostrarSelectorColor,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Divider(),
-                                // LÍNEAS DE COMBUSTIBLE (Ahora al final de la derecha)
-                                filaEditable(
-                                  Icons.oil_barrel_outlined,
-                                  "Líneas de Combustible",
-                                  "${vehiculo.cantidadCombustible} líneas",
-                                  () => mostrarDialogoTexto(
-                                    "cantidad_combustible",
-                                    _combustibleController,
-                                    soloNumeros: true,
-                                    esCombustible: true,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
 
-                  // fila para elegir si hay que limpiar
-                  const SizedBox(height: 5),
-                  Card(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    color: Colors.white,
-                    child: SwitchListTile(
-                      title: const Text(
-                        "¿Limpieza necesaria?",
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  const SizedBox(width: 5),
+
+                  // BLOQUE DERECHO
+                  Expanded(
+                    child: Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                        child: Column(
+                          children: [
+                            filaEditable(
+                              Icons.branding_watermark,
+                              "Marca",
+                              vehiculo.marca,
+                                  () => mostrarDialogoTexto("marca", _marcaController),
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.calendar_month,
+                              "Año",
+                              vehiculo.anyo.toString(),
+                                  () => mostrarDialogoTexto("anyo", _anyoController, soloNumeros: true),
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.euro,
+                              "Precio",
+                              "${vehiculo.precio} €",
+                                  () => mostrarDialogoTexto("precio", _precioController, soloNumeros: true),
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.local_gas_station,
+                              "Combustible",
+                              vehiculo.combustible!,
+                                  () => mostrarDropdown("combustible", vehiculo.combustible!, [
+                                "Diesel",
+                                "Gasoil",
+                                "Eléctrico",
+                                "Híbrido",
+                              ]),
+                            ),
+                            const Divider(),
+                            filaEditable(
+                              Icons.info_outline,
+                              "Estado",
+                              vehiculo.estado,
+                                  () => mostrarDropdown("estado", vehiculo.estado, [
+                                "Disponible",
+                                "Alquilado",
+                                "Taller",
+                              ]),
+                            ),
+                            const Divider(),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.palette, color: Color(vehiculo.color!), size: 20),
+                                  const SizedBox(width: 10),
+                                  const Expanded(
+                                    child: Text(
+                                      "Color",
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 30,
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      icon: const Icon(Icons.edit, size: 16),
+                                      onPressed: mostrarSelectorColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Divider(),
+                            // LIMPIEZA COMO ÚLTIMA FILA DE LA DERECHA
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text(
+                                "Limpieza",
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                              secondary: const Icon(Icons.cleaning_services_outlined, size: 20),
+                              activeColor: Colors.black,
+                              value: vehiculo.necesitaLimpieza == 1,
+                              onChanged: (bool nuevoValor) {
+                                cambiarLimpieza(nuevoValor);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                      secondary: const Icon(Icons.cleaning_services_outlined),
-
-                      // Fondo blanco cuando está a la derecha (activado)
-                      activeTrackColor: Colors.white,
-                      // Fondo gris clarito cuando está a la izquierda (desactivado)
-                      inactiveTrackColor: Colors.grey[300],
-
-                      activeColor: Colors.black,
-                      // El círculo se pone azul cuando el fondo es blanco
-
-                      // Fondo gris clarito cuando está a la izquierda (desactivado)
-                      value: vehiculo.necesitaLimpieza == 1,
-                      onChanged: (bool nuevoValor) {
-                        cambiarLimpieza(nuevoValor);
-                      },
                     ),
                   ),
                 ],
               ),
             ),
 
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -347,7 +299,6 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
                   ),
                   onPressed: () async {
                     await Navigator.pushNamed(context, "añadir_reparacion", arguments: vehiculo.id);
-                    // Recargamos cuando volvemos
                     cargarHistoricoReparaciones();
                   },
                   icon: const Icon(Icons.add, size: 18),
@@ -363,31 +314,31 @@ class _DetallesVehiculoScreenState extends State<DetallesVehiculoScreen> {
               child: listaReparaciones == null || listaReparaciones!.isEmpty
                   ? const Center(child: Text("No hay reparaciones"))
                   : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: listaReparaciones!.length,
-                      itemBuilder: (context, index) {
-                        final r = listaReparaciones![index];
-                        return Card(
-                          margin: const EdgeInsets.all(10),
-                          child: SizedBox(
-                            width: 200,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.history),
-                                Text("${r.fechaInicio} / ${r.fechaFin}", style: TextStyle(fontSize: 12)),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pushNamed(context, "detalles_reparacion", arguments: r.id);
-                                  },
-                                  child: const Text("Ver detalles"),
-                                ),
-                              ],
-                            ),
+                scrollDirection: Axis.horizontal,
+                itemCount: listaReparaciones!.length,
+                itemBuilder: (context, index) {
+                  final r = listaReparaciones![index];
+                  return Card(
+                    margin: const EdgeInsets.all(10),
+                    child: SizedBox(
+                      width: 200,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.history),
+                          Text("${r.fechaInicio} / ${r.fechaFin}", style: TextStyle(fontSize: 12)),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, "detalles_reparacion", arguments: r.id);
+                            },
+                            child: const Text("Ver detalles"),
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     ),
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 40),
           ],
