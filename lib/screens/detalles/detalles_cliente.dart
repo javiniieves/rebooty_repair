@@ -290,10 +290,7 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
             items: ["DNI", "NIE", "Pasaporte"].map((tipo) {
               return DropdownMenuItem(
                 value: tipo,
-                child: Text(
-                  tipo,
-                  style: const TextStyle(color: Color(0xFFC8A97E)),
-                ),
+                child: Text(tipo, style: const TextStyle(color: Color(0xFFC8A97E))),
               );
             }).toList(),
             onChanged: (nuevoTipoDocumento) {
@@ -353,7 +350,6 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
 
   Future<void> actualizarCampo(String campo, String valor) async {
     final dbHelper = DatabaseHelper.instance;
-    
     switch (campo) {
       case "nombre":
         cliente.nombre = valor;
@@ -369,6 +365,12 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
         break;
       case "ruta_foto":
         cliente.rutaFoto = valor;
+        break;
+      case "tipo_documento":
+        cliente.tipoDocumento = valor;
+        break;
+      case "documento_oficial":
+        cliente.documentoOficial = valor;
         break;
     }
     await dbHelper.actualizarCliente(cliente);
