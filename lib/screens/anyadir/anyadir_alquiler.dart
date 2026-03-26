@@ -539,12 +539,10 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
       devolverFianza: devolverFianza ? 1 : 0,
     );
 
-    final db = await DatabaseHelper.instance.database;
-    int idNuevoAlquiler = await db.insert("alquileres", alquiler.toMap());
+    int idNuevoAlquiler = await DatabaseHelper.instance.insertarAlquiler(alquiler);
 
     for (String ruta in fotosTemporales) {
-      final foto = Foto(idAlquiler: idNuevoAlquiler, ruta: ruta);
-      await db.insert("fotos", foto.toMap());
+      await DatabaseHelper.instance.insertarFoto(idNuevoAlquiler, ruta);
     }
 
     Navigator.pop(context);
