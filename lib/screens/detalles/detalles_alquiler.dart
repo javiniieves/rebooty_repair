@@ -37,9 +37,20 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   String _formaPagoActual = "";
   bool _devolverFianza = false;
 
+  // Lista de precios para el cálculo automático (se cargará del vehículo)
+  List<double> preciosCocheSeleccionado = [];
+
   Future<void> cargarAlquiler(int idAlquiler) async {
     // guardamos el alquiler con el id recibido
     alquiler = (await DatabaseHelper.instance.obtenerAlquilerPorId(idAlquiler))!;
+    // Cargamos los precios del coche asociado para recalcular si es necesario
+    final v = await DatabaseHelper.instance.obtenerVehiculoPorId(alquiler.idCoche);
+    if (v != null) {
+      preciosCocheSeleccionado = (v.precios ?? "0,0,0,0,0,0,0")
+          .split(',')
+          .map((p) => double.tryParse(p) ?? 0.0)
+          .toList();
+    }
   }
 
   Future<void> cargarCocheYCliente(int idCoche, int idCliente) async {
@@ -83,6 +94,12 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     fotos = await DatabaseHelper.instance.obtenerFotosPorAlquiler(idAlquiler);
     multas = await DatabaseHelper.instance.obtenerMultasPorAlquiler(idAlquiler);
 
+    // Cargamos precios del coche para recalcular precios si se cambian fechas
+    preciosCocheSeleccionado = (coche.precios ?? "0,0,0,0,0,0,0")
+        .split(',')
+        .map((p) => double.tryParse(p) ?? 0.0)
+        .toList();
+
     // Actualiza los controladores
     _clienteNombreController.text = cliente.nombre;
     _cocheMatriculaController.text = coche.matricula;
@@ -107,6 +124,78 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
   Future<void> actualizarVehiculo(String campo, dynamic valor) async {
     await DatabaseHelper.instance.actualizarCampoVehiculo(coche.id!, campo, valor);
     await cargarCocheYCliente(alquiler.idCoche, alquiler.idCliente);
+  }
+
+  void _recalcularPrecioAutomatico({String? nuevaFechaIni, String? nuevaFechaFin}) {
+    // 1. Obtención de fechas (parámetro o controlador)
+    String sIni = nuevaFechaIni ?? _fechaInicioControler.text;
+    String sFin = nuevaFechaFin ?? _fechaLimiteControler.text;
+
+    DateTime? fIni = DateTime.tryParse(sIni);
+    DateTime? fFin = DateTime.tryParse(sFin);
+
+    if (fIni != null && fFin != null) {
+      // 2. Cálculo de días mediante horas para evitar truncado de Dart
+      final diferenciaHoras = fFin.difference(fIni).inHours;
+      int diasTotales = (diferenciaHoras / 24).round();
+
+      // Mínimo de 1 día si hay diferencia real
+      if (diasTotales == 0 && fFin.isAfter(fIni)) diasTotales = 1;
+
+      double total = 0.0;
+
+      // --- LÓGICA DE PRECIOS POR TRAMOS (ESTILO MRDARKWING) ---
+
+      if (diasTotales <= 0) {
+        total = 0.0;
+      }
+      // TRAMO 1: Menos de una semana (1-6 días)
+      else if (diasTotales < 7) {
+        if (preciosCocheSeleccionado.isNotEmpty) {
+          total = preciosCocheSeleccionado[diasTotales - 1];
+        } else {
+          total = 0.0;
+        }
+      }
+      // TRAMO 2: De 7 a 29 días (Prorrateo sobre la semana)
+      else if (diasTotales >= 7 && diasTotales < 30) {
+        if (preciosCocheSeleccionado.length >= 7) {
+          double precioSemana = preciosCocheSeleccionado[6];
+          double precioDiaExtra = precioSemana / 7;
+          total = precioSemana + (precioDiaExtra * (diasTotales - 7));
+        }
+      }
+      // TRAMO 3: Bloques mensuales (30 días exactos o múltiplos)
+      else if (diasTotales % 30 == 0) {
+        int mesesCompletos = diasTotales ~/ 30;
+        total = mesesCompletos * 700.0;
+      }
+      // TRAMO 4: Larga duración con días sueltos (ej: 122 días)
+      else {
+        int mesesCompletos = diasTotales ~/ 30;
+        int diasSueltos = diasTotales % 30;
+        double precioPorMes = 700.0;
+        double precioDiaProrrateado = precioPorMes / 30;
+
+        total = (mesesCompletos * precioPorMes) + (diasSueltos * precioDiaProrrateado);
+      }
+
+      // --- FINALIZACIÓN Y REDONDEO ---
+
+      // Forzamos 2 decimales matemáticamente para la base de datos
+      double precioFinalLimpio = double.parse(total.toStringAsFixed(2));
+
+      // Guardamos en BD el valor redondeado
+      actualizarAlquiler("precio", precioFinalLimpio);
+
+      // Actualizamos la UI con formato de moneda (2 decimales fijos)
+      setState(() {
+        _precioController.text = precioFinalLimpio.toStringAsFixed(2);
+      });
+
+      print("--- CÁLCULO COMPLETADO ---");
+      print("Días: $diasTotales | Total: $precioFinalLimpio€");
+    }
   }
 
   // Metodo para finalizar el alquiler
@@ -747,72 +836,48 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
     );
   }
 
-  // Widget para mostrar un campo con un valor booleano como Sí/No
-  Widget _infoRowSwitch(IconData icon, String titulo, bool valor) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: Colors.deepPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-          child: Icon(icon),
-        ),
-        const SizedBox(width: 15),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(titulo, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-              Text(valor ? "Sí" : "No", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   Future<void> _ventanaCambioFecha(String nombreCampo, TextEditingController controllerFecha) async {
     DateTime fechaHoy = DateTime.now();
+
     final DateTime? fechaElegida = await showDatePicker(
       context: context,
-      initialDate: fechaHoy,
+      initialDate: DateTime.tryParse(controllerFecha.text) ?? fechaHoy,
       firstDate: DateTime(2024),
-      lastDate: fechaHoy.add(const Duration(days: 365 * 5)),
+      lastDate: fechaHoy.add(const Duration(days: 365 * 2)),
     );
 
     if (fechaElegida != null) {
       String fechaFormateada =
           "${fechaElegida.year}-${fechaElegida.month.toString().padLeft(2, '0')}-${fechaElegida.day.toString().padLeft(2, '0')}";
 
-      if (nombreCampo == "fecha_inicio" || nombreCampo == "fecha_fin") {
-        String nuevaFechaInicio = nombreCampo == "fecha_inicio" ? fechaFormateada : _fechaInicioControler.text;
-        String nuevaFechaFin = nombreCampo == "fecha_fin" ? fechaFormateada : _fechaLimiteControler.text;
+      // 1. ACTUALIZAR EN BASE DE DATOS PRIMERO
+      await actualizarAlquiler(nombreCampo, fechaFormateada);
 
-        final alquileresOcupados = await DatabaseHelper.instance.obtenerAlquileresOcupados(
-          idVehiculo: alquiler.idCoche,
-          fechaInicio: nuevaFechaInicio,
-          fechaFin: nuevaFechaFin,
-        );
+      // 2. FORZAR ACTUALIZACIÓN DEL CONTROLADOR VISUAL INMEDIATAMENTE
+      setState(() {
+        controllerFecha.text = fechaFormateada;
+      });
 
-        final tallerOcupado = await DatabaseHelper.instance.obtenerReparacionesOcupadas(
-          idVehiculo: alquiler.idCoche,
-          fechaInicio: nuevaFechaInicio,
-          fechaFin: nuevaFechaFin,
-        );
-
-        if (alquileresOcupados.isNotEmpty || tallerOcupado.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Error: El coche está ocupado o en taller en esas fechas"),
-              backgroundColor: Colors.red,
-            ),
-          );
-          return;
-        }
+      // 3. RECALCULAR USANDO LOS DATOS FRESCOS
+      // Si hemos cambiado la fecha de inicio, la pasamos explícitamente. Si no, pasamos la de fin.
+      if (nombreCampo == "fecha_inicio") {
+        _recalcularPrecioAutomatico(nuevaFechaIni: fechaFormateada);
+      } else {
+        _recalcularPrecioAutomatico(nuevaFechaFin: fechaFormateada);
       }
 
-      actualizarAlquiler(nombreCampo, fechaFormateada);
-      cargarAlquiler(alquiler.id!);
+      // 4. RECARGA TOTAL PARA ASEGURAR SINCRONÍA
+      await _cargarTodo(alquiler.id!);
     }
+  }
+
+  void _errorSnackBar(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
+  }
+
+  // Función auxiliar para no repetir código de errores
+  void _errorFecha(String mensaje) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(mensaje), backgroundColor: Colors.red));
   }
 
   Future<void> _ventanaCambioPrecio() async {

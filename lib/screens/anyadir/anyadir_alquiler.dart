@@ -56,32 +56,50 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
     });
   }
 
-  // --- NUEVA FUNCIÓN PARA CALCULAR EL PRECIO AUTOMÁTICAMENTE ---
   void _calcularPrecioAutomatico() {
     if (fechaInicio != null && fechaFin != null && preciosCocheSeleccionado.isNotEmpty) {
-      // Se elimina el +1 para que el día de devolución no se cuente
-      final diferenciaDias = fechaFin!.difference(fechaInicio!).inDays;
-      double total = 0.0;
+      // 1. Cálculo por horas para evitar el truncado de .inDays
+      final diferenciaHoras = fechaFin!.difference(fechaInicio!).inHours;
+      int diasTotales = (diferenciaHoras / 24).round();
 
-      // Si la diferencia es 0 (mismo día), podrías decidir si cobrar un mínimo o dejarlo en 0.
-      // Aquí asumo que si diferencia es 0, se busca el precio del primer día disponible.
-      if (diferenciaDias <= 0) {
-        total = 0.0;
-      } else if (diferenciaDias < 7) {
-        total = preciosCocheSeleccionado[diferenciaDias - 1];
-      } else if (diferenciaDias >= 7 && diferenciaDias < 30) {
-        double precioDia7 = preciosCocheSeleccionado[6];
-        double precioMedio = precioDia7 / 7;
-        int diasExtra = diferenciaDias - 7;
-        total = precioDia7 + (precioMedio * diasExtra);
-      } else if (diferenciaDias == 30) {
-        total = 700.0;
-      } else {
-        double precioDiarioMensual = 700.0 / 30;
-        int diasExtraSobreMes = diferenciaDias - 30;
-        total = 700.0 + (precioDiarioMensual * diasExtraSobreMes);
+      // Mínimo de 1 día si las fechas son distintas
+      if (diasTotales == 0 && fechaFin!.isAfter(fechaInicio!)) {
+        diasTotales = 1;
       }
 
+      double total = 0.0;
+
+      // --- LÓGICA DE PRECIOS POR TRAMOS ---
+      if (diasTotales <= 0) {
+        total = 0.0;
+      }
+      // TRAMO 1: Menos de una semana (1-6 días)
+      else if (diasTotales < 7) {
+        total = preciosCocheSeleccionado[diasTotales - 1];
+      }
+      // TRAMO 2: De 7 a 29 días (Prorrateo sobre la semana)
+      else if (diasTotales >= 7 && diasTotales < 30) {
+        double precioSemana = preciosCocheSeleccionado[6];
+        double precioDiaExtra = precioSemana / 7;
+        total = precioSemana + (precioDiaExtra * (diasTotales - 7));
+      }
+      // TRAMO 3: Bloques mensuales (Múltiplos de 30)
+      else if (diasTotales % 30 == 0) {
+        int mesesCompletos = diasTotales ~/ 30;
+        total = mesesCompletos * 700.0;
+      }
+      // TRAMO 4: Larga duración con días sueltos
+      else {
+        int mesesCompletos = diasTotales ~/ 30;
+        int diasSueltos = diasTotales % 30;
+        double precioPorMes = 700.0;
+        double precioDiaProrrateado = precioPorMes / 30;
+
+        total = (mesesCompletos * precioPorMes) + (diasSueltos * precioDiaProrrateado);
+      }
+
+      // --- REDONDEO A 2 DECIMALES "POR COJONES" ---
+      // Usamos toStringAsFixed(2) para asegurar el formato en el controlador
       setState(() {
         _precioController.text = total.toStringAsFixed(2);
       });
@@ -496,8 +514,6 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
           fechaFin = fechaLimpia;
           _fechaFinController.text = fechaFormateada;
         }
-
-        // LLAMAMOS AL NUEVO MÉTODO DE CÁLCULO
         _calcularPrecioAutomatico();
       });
     }

@@ -285,11 +285,14 @@ class DatabaseHelper {
     required int idVehiculo,
     required String fechaInicio,
     required String fechaFin,
+    int? idAlquilerActual,
   }) async {
     final db = await instance.database;
 
-    String whereClause = "id_coche = ? AND estado != ? AND ? <= fecha_fin AND ? >= fecha_inicio";
-    List<dynamic> args = [idVehiculo, "Terminado", fechaInicio, fechaFin];
+    // Añadimos "id != ?" a la cláusula para que se ignore a sí mismo si ya existe
+    // Usamos -1 como valor por defecto si idAlquilerActual es null para que la consulta no falle
+    String whereClause = "id_coche = ? AND estado != ? AND ? <= fecha_fin AND ? >= fecha_inicio AND id != ?";
+    List<dynamic> args = [idVehiculo, "Terminado", fechaFin, fechaInicio, idAlquilerActual ?? -1];
 
     final result = await db.query("alquileres", where: whereClause, whereArgs: args);
     return result.map((e) => Alquiler.fromMap(e)).toList();
