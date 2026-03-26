@@ -59,10 +59,15 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   // --- NUEVA FUNCIÓN PARA CALCULAR EL PRECIO AUTOMÁTICAMENTE ---
   void _calcularPrecioAutomatico() {
     if (fechaInicio != null && fechaFin != null && preciosCocheSeleccionado.isNotEmpty) {
-      final diferenciaDias = fechaFin!.difference(fechaInicio!).inDays + 1;
+      // Se elimina el +1 para que el día de devolución no se cuente
+      final diferenciaDias = fechaFin!.difference(fechaInicio!).inDays;
       double total = 0.0;
 
-      if (diferenciaDias < 7) {
+      // Si la diferencia es 0 (mismo día), podrías decidir si cobrar un mínimo o dejarlo en 0.
+      // Aquí asumo que si diferencia es 0, se busca el precio del primer día disponible.
+      if (diferenciaDias <= 0) {
+        total = 0.0;
+      } else if (diferenciaDias < 7) {
         total = preciosCocheSeleccionado[diferenciaDias - 1];
       } else if (diferenciaDias >= 7 && diferenciaDias < 30) {
         double precioDia7 = preciosCocheSeleccionado[6];
