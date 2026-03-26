@@ -224,7 +224,11 @@ class DatabaseHelper {
 
   Future<int> insertarAlquiler(Alquiler a) async {
     final db = await instance.database;
-    return await db.insert("alquileres", a.toMap());
+    final id = await db.insert("alquileres", a.toMap());
+
+    await db.update("vehiculos", {"estado": "Alquilado"}, where: "id = ?", whereArgs: [a.idCoche]);
+
+    return id;
   }
 
   Future<List<Alquiler>> obtenerAlquileres() async {
@@ -236,21 +240,13 @@ class DatabaseHelper {
   Future<int> borrarAlquiler(int id) async {
     final db = await instance.database;
 
-    final alquiler = await db.query(
-      "alquileres",
-      where: "id = ?",
-      whereArgs: [id],
-    );
+    final alquiler = await db.query("alquileres", where: "id = ?", whereArgs: [id]);
 
     if (alquiler.isNotEmpty) {
       final idCoche = alquiler.first["id_coche"];
 
       // Obtener el estado actual del vehículo
-      final vehiculo = await db.query(
-        "vehiculos",
-        where: "id = ?",
-        whereArgs: [idCoche],
-      );
+      final vehiculo = await db.query("vehiculos", where: "id = ?", whereArgs: [idCoche]);
 
       String? estadoActual;
       if (vehiculo.isNotEmpty) {
@@ -258,20 +254,11 @@ class DatabaseHelper {
       }
 
       // Borrar alquiler
-      await db.delete(
-        "alquileres",
-        where: "id = ?",
-        whereArgs: [id],
-      );
+      await db.delete("alquileres", where: "id = ?", whereArgs: [id]);
 
       // Solo cambiar a Disponible si NO estaba en Taller
       if (estadoActual != "Taller") {
-        await db.update(
-          "vehiculos",
-          {"estado": "Disponible"},
-          where: "id = ?",
-          whereArgs: [idCoche],
-        );
+        await db.update("vehiculos", {"estado": "Disponible"}, where: "id = ?", whereArgs: [idCoche]);
       }
     }
 
