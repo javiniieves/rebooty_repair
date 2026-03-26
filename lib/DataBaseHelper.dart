@@ -235,12 +235,44 @@ class DatabaseHelper {
 
   Future<int> borrarAlquiler(int id) async {
     final db = await instance.database;
-    final alquiler = await db.query("alquileres", where: "id = ?", whereArgs: [id]);
+
+    final alquiler = await db.query(
+      "alquileres",
+      where: "id = ?",
+      whereArgs: [id],
+    );
 
     if (alquiler.isNotEmpty) {
       final idCoche = alquiler.first["id_coche"];
-      await db.delete("alquileres", where: "id = ?", whereArgs: [id]);
-      await db.update("vehiculos", {"estado": "Disponible"}, where: "id = ?", whereArgs: [idCoche]);
+
+      // Obtener el estado actual del vehículo
+      final vehiculo = await db.query(
+        "vehiculos",
+        where: "id = ?",
+        whereArgs: [idCoche],
+      );
+
+      String? estadoActual;
+      if (vehiculo.isNotEmpty) {
+        estadoActual = vehiculo.first["estado"] as String?;
+      }
+
+      // Borrar alquiler
+      await db.delete(
+        "alquileres",
+        where: "id = ?",
+        whereArgs: [id],
+      );
+
+      // Solo cambiar a Disponible si NO estaba en Taller
+      if (estadoActual != "Taller") {
+        await db.update(
+          "vehiculos",
+          {"estado": "Disponible"},
+          where: "id = ?",
+          whereArgs: [idCoche],
+        );
+      }
     }
 
     return 1;
