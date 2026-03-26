@@ -256,6 +256,9 @@ class DatabaseHelper {
       // Borrar alquiler
       await db.delete("alquileres", where: "id = ?", whereArgs: [id]);
 
+      //Borrar fotos relacionadas con el alquiler
+      await db.delete("fotos", where: "id_alquiler = ?", whereArgs: [id]);
+
       // Solo cambiar a Disponible si NO estaba en Taller
       if (estadoActual != "Taller") {
         await db.update("vehiculos", {"estado": "Disponible"}, where: "id = ?", whereArgs: [idCoche]);
