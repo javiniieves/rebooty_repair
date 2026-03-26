@@ -38,7 +38,7 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
 
   Future<void> cargarDatosCliente(int idCliente) async {
     setState(() {
-      _tipoDocumento = cliente.documentoOficial;
+      _tipoDocumento = cliente.tipoDocumento;
     });
   }
 
@@ -280,17 +280,23 @@ class _DetallesClienteScreenState extends State<DetallesClienteScreen> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          DropdownMenu<String>(
-            width: double.infinity,
-            initialSelection: _tipoDocumento,
-            dropdownMenuEntries: ["DNI", "NIE", "Pasaporte"].map((tipo) {
-              return DropdownMenuEntry(
+          DropdownButtonFormField<String>(
+            isExpanded: true,
+            value: _tipoDocumento,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              prefixIcon: const Icon(Icons.description),
+            ),
+            items: ["DNI", "NIE", "Pasaporte"].map((tipo) {
+              return DropdownMenuItem(
                 value: tipo,
-                label: tipo,
-                labelWidget: Text(tipo, style: const TextStyle(color: Color(0xFFC8A97E))),
+                child: Text(
+                  tipo,
+                  style: const TextStyle(color: Color(0xFFC8A97E)),
+                ),
               );
             }).toList(),
-            onSelected: (nuevoTipoDocumento) {
+            onChanged: (nuevoTipoDocumento) {
               setState(() {
                 _tipoDocumento = nuevoTipoDocumento!;
                 _documentoController.clear();

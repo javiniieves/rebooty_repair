@@ -510,6 +510,14 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
         if (esInicio) {
           fechaInicio = fechaLimpia;
           _fechaInicioController.text = fechaFormateada;
+
+          DateTime hoyLimpio = DateTime(fechaHoy.year, fechaHoy.month, fechaHoy.day);
+
+          if (fechaLimpia == hoyLimpio) {
+            estadoActual = "En proceso";
+          } else {
+            estadoActual = "Pendiente";
+          }
         } else {
           fechaFin = fechaLimpia;
           _fechaFinController.text = fechaFormateada;

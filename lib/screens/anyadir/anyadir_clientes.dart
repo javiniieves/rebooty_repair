@@ -164,19 +164,20 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                 const SizedBox(height: 30),
 
                 // Selector del tipo de documento
-                DropdownMenuFormField<String>(
-                  width: double.infinity,
-                  initialSelection: _tipoDocumentoSeleccionado,
-                  leadingIcon: const Icon(Icons.description),
-                  label: const Text("Tipo de documento"),
-                  dropdownMenuEntries: ["DNI", "NIE", "Pasaporte"].map((tipo) {
-                    return DropdownMenuEntry(
+                DropdownButtonFormField<String>(
+                  value: _tipoDocumentoSeleccionado,
+                  decoration: InputDecoration(
+                    labelText: "Tipo de documento",
+                    prefixIcon: const Icon(Icons.description),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  items: ["DNI", "NIE", "Pasaporte"].map((tipo) {
+                    return DropdownMenuItem(
                       value: tipo,
-                      label: tipo,
-                      labelWidget: Text(tipo, style: const TextStyle(color: Color(0xFFC8A97E))),
+                      child: Text(tipo, style: const TextStyle(color: Color(0xFFC8A97E))),
                     );
                   }).toList(),
-                  onSelected: (nuevoValor) {
+                  onChanged: (nuevoValor) {
                     setState(() {
                       _tipoDocumentoSeleccionado = nuevoValor!;
                       _dniController.clear();
@@ -298,7 +299,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
                   height: 55,
                   child: ElevatedButton.icon(
                     onPressed: () async {
-                        await _guardarCliente();
+                      await _guardarCliente();
                     },
                     icon: const Icon(Icons.save),
                     label: const Text("GUARDAR CLIENTE"),
@@ -332,9 +333,7 @@ class _PantallaAnyadirClientesState extends State<PantallaAnyadirClientes> {
 
     _limpiarCampos();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Cliente guardado correctamente")),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cliente guardado correctamente")));
 
     Navigator.pop(context);
   }
