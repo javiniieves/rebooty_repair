@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../database.dart' hide DatabaseHelper;
+import '../../DataBaseHelper.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:image_picker/image_picker.dart';

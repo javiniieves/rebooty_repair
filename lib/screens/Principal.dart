@@ -3,7 +3,7 @@ import 'package:rebooty_repair/screens/anyadir/pantalla_anyadir.dart';
 import 'package:rebooty_repair/screens/buscar/pantalla_buscar.dart';
 import 'package:rebooty_repair/screens/preferencias.dart';
 
-import '../database.dart';
+import '../DataBaseHelper.dart';
 
 class Principal extends StatefulWidget {
   const Principal({super.key});

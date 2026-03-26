@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:rebooty_repair/database.dart' hide DatabaseHelper;
+import 'package:rebooty_repair/DataBaseHelper.dart';
 import 'package:validators/validators.dart';
 
 import '../../models/Vehiculo.dart';

@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
 
 import 'models/Alquiler.dart';
 import 'models/Cliente.dart';
@@ -336,7 +340,6 @@ class DatabaseHelper {
     return await db.update("reparaciones", {campo: valor}, where: "id = ?", whereArgs: [id]);
   }
 
-
   // ========================
   // 📸 FOTOS
   // ========================
@@ -386,5 +389,163 @@ class DatabaseHelper {
     final db = await instance.database;
     final result = await db.query("multas", where: "id = ?", whereArgs: [idMulta]);
     return result.isNotEmpty ? Multa.fromMap(result.first) : null;
+  }
+
+  // ========================
+  // Operaciones
+  // ========================
+
+  static Future<bool> exportarBD() async {
+    try {
+      String pathBaseDatos = await getDatabasesPath();
+      String rutaBaseDatos = join(pathBaseDatos, "alquileres.db");
+      File archivo = File(rutaBaseDatos);
+
+      if (!await archivo.exists()) {
+        print("No se encuentra el archivo .db");
+        return false;
+      }
+
+      if (Platform.isWindows) {
+        //si el windows Usa el explorador de archivos para guardar
+        String? rutaDestino = await FilePicker.platform.saveFile(
+          dialogTitle: '¿Dónde quieres guardar la base de datos?',
+          fileName: 'alquileres.db',
+        );
+
+        if (rutaDestino == null) {
+          return false; // usuario canceló
+        }
+
+        await archivo.copy(rutaDestino);
+        print("Copiado a: $rutaDestino");
+        return true;
+      } else {
+        // si el movil usamos el menú de compartir (WhatsApp, Drive, etc)
+        await Share.shareXFiles([XFile(rutaBaseDatos)], text: "Copia de seguridad");
+        return true;
+      }
+    } catch (e) {
+      print("Error al exportar: $e");
+      return false;
+    }
+  }
+
+  static Future<bool> importarBD() async {
+    try {
+      // Seleccionar el archivo
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['db'], // Solo permite archivos con esta extensión
+      );
+
+      if (result == null || result.files.single.path == null) {
+        return false; // El usuario canceló
+      }
+
+      File archivoNuevo = File(result.files.single.path!);
+
+      // Obtener la ruta donde la app guarda su base de datos actual
+      String pathBaseDatos = await getDatabasesPath();
+      String rutaDestino = join(pathBaseDatos, "alquileres.db");
+
+      // Cerrar la base de datos actual antes de sobrescribir
+      final db = await instance.database;
+      await db.close();
+
+      // Copiar el archivo seleccionado a la ruta interna
+      await archivoNuevo.copy(rutaDestino);
+
+      print("Base de datos importada desde: ${archivoNuevo.path}");
+      return true;
+    } catch (e) {
+      print("Error al importar: $e");
+      return false;
+    }
+  }
+
+  static Future<void> limpiarRegistrosBaseDatos() async {
+    try {
+      final db = await instance.database;
+
+      await db.delete("vehiculos");
+      await db.delete("reparaciones");
+      await db.delete("clientes");
+      await db.delete("alquileres");
+      await db.delete("fotos");
+    } catch (e) {
+      print("Error al borrar los registros de la base de datos");
+    }
+  }
+
+  static Future<Map<String, double>> obtenerContabilidadPorFechas(String inicio, String fin) async {
+    final db = await instance.database;
+
+    final List<Map<String, dynamic>> resultados = await db.rawQuery(
+      '''SELECT forma_pago, 
+       SUM(
+         IFNULL(precio, 0) + 
+         CASE WHEN devolver_fianza = 0 THEN IFNULL(fianza, 0) ELSE 0 END
+       ) as total 
+       FROM alquileres 
+       WHERE estado = 'Terminado'
+       AND fecha_inicio BETWEEN ? AND ?  -- CAMBIO AQUÍ: Usamos BETWEEN
+       GROUP BY forma_pago''',
+      [inicio, fin], // Ahora el orden es Inicio, Fin
+    );
+
+    Map<String, double> totales = {"Efectivo": 0.0, "Tarjeta": 0.0, "Transferencia": 0.0};
+
+    for (var row in resultados) {
+      String? fp = row['forma_pago'];
+      // Asegúrate de que comparas exactamente con los strings del mapa
+      if (fp != null && totales.containsKey(fp)) {
+        totales[fp] = (row['total'] as num).toDouble();
+      }
+    }
+
+    return totales;
+  }
+
+  // Metodo para comprobar si hoy hay reparaciones activas y actualizar el estado del vehiculo a "Taller"
+  static Future<void> actualizarEstadosTallerAutomaticamente() async {
+    final db = await instance.database;
+
+    // Sacamos la fecha de hoy en formato YYYY-MM-DD
+    DateTime fechaHoy = DateTime.now();
+    String hoyStr =
+        "${fechaHoy.year}-${fechaHoy.month.toString().padLeft(2, '0')}-${fechaHoy.day.toString().padLeft(2, '0')}";
+
+    // Actualizamos a 'Taller' todos los vehículos que tengan una reparación
+    // donde la fecha de inicio sea <= hoy y la fecha de fin sea >= hoy
+    await db.rawUpdate(
+      '''
+      UPDATE vehiculos 
+      SET estado = 'Taller' 
+      WHERE id IN (
+        SELECT id_coche 
+        FROM reparaciones 
+        WHERE fecha_inicio <= ? AND fecha_fin >= ?
+      )
+    ''',
+      [hoyStr, hoyStr],
+    );
+
+    // los coches salgan del taller automáticamente si la fecha de fin ya pasó
+    // vuelvan a estar 'Disponible' (siempre que su estado actual sea 'Taller')
+    await db.rawUpdate(
+      '''
+      UPDATE vehiculos 
+      SET estado = 'Disponible' 
+      WHERE estado = 'Taller' AND id NOT IN (
+        SELECT id_coche 
+        FROM reparaciones 
+        WHERE fecha_inicio <= ? AND fecha_fin >= ?
+      )
+    ''',
+      [hoyStr, hoyStr],
+    );
+
+    print("Estados de taller actualizados automáticamente para la fecha: $hoyStr");
   }
 }
