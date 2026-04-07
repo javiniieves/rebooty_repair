@@ -43,7 +43,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
       appBar: AppBar(title: const Text("Configuración y Base de Datos"), centerTitle: true),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(30.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 30.0), // Ajustado padding lateral
           child: Column(
             children: [
               // --- SECCIÓN DE CONTABILIDAD ---
@@ -51,35 +51,35 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                 children: [
                   Icon(Icons.analytics_outlined, size: 30),
                   SizedBox(width: 15),
-                  Text("Contabilidad", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text("Contabilidad", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 ],
               ),
               const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(child: _campoFecha(_fechaInicioController, "Desde")),
-                  const SizedBox(width: 15),
+                  const SizedBox(width: 10),
                   Expanded(child: _campoFecha(_fechaFinController, "Hasta")),
-                  const SizedBox(width: 15),
+                  const SizedBox(width: 10),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15), // Reducido para móvil
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                     onPressed: _consultarIngresos,
-                    child: const Icon(Icons.search, size: 30),
+                    child: const Icon(Icons.search, size: 25),
                   ),
                 ],
               ),
               const SizedBox(height: 25),
 
               // Tarjetas de ingresos
-              _cardIngreso("Ingresos en Efectivo", ganancias["Efectivo"]!, Colors.green, Icons.money),
+              _cardIngreso("Efectivo", ganancias["Efectivo"]!, Colors.green, Icons.money),
               const SizedBox(height: 12),
-              _cardIngreso("Ingresos por Tarjeta", ganancias["Tarjeta"]!, Colors.blue, Icons.credit_card),
+              _cardIngreso("Tarjeta", ganancias["Tarjeta"]!, Colors.blue, Icons.credit_card),
               const SizedBox(height: 12),
               _cardIngreso(
-                "Ingresos por Transferencia",
+                "Transferencia",
                 ganancias["Transferencia"]!,
                 Colors.orange,
                 Icons.account_balance,
@@ -101,7 +101,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue.shade50,
                         foregroundColor: Colors.blue,
-                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         side: const BorderSide(color: Colors.blue, width: 2),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
@@ -116,10 +116,8 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                             ),
                           );
 
-                          // Esperamos un momento para que el usuario lea el mensaje y luego cerramos
                           await Future.delayed(const Duration(seconds: 2));
 
-                          // Cerramos la app según la plataforma
                           if (Platform.isAndroid || Platform.isIOS) {
                             SystemNavigator.pop();
                           } else {
@@ -134,21 +132,21 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                         }
                       },
                       child: const Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center, // Centrado para estética
                         children: [
-                          Icon(Icons.upload_file, size: 35),
-                          SizedBox(width: 20),
-                          Text("Importar base de datos", style: TextStyle(fontSize: 24)),
+                          Icon(Icons.upload_file, size: 30),
+                          SizedBox(width: 15),
+                          Flexible(child: Text("Importar base de datos", style: TextStyle(fontSize: 18))), // Flexible añadido
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 50),
+                    const SizedBox(height: 30), // Espaciado ajustado
 
                     // Botón de Exportar
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
                       onPressed: () async {
@@ -161,33 +159,33 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                         }
                       },
                       child: const Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.cloud, size: 35),
-                          SizedBox(width: 20),
-                          Text("Exportar base de datos", style: TextStyle(fontSize: 24)),
+                          Icon(Icons.cloud, size: 30),
+                          SizedBox(width: 15),
+                          Flexible(child: Text("Exportar base de datos", style: TextStyle(fontSize: 18))), // Flexible añadido
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 50),
+                    const SizedBox(height: 30),
 
                     // Botón de Borrado
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red.shade50,
                         foregroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         side: const BorderSide(color: Colors.red, width: 2),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
                       onPressed: () => _mostrarDialogoConfirmacion(context),
                       child: const Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.delete, size: 35),
-                          SizedBox(width: 20),
-                          Text("Borrar todos los registros", style: TextStyle(fontSize: 24)),
+                          Icon(Icons.delete, size: 30),
+                          SizedBox(width: 15),
+                          Flexible(child: Text("Borrar todos los registros", style: TextStyle(fontSize: 18))), // Flexible añadido
                         ],
                       ),
                     ),
@@ -206,9 +204,11 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
     return TextFormField(
       controller: controller,
       readOnly: true,
+      style: const TextStyle(fontSize: 14), // Texto más pequeño para que quepa la fecha
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: const Icon(Icons.calendar_month),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        prefixIcon: const Icon(Icons.calendar_month, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
       onTap: () async {
@@ -221,7 +221,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
         if (picked != null) {
           setState(() {
             controller.text =
-                "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+            "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
           });
         }
       },
@@ -231,7 +231,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
   Widget _cardIngreso(String titulo, double valor, Color color, IconData icono) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(15),
@@ -240,25 +240,31 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Icon(icono, color: color, size: 28),
-              const SizedBox(width: 15),
-              Text(
-                titulo,
-                style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ],
+          Expanded( // Para que el texto no empuje el valor fuera de la pantalla
+            child: Row(
+              children: [
+                Icon(icono, color: color, size: 24),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    titulo,
+                    style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
           Text(
             "${valor.toStringAsFixed(2)} €",
-            style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.bold),
+            style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ],
       ),
     );
   }
 
+  // Los métodos de diálogo permanecen igual, no afectan al layout principal
   void _mostrarDialogoConfirmacion(BuildContext context) {
     showDialog(
       context: context,
@@ -267,7 +273,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
           backgroundColor: Colors.black,
           title: const Text(
             "¿Estás seguro de que quiere borrar TODOS los registros de la base de datos?",
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: Colors.white, fontSize: 18),
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
@@ -295,7 +301,7 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
           backgroundColor: Colors.red,
           title: const Text(
             "Está apunto de ELIMINAR para SIEMPRE la base de datos ¿Está seguro de que quiere eliminarla?",
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
@@ -307,8 +313,8 @@ class _PantallaPreferenciasState extends State<PantallaPreferencias> {
                   ScaffoldMessenger.of(
                     context,
                   ).showSnackBar(const SnackBar(content: Text("Registros borrados con éxito")));
-                  Navigator.pop(context); // Cierra este diálogo
-                  Navigator.pop(context); // Cierra el anterior
+                  Navigator.pop(context);
+                  Navigator.pop(context);
                 }
               },
               icon: const Icon(Icons.delete_forever, color: Colors.white),
