@@ -25,6 +25,8 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
   List<Cliente> listaClientes = [];
   List<Vehiculo> listaVehiculos = [];
 
+  late Vehiculo vehiculo;
+
   List<String> fotosTemporales = [];
 
   final _precioController = TextEditingController();
@@ -204,6 +206,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                       displayStringForOption: (vehiculo) => "${vehiculo.matricula} - ${vehiculo.modelo}",
                       onSelected: (vehiculoSeleccionado) {
                         setState(() {
+                          vehiculo = vehiculoSeleccionado;
                           _idVehiculoSeleccionado = vehiculoSeleccionado.id.toString();
                           // AQUÍ GUARDAMOS EL PRECIO DEL COCHE ELEGIDO
                           preciosCocheSeleccionado = (vehiculoSeleccionado.precios ?? "0,0,0,0,0,0,0")
@@ -534,6 +537,22 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Selecciona cliente y vehículo"), backgroundColor: Colors.red));
+      return;
+    }
+
+    DateTime diaActual = DateTime.now();
+    DateTime mesActual = DateTime(diaActual.year, diaActual.month);
+    if(!DateTime.parse(vehiculo.fechaVencimientoSeguro!).isAfter(diaActual)){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("El coche tiene el seguro vencido"), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if(DateTime.parse(vehiculo.fechaProximaItv!).isBefore(mesActual)){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("!ERROR¡ el coche tiene que pasar la ITV"), backgroundColor: Colors.red),
+      );
       return;
     }
 
