@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:rebooty_repair/AppTheme.dart';
 
 import '../../models/Alquiler.dart';
 import '../../DataBaseHelper.dart';
@@ -179,34 +180,46 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Autocomplete<Cliente>(
-                      optionsBuilder: (TextEditingValue textEditingValue) {
-                        if (textEditingValue.text.isEmpty) return listaClientes;
-                        return listaClientes.where((cliente) {
-                          return cliente.documentoOficial.toLowerCase().contains(textEditingValue.text.toLowerCase());
-                        });
-                      },
-                      displayStringForOption: (cliente) => "${cliente.documentoOficial} - ${cliente.nombre}",
-                      onSelected: (clienteSeleccionado) {
+                    child: DropdownButtonFormField<Cliente>(
+                      hint: Text("Cliente", style: TextStyle(color: AppTheme.tema.colorScheme.tertiary)),
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.person, color: AppTheme.tema.colorScheme.tertiary),
+                      ),
+                      items: listaClientes.map((cliente) {
+                        return DropdownMenuItem(
+                          value: cliente,
+                          child: Text(
+                            "${cliente.documentoOficial} - ${cliente.nombre}",
+                            style: TextStyle(color: AppTheme.tema.colorScheme.tertiary),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (clienteSeleccionado) {
                         setState(() {
-                          _idClienteSeleccionado = clienteSeleccionado.id.toString();
+                          _idClienteSeleccionado = clienteSeleccionado!.id.toString();
                         });
                       },
                     ),
                   ),
                   const SizedBox(width: 15),
                   Expanded(
-                    child: Autocomplete<Vehiculo>(
-                      optionsBuilder: (TextEditingValue textEditingValue) {
-                        if (textEditingValue.text.isEmpty) return listaVehiculos;
-                        return listaVehiculos.where((vehiculo) {
-                          return vehiculo.matricula.toLowerCase().contains(textEditingValue.text.toLowerCase());
-                        });
-                      },
-                      displayStringForOption: (vehiculo) => "${vehiculo.matricula} - ${vehiculo.modelo}",
-                      onSelected: (vehiculoSeleccionado) {
+                    child: DropdownButtonFormField<Vehiculo>(
+                      hint: Text("Vehiculo", style: TextStyle(color: AppTheme.tema.colorScheme.tertiary)),
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.directions_car, color: AppTheme.tema.colorScheme.tertiary),
+                      ),
+                      items: listaVehiculos.map((vehiculo) {
+                        return DropdownMenuItem(
+                          value: vehiculo,
+                          child: Text(
+                            "${vehiculo.matricula} - ${vehiculo.modelo}",
+                            style: TextStyle(color: AppTheme.tema.colorScheme.tertiary),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (vehiculoSeleccionado) {
                         setState(() {
-                          vehiculo = vehiculoSeleccionado;
+                          vehiculo = vehiculoSeleccionado!;
                           _idVehiculoSeleccionado = vehiculoSeleccionado.id.toString();
                           // AQUÍ GUARDAMOS EL PRECIO DEL COCHE ELEGIDO
                           preciosCocheSeleccionado = (vehiculoSeleccionado.precios ?? "0,0,0,0,0,0,0")
@@ -542,14 +555,14 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
 
     DateTime diaActual = DateTime.now();
     DateTime mesActual = DateTime(diaActual.year, diaActual.month);
-    if(!DateTime.parse(vehiculo.fechaVencimientoSeguro!).isAfter(diaActual)){
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("El coche tiene el seguro vencido"), backgroundColor: Colors.red),
-      );
+    if (!DateTime.parse(vehiculo.fechaVencimientoSeguro!).isAfter(diaActual)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("El coche tiene el seguro vencido"), backgroundColor: Colors.red));
       return;
     }
 
-    if(DateTime.parse(vehiculo.fechaProximaItv!).isBefore(mesActual)){
+    if (DateTime.parse(vehiculo.fechaProximaItv!).isBefore(mesActual)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("!ERROR¡ el coche tiene que pasar la ITV"), backgroundColor: Colors.red),
       );
