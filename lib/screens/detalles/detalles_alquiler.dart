@@ -347,207 +347,227 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
             children: [
               const SizedBox(height: 20),
 
-              // Cards en dos columnas igual que detalles vehiculo
+              // Cards adaptativas: dos columnas en pantalla ancha, una columna en móvil
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Column(
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // COLUMNA IZQUIERDA
-                        Expanded(
-                          child: Card(
-                            elevation: 8,
-                            shadowColor: Colors.black26,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(child: _infoRow(Icons.person, "Cliente", _clienteNombreController)),
-                                      IconButton(
-                                        onPressed: () async =>
-                                            await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente),
-                                        icon: const Icon(Icons.arrow_forward_ios),
-                                      ),
-                                    ],
-                                  ),
-                                  const Divider(height: 40),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _infoRow(Icons.calendar_today, "Fecha de inicio", _fechaInicioControler),
-                                      ),
-                                      IconButton(
-                                        onPressed: () => _ventanaCambioFecha("fecha_inicio", _fechaInicioControler),
-                                        icon: const Icon(Icons.edit),
-                                      ),
-                                    ],
-                                  ),
-                                  const Divider(height: 40),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _infoRow(Icons.event_busy, "Fecha limite", _fechaLimiteControler),
-                                      ),
-                                      IconButton(
-                                        onPressed: () => _ventanaCambioFecha("fecha_fin", _fechaLimiteControler),
-                                        icon: const Icon(Icons.edit),
-                                      ),
-                                    ],
-                                  ),
-                                  const Divider(height: 40),
-                                  Row(
-                                    children: [
-                                      Expanded(child: _infoRow(Icons.euro, "Precio", _precioController)),
-                                      IconButton(onPressed: () => _ventanaCambioPrecio(), icon: const Icon(Icons.edit)),
-                                    ],
-                                  ),
-                                  const Divider(height: 40),
-                                  // MOSTRAR FIANZA
-                                  Row(
-                                    children: [
-                                      Expanded(child: _infoRow(Icons.security_rounded, "Fianza", _fianzaController)),
-                                      IconButton(onPressed: () => _ventanaCambioFianza(), icon: const Icon(Icons.edit)),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final bool esPantallaAncha = constraints.maxWidth > 600;
 
-                        const SizedBox(width: 10),
-
-                        // COLUMNA DERECHA
-                        Expanded(
-                          child: Card(
-                            elevation: 8,
-                            shadowColor: Colors.black26,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _infoRow(Icons.directions_car, "Coche", _cocheMatriculaController),
-                                      ),
-                                      IconButton(
-                                        onPressed: () async =>
-                                            await Navigator.pushNamed(context, "detalles_vehiculo", arguments: coche),
-                                        icon: const Icon(Icons.arrow_forward_ios),
-                                      ),
-                                    ],
-                                  ),
-                                  const Divider(height: 40),
-                                  // MOSTRAR FORMA DE PAGO
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _infoRowEstado(Icons.payment_rounded, "Forma de Pago", _formaPagoActual),
-                                      ),
-                                      IconButton(
-                                        onPressed: () => _ventanaCambioFormaPago(),
-                                        icon: const Icon(Icons.edit),
-                                      ),
-                                    ],
-                                  ),
-                                  const Divider(height: 40),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _infoRow(Icons.search, "Observaciones", _observacionesController),
-                                      ),
-                                      IconButton(
-                                        onPressed: () => _ventanaCambioObservaciones(),
-                                        icon: const Icon(Icons.edit),
-                                      ),
-                                      IconButton(onPressed: mostrarObservaciones, icon: const Icon(Icons.visibility)),
-                                    ],
-                                  ),
-                                  const Divider(height: 40),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _infoRow(Icons.event_available, "Fecha entrega", _fechaDevoControler),
-                                      ),
-                                      IconButton(
-                                        onPressed: () => _ventanaCambioFecha("fecha_devolucion", _fechaDevoControler),
-                                        icon: const Icon(Icons.edit),
-                                      ),
-                                    ],
-                                  ),
-                                  const Divider(height: 40),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _infoRowEstado(
-                                          Icons.info_outline,
-                                          "Estado de la devolucion",
-                                          _estadoActual,
-                                        ),
-                                      ),
-                                      IconButton(
-                                        onPressed: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) => _ventanaCambioEstado("estado", _estadoActual),
-                                          );
-                                        },
-                                        icon: const Icon(Icons.edit),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // MOSTRAR DEVOLVER FIANZA - card ancha ocupando ambas columnas
-                    const SizedBox(height: 10),
-                    Card(
+                    final cardIzquierda = Card(
                       elevation: 8,
                       shadowColor: Colors.black26,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                        child: Row(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: esPantallaAncha ? 25 : 15, // padding adaptativo
+                          vertical: 30,
+                        ),
+                        child: Column(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.deepPurple.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(Icons.assignment_return_outlined),
+                            Row(
+                              children: [
+                                Expanded(child: _infoRow(Icons.person, "Cliente", _clienteNombreController)),
+                                IconButton(
+                                  onPressed: () async =>
+                                  await Navigator.pushNamed(context, "detalles_cliente", arguments: cliente),
+                                  icon: const Icon(Icons.arrow_forward_ios),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 15),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("¿Devolver fianza?", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                                  Text(
-                                    _devolverFianza ? "Sí" : "No",
-                                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
+                            const Divider(height: 40),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _infoRow(Icons.calendar_today, "Fecha de inicio", _fechaInicioControler),
+                                ),
+                                IconButton(
+                                  onPressed: () => _ventanaCambioFecha("fecha_inicio", _fechaInicioControler),
+                                  icon: const Icon(Icons.edit),
+                                ),
+                              ],
                             ),
-                            IconButton(onPressed: () => _ventanaCambioDevolverFianza(), icon: const Icon(Icons.edit)),
+                            const Divider(height: 40),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _infoRow(Icons.event_busy, "Fecha limite", _fechaLimiteControler),
+                                ),
+                                IconButton(
+                                  onPressed: () => _ventanaCambioFecha("fecha_fin", _fechaLimiteControler),
+                                  icon: const Icon(Icons.edit),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 40),
+                            Row(
+                              children: [
+                                Expanded(child: _infoRow(Icons.euro, "Precio", _precioController)),
+                                IconButton(onPressed: () => _ventanaCambioPrecio(), icon: const Icon(Icons.edit)),
+                              ],
+                            ),
+                            const Divider(height: 40),
+                            // MOSTRAR FIANZA
+                            Row(
+                              children: [
+                                Expanded(child: _infoRow(Icons.security_rounded, "Fianza", _fianzaController)),
+                                IconButton(onPressed: () => _ventanaCambioFianza(), icon: const Icon(Icons.edit)),
+                              ],
+                            ),
                           ],
                         ),
                       ),
-                    ),
-                  ],
+                    );
+
+                    final cardDerecha = Card(
+                      elevation: 8,
+                      shadowColor: Colors.black26,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: esPantallaAncha ? 25 : 15, // padding adaptativo
+                          vertical: 30,
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _infoRow(Icons.directions_car, "Coche", _cocheMatriculaController),
+                                ),
+                                IconButton(
+                                  onPressed: () async =>
+                                  await Navigator.pushNamed(context, "detalles_vehiculo", arguments: coche),
+                                  icon: const Icon(Icons.arrow_forward_ios),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 40),
+                            // MOSTRAR FORMA DE PAGO
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _infoRowEstado(Icons.payment_rounded, "Forma de Pago", _formaPagoActual),
+                                ),
+                                IconButton(
+                                  onPressed: () => _ventanaCambioFormaPago(),
+                                  icon: const Icon(Icons.edit),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 40),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _infoRow(Icons.search, "Observaciones", _observacionesController),
+                                ),
+                                IconButton(
+                                  onPressed: () => _ventanaCambioObservaciones(),
+                                  icon: const Icon(Icons.edit),
+                                ),
+                                IconButton(onPressed: mostrarObservaciones, icon: const Icon(Icons.visibility)),
+                              ],
+                            ),
+                            const Divider(height: 40),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _infoRow(Icons.event_available, "Fecha entrega", _fechaDevoControler),
+                                ),
+                                IconButton(
+                                  onPressed: () => _ventanaCambioFecha("fecha_devolucion", _fechaDevoControler),
+                                  icon: const Icon(Icons.edit),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 40),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _infoRowEstado(
+                                    Icons.info_outline,
+                                    "Estado de la devolucion",
+                                    _estadoActual,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => _ventanaCambioEstado("estado", _estadoActual),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.edit),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+
+                    return Column(
+                      children: [
+                        // En pantalla ancha: las dos cards en fila (comportamiento original Windows)
+                        // En móvil: apiladas en columna
+                        if (esPantallaAncha)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: cardIzquierda),
+                              const SizedBox(width: 10),
+                              Expanded(child: cardDerecha),
+                            ],
+                          )
+                        else
+                          Column(
+                            children: [
+                              cardIzquierda,
+                              const SizedBox(height: 10),
+                              cardDerecha,
+                            ],
+                          ),
+
+                        // MOSTRAR DEVOLVER FIANZA - card ancha ocupando ambas columnas
+                        const SizedBox(height: 10),
+                        Card(
+                          elevation: 8,
+                          shadowColor: Colors.black26,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.deepPurple.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.assignment_return_outlined),
+                                ),
+                                const SizedBox(width: 15),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text("¿Devolver fianza?", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                                      Text(
+                                        _devolverFianza ? "Sí" : "No",
+                                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                    onPressed: () => _ventanaCambioDevolverFianza(), icon: const Icon(Icons.edit)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
 
@@ -819,7 +839,8 @@ class _DetallesAlquilerScreenState extends State<DetallesAlquilerScreen> {
       children: [
         Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: Colors.deepPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(
+              color: Colors.deepPurple.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
           child: Icon(icon),
         ),
         const SizedBox(width: 15),
