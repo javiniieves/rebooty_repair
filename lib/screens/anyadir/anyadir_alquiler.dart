@@ -246,9 +246,15 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                         return "${v.matricula} - ${v.modelo}";
                       },
 
-                      onChanged: (Vehiculo? vehiculoSeleccionado) {
+                      onChanged: (vehiculoSeleccionado) {
                         setState(() {
-                          _idVehiculoSeleccionado = vehiculoSeleccionado!.id.toString();
+                          vehiculo = vehiculoSeleccionado!;
+                          _idVehiculoSeleccionado = vehiculoSeleccionado.id.toString();
+                          preciosCocheSeleccionado = (vehiculoSeleccionado.precios ?? "0,0,0,0,0,0,0")
+                              .split(',')
+                              .map((p) => double.tryParse(p) ?? 0.0)
+                              .toList();
+                          _calcularPrecioAutomatico();
                         });
                       },
 
