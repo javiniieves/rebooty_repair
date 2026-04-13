@@ -141,26 +141,22 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
               builder: (context) {
                 return AlertDialog(
                   title: const Text("¿Desea guardar los datos que ha introducido?"),
-                  content: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          Navigator.pop(context);
-                          await _guardarAlquiler();
-                        },
-                        label: const Row(children: [Icon(Icons.check), Text("Confirmar")]),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.pop(context);
-                        },
-                        label: const Row(children: [Icon(Icons.cancel_outlined), Text("Cancelar")]),
-                      ),
-                    ],
-                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                      child: const Text("CANCELAR"),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _guardarAlquiler();
+                      },
+                      child: const Text("CONFIRMAR"),
+                    ),
+                  ],
                 );
               },
             );
@@ -374,6 +370,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   Expanded(
                     child: DropdownButtonFormField(
                       value: formaPagoActual,
+                      isExpanded: true,
                       decoration: InputDecoration(
                         labelText: "Forma de pago",
                         prefixIcon: const Icon(Icons.payment_rounded),
@@ -396,6 +393,7 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
                   Expanded(
                     child: DropdownButtonFormField(
                       value: estadoActual,
+                      isExpanded: true,
                       decoration: InputDecoration(
                         labelText: "Estado",
                         prefixIcon: const Icon(Icons.info_outline),

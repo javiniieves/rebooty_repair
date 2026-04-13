@@ -462,13 +462,10 @@ class DatabaseHelper {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['db'], // Solo permite archivos con esta extensión
+        withData: true, // fuerza cargar bytes en iOS
       );
 
-      if (result == null || result.files.single.path == null) {
-        return false; // El usuario canceló
-      }
-
-      File archivoNuevo = File(result.files.single.path!);
+      if (result == null) return false;
 
       // Obtener la ruta donde la app guarda su base de datos actual
       String pathBaseDatos = await getDatabasesPath();
@@ -477,11 +474,21 @@ class DatabaseHelper {
       // Cerrar la base de datos actual antes de sobrescribir
       final db = await instance.database;
       await db.close();
+      _database = null; // reset para que se reabra limpio en el siguiente acceso
 
-      // Copiar el archivo seleccionado a la ruta interna
-      await archivoNuevo.copy(rutaDestino);
+      final archivo = result.files.single;
 
-      print("Base de datos importada desde: ${archivoNuevo.path}");
+      if (archivo.path != null) {
+        // Android / Windows: copiar directamente desde la ruta
+        await File(archivo.path!).copy(rutaDestino);
+      } else if (archivo.bytes != null) {
+        // iOS: escribir los bytes directamente
+        await File(rutaDestino).writeAsBytes(archivo.bytes!);
+      } else {
+        return false;
+      }
+
+      print("Base de datos importada desde: ${archivo.path}");
       return true;
     } catch (e) {
       print("Error al importar: $e");
