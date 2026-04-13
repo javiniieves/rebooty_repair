@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -171,66 +172,98 @@ class _PantallaAnyadirAlquilerState extends State<PantallaAnyadirAlquiler> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: DropdownButtonFormField<Cliente>(
-                      isExpanded: true,
-                      // Corregido para evitar overflow
-                      hint: Text("Cliente", style: TextStyle(color: AppTheme.tema.colorScheme.tertiary, fontSize: 14)),
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.person, color: AppTheme.tema.colorScheme.tertiary),
-                      ),
-                      items: listaClientes.map((cliente) {
-                        return DropdownMenuItem(
-                          value: cliente,
-                          child: Text(
-                            "${cliente.documentoOficial} - ${cliente.nombre}",
-                            style: TextStyle(color: AppTheme.tema.colorScheme.tertiary, fontSize: 12),
-                            overflow: TextOverflow.ellipsis, // Corregido para nombres largos
+                    child: DropdownSearch<Cliente>(
+                      items: listaClientes,
+
+                      popupProps: PopupProps.menu(
+                        menuProps: MenuProps(backgroundColor: Colors.grey.shade600),
+                        showSearchBox: true,
+                        searchFieldProps: TextFieldProps(
+                          decoration: InputDecoration(
+                            hintText: "Buscar por nombre o DNI",
+                            prefixIcon: Icon(Icons.search),
+                            filled: true,
                           ),
-                        );
-                      }).toList(),
-                      onChanged: (clienteSeleccionado) {
+                        ),
+                        emptyBuilder: (context, searchEntry) {
+                          return Center(
+                            child: Padding(padding: EdgeInsets.all(16), child: Text("No se encontraron resultados")),
+                          );
+                        },
+                      ),
+
+                      itemAsString: (Cliente c) {
+                        return "${c.documentoOficial} - ${c.nombre}";
+                      },
+
+                      onChanged: (Cliente? clienteSeleccionado) {
                         setState(() {
                           _idClienteSeleccionado = clienteSeleccionado!.id.toString();
                         });
+                      },
+
+                      dropdownDecoratorProps: DropDownDecoratorProps(
+                        dropdownSearchDecoration: InputDecoration(
+                          labelText: "Cliente",
+                          prefixIcon: Icon(Icons.person),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+
+                      filterFn: (cliente, filter) {
+                        final texto = filter.toLowerCase();
+                        return cliente.nombre.toLowerCase().startsWith(texto) ||
+                            cliente.documentoOficial.toLowerCase().startsWith(texto);
                       },
                     ),
                   ),
                   const SizedBox(width: 15),
                   Expanded(
-                    child: DropdownButtonFormField<Vehiculo>(
-                      isExpanded: true,
-                      // Corregido para evitar overflow
-                      hint: Text("Vehiculo", style: TextStyle(color: AppTheme.tema.colorScheme.tertiary, fontSize: 14)),
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.directions_car, color: AppTheme.tema.colorScheme.tertiary),
-                      ),
-                      items: listaVehiculos.map((vehiculo) {
-                        return DropdownMenuItem(
-                          value: vehiculo,
-                          child: Text(
-                            "${vehiculo.matricula} - ${vehiculo.modelo}",
-                            style: TextStyle(color: AppTheme.tema.colorScheme.tertiary, fontSize: 12),
-                            overflow: TextOverflow.ellipsis, // Corregido para matrículas/modelos largos
+                    child: DropdownSearch<Vehiculo>(
+                      items: listaVehiculos,
+                      popupProps: PopupProps.menu(
+                        menuProps: MenuProps(backgroundColor: Colors.grey.shade600),
+                        showSearchBox: true,
+                        searchFieldProps: TextFieldProps(
+                          decoration: InputDecoration(
+                            hintText: "Buscar por Matricula o Modelo",
+                            prefixIcon: Icon(Icons.search),
+                            filled: true,
                           ),
-                        );
-                      }).toList(),
-                      onChanged: (vehiculoSeleccionado) {
+                        ),
+                        emptyBuilder: (context, searchEntry) {
+                          return Center(
+                            child: Padding(padding: EdgeInsets.all(16), child: Text("No se encontraron resultados")),
+                          );
+                        },
+                      ),
+
+                      itemAsString: (Vehiculo v) {
+                        return "${v.matricula} - ${v.modelo}";
+                      },
+
+                      onChanged: (Vehiculo? vehiculoSeleccionado) {
                         setState(() {
-                          vehiculo = vehiculoSeleccionado!;
-                          _idVehiculoSeleccionado = vehiculoSeleccionado.id.toString();
-                          // AQUÍ GUARDAMOS EL PRECIO DEL COCHE ELEGIDO
-                          preciosCocheSeleccionado = (vehiculoSeleccionado.precios ?? "0,0,0,0,0,0,0")
-                              .split(',')
-                              .map((p) => double.tryParse(p) ?? 0.0)
-                              .toList();
-                          // RECALCULAMOS POR SI LAS FECHAS YA ESTABAN PUESTAS
-                          _calcularPrecioAutomatico();
+                          _idVehiculoSeleccionado = vehiculoSeleccionado!.id.toString();
                         });
+                      },
+
+                      dropdownDecoratorProps: DropDownDecoratorProps(
+                        dropdownSearchDecoration: InputDecoration(
+                          labelText: "Vehiculo",
+                          prefixIcon: Icon(Icons.directions_car),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+
+                      filterFn: (vehiculo, filter) {
+                        final texto = filter.toLowerCase();
+                        return vehiculo.matricula.toLowerCase().startsWith(texto) ||
+                            vehiculo.modelo.toLowerCase().startsWith(texto);
                       },
                     ),
                   ),
